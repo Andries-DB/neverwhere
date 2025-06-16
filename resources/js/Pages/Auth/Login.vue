@@ -37,7 +37,7 @@ const submit = () => {
             <h2
                 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900"
             >
-                Sign in to your account
+                Log in in je account
             </h2>
         </div>
 
@@ -55,7 +55,6 @@ const submit = () => {
                         type="email"
                         class="mt-1 block w-full"
                         v-model="form.email"
-                        required
                         autofocus
                         autocomplete="username"
                     />
@@ -64,14 +63,13 @@ const submit = () => {
                 </div>
 
                 <div class="mt-4">
-                    <InputLabel for="password" value="Password" />
+                    <InputLabel for="password" value="Wachtwoord" />
 
                     <TextInput
                         id="password"
                         type="password"
                         class="mt-1 block w-full"
                         v-model="form.password"
-                        required
                         autocomplete="current-password"
                     />
 
@@ -85,7 +83,7 @@ const submit = () => {
                             v-model:checked="form.remember"
                         />
                         <span class="ms-2 text-sm text-gray-600"
-                            >Remember me</span
+                            >Onthoud me</span
                         >
                     </label>
                 </div>
@@ -96,7 +94,7 @@ const submit = () => {
                         :href="route('password.request')"
                         class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
-                        Forgot your password?
+                        Je wachtwoord vergeten?
                     </Link>
 
                     <PrimaryButton

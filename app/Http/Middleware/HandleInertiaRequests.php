@@ -34,6 +34,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'conversations' => fn() => $request->user()
+                ? $request->user()->conversations()
+                ->orderByDesc('created_at')
+                ->get(['id', 'guid', 'title', 'status'])
+                : [],
         ];
     }
 }
