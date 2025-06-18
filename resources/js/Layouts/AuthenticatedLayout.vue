@@ -92,18 +92,23 @@ watch(sidebarCollapsed, (newValue) => {
         <div
             :class="[
                 'bg-white border-r border-slate-200 transition-all duration-300 ease-in-out flex flex-col',
-                sidebarCollapsed ? 'w-20' : 'w-64',
+                // Mobile behavior - slide in from left when expanded
+                sidebarCollapsed
+                    ? '-translate-x-full md:translate-x-0 md:w-20'
+                    : 'translate-x-0 w-80 md:w-64',
+                'fixed inset-y-0 left-0 z-50 md:relative md:z-auto',
             ]"
         >
             <!-- Sidebar Header -->
             <div
                 class="flex items-center px-4 h-16 justify-center w-full border-b border-slate-200"
             >
-                <div
+                <a
                     :class="[
                         'flex items-center  min-w-0 flex-1',
                         sidebarCollapsed ? 'justify-center' : 'justify-start',
                     ]"
+                    :href="route('dashboard')"
                 >
                     <ApplicationLogo
                         class="h-8 w-8 text-blue-600 flex-shrink-0"
@@ -114,7 +119,7 @@ watch(sidebarCollapsed, (newValue) => {
                     >
                         Neverwhere
                     </span>
-                </div>
+                </a>
             </div>
 
             <!-- Sidebar Navigation -->
@@ -308,73 +313,21 @@ watch(sidebarCollapsed, (newValue) => {
                             </div>
                         </div>
                     </div>
-                    <!-- <div class="relative">
-                    <Dropdown align="right" width="48">
-                        <template #trigger>
-                            <button
-                                class="flex items-center w-full px-3 py-2 text-left rounded-md hover:bg-slate-100 transition-colors duration-200 group"
-                            >
-                                <div
-                                    class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-medium"
-                                >
-                                    {{
-                                        ($page.props.auth?.user?.name ||
-                                            "U")[0].toUpperCase()
-                                    }}
-                                </div>
-                                <div
-                                    v-if="!sidebarCollapsed"
-                                    class="ml-3 flex-1 min-w-0"
-                                >
-                                    <div
-                                        class="text-sm font-medium text-slate-900 truncate"
-                                    >
-                                        {{
-                                            $page.props.auth?.user?.name ||
-                                            "User Name"
-                                        }}
-                                    </div>
-                                    <div
-                                        class="text-xs text-slate-500 truncate"
-                                    >
-                                        {{
-                                            $page.props.auth?.user?.email ||
-                                            "user@example.com"
-                                        }}
-                                    </div>
-                                </div>
-                                <svg
-                                    v-if="!sidebarCollapsed"
-                                    class="ml-2 w-4 h-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                        clip-rule="evenodd"
-                                    />
-                                </svg>
-                            </button>
-                        </template>
-
-                        <template #content>
-                            <DropdownLink :href="route('profile.edit')">
-                                Profile
-                            </DropdownLink>
-                            <DropdownLink
-                                :href="route('logout')"
-                                method="post"
-                                as="button"
-                            >
-                                Log Out
-                            </DropdownLink>
-                        </template>
-                    </Dropdown>
-                </div> -->
                 </div>
             </div>
         </div>
+
+        <!-- Backdrop for mobile when sidebar is open -->
+        <div
+            v-if="!sidebarCollapsed"
+            @click="sidebarCollapsed = true"
+            class="fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-40 md:hidden"
+            :class="
+                sidebarCollapsed
+                    ? 'opacity-0 pointer-events-none'
+                    : 'opacity-50'
+            "
+        ></div>
 
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col min-w-0">
@@ -420,7 +373,9 @@ watch(sidebarCollapsed, (newValue) => {
                     </button>
 
                     <!-- Breadcrumb or Page Title -->
-                    <div class="flex items-center space-x-2 text-sm min-w-0">
+                    <div
+                        class="items-center space-x-2 text-sm min-w-0 overflow-x-auto whitespace-nowrap hidden md:flex"
+                    >
                         <template
                             v-for="(crumb, index) in breadcrumbs"
                             :key="index"
@@ -436,22 +391,23 @@ watch(sidebarCollapsed, (newValue) => {
                                 <template v-if="crumb.href">
                                     <a
                                         :href="crumb.href"
-                                        class="text-slate-500 hover:text-slate-700"
+                                        class="text-slate-500 hover:text-slate-700 flex-shrink-0"
                                     >
                                         {{ crumb.title }}
                                     </a>
                                 </template>
                                 <template v-else>
-                                    <span class="text-slate-500">{{
-                                        crumb.title
-                                    }}</span>
+                                    <span
+                                        class="text-slate-500 flex-shrink-0"
+                                        >{{ crumb.title }}</span
+                                    >
                                 </template>
                             </template>
 
                             <!-- Pijltje tussen crumbs, niet na de laatste -->
                             <svg
                                 v-if="index < breadcrumbs.length - 1"
-                                class="w-4 h-4 text-slate-400"
+                                class="w-4 h-4 text-slate-400 flex-shrink-0"
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                             >
@@ -528,7 +484,7 @@ watch(sidebarCollapsed, (newValue) => {
                         </div>
                     </div>
 
-                    <div class="mt-3 space-y-1 px-4">
+                    <!-- <div class="mt-3 space-y-1 px-4">
                         <ResponsiveNavLink
                             :href="route('profile.edit')"
                             class="text-slate-700 hover:bg-slate-100"
@@ -543,7 +499,7 @@ watch(sidebarCollapsed, (newValue) => {
                         >
                             Log Out
                         </ResponsiveNavLink>
-                    </div>
+                    </div> -->
                 </div>
             </div>
 
@@ -557,9 +513,9 @@ watch(sidebarCollapsed, (newValue) => {
     </div>
 </template>
 
-<style>
+<!-- <style>
 html,
 body {
     overflow-x: hidden;
 }
-</style>
+</style> -->

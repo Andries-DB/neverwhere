@@ -3,7 +3,9 @@
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
         <template #title>Sources</template>
 
-        <div class="flex items-center justify-between">
+        <div
+            class="flex md:flex-row gap-2 md:gap-0 flex-col md:items-center items-start justify-between"
+        >
             <h1 class="text-black font-bold text-4xl">{{ source.name }}</h1>
 
             <div class="flex gap-2">

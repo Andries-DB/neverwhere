@@ -3,7 +3,9 @@
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
         <template #title>Sources</template>
 
-        <div class="flex items-start justify-between">
+        <div
+            class="flex md:flex-row gap-4 md:gap-0 flex-col items-start justify-between"
+        >
             <div class="flex flex-col">
                 <div
                     v-if="user.sources && user.sources.length"

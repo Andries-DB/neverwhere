@@ -12,7 +12,14 @@ class Message extends Model
         'conversation_id',
         'send_by',
         'message',
+        'json'
     ];
+
+    protected $casts = [
+        'send_by' => 'string',
+        'json' => 'array',
+    ];
+
 
     // Relatie: Message behoort toe aan een User
     public function user()
@@ -25,9 +32,4 @@ class Message extends Model
     {
         return $this->belongsTo(Conversation::class);
     }
-
-    // Eventueel casten van 'send_by' naar string (enum)
-    protected $casts = [
-        'send_by' => 'string',
-    ];
 }

@@ -1,20 +1,16 @@
 <template>
     <Head :title="conversation.title ?? 'Nieuwe conversatie'" />
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
-        <div class="flex items-center justify-between">
-            <h1 class="text-black font-bold text-4xl">
-                {{ conversation.title ?? "Nieuwe conversatie" }}
-            </h1>
-        </div>
-
-        <div class="mt-10 items-stretch gap-5 flex flex-col md:flex-row">
+        <div class="items-stretch gap-5 flex flex-col md:flex-row">
             <div
-                class="main-nav w-full bg-slate-100 text-black flex flex-col items-center rounded-md"
+                class="main-nav w-full text-black flex flex-col items-center rounded-md"
             >
-                <div class="h-[475px] w-full pb-5 bg-dotted flex flex-col">
+                <div
+                    class="xl:h-[75vh] lg:h-[550px] md:h-[500px] h-[68vh] w-full pb-5 flex flex-col"
+                >
                     <div
                         ref="messagecontainer"
-                        class="overflow-y-scroll flex-1 p-3 max-h-[500px] flex flex-col gap-2"
+                        class="overflow-y-scroll flex-1 p-3 xl:max-h-[73vh] lg:max-h-[500px] md:max-h-[475px] max-h-[65vh] flex flex-col gap-4"
                     >
                         <template
                             v-for="(message, index) in messages"
@@ -36,7 +32,7 @@
                                         message.send_by === 'ai' &&
                                         !message.displayAsTable &&
                                         !message.displayAsChart,
-                                    'bg-gray-100 text-gray-800 self-start max-w-[95%]':
+                                    'bg-gray-100 text-gray-800 self-start  w-full':
                                         message.send_by === 'ai' &&
                                         (message.displayAsTable ||
                                             message.displayAsChart),
@@ -46,7 +42,7 @@
                                     v-if="message.send_by === 'user'"
                                     class="text-xs text-gray-600 mb-1 font-semibold"
                                 >
-                                    You:
+                                    Jij:
                                 </p>
                                 <p
                                     v-else
@@ -107,12 +103,7 @@
                                 </div>
 
                                 <!-- Grafiek weergave met AG Charts -->
-                                <div
-                                    v-if="
-                                        message.displayAsChart &&
-                                        hasChartData(message)
-                                    "
-                                >
+                                <div v-if="message.displayAsChart">
                                     <p
                                         v-if="
                                             parseTableMessage(message.message)
@@ -126,60 +117,184 @@
                                         }}
                                     </p>
 
-                                    <template
-                                        v-if="
-                                            parseTableMessage(message.message)
-                                                .rows.length > 0
-                                        "
-                                    >
-                                        <!-- Chart type selector -->
-                                        <div class="mb-3 flex gap-2">
-                                            <button
-                                                v-for="chartType in availableChartTypes"
-                                                :key="chartType.value"
-                                                @click="
-                                                    message.selectedChartType =
-                                                        chartType.value
-                                                "
-                                                :class="[
-                                                    'px-2 py-1 text-xs rounded border transition-colors',
-                                                    (message.selectedChartType ||
-                                                        'column') ===
-                                                    chartType.value
-                                                        ? 'bg-blue-100 border-blue-300 text-blue-700'
-                                                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50',
-                                                ]"
+                                    <template v-if="message.json">
+                                        <!-- Chart configuratie paneel -->
+                                        <div
+                                            class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                                        >
+                                            <div
+                                                class="grid grid-cols-1 md:grid-cols-3 gap-4"
                                             >
-                                                {{ chartType.label }}
-                                            </button>
+                                                <!-- Chart type selector -->
+                                                <div>
+                                                    <label
+                                                        class="block text-xs font-medium text-gray-700 mb-1"
+                                                    >
+                                                        Grafiek Type
+                                                    </label>
+                                                    <div
+                                                        class="flex flex-wrap gap-1"
+                                                    >
+                                                        <button
+                                                            v-for="chartType in availableChartTypes"
+                                                            :key="
+                                                                chartType.value
+                                                            "
+                                                            @click="
+                                                                message.selectedChartType =
+                                                                    chartType.value
+                                                            "
+                                                            :class="[
+                                                                'px-2 py-1 text-xs rounded border transition-colors',
+                                                                (message.selectedChartType ||
+                                                                    'column') ===
+                                                                chartType.value
+                                                                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                                                                    : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50',
+                                                            ]"
+                                                        >
+                                                            {{
+                                                                chartType.label
+                                                            }}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- X-axis selector -->
+                                                <div>
+                                                    <label
+                                                        class="block text-xs font-medium text-gray-700 mb-1"
+                                                    >
+                                                        X-as (Categorie)
+                                                    </label>
+                                                    <select
+                                                        v-model="
+                                                            message.selectedXAxis
+                                                        "
+                                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                    >
+                                                        <option value="">
+                                                            Kies X-as veld
+                                                        </option>
+                                                        <option
+                                                            v-for="field in getAvailableFields(
+                                                                message
+                                                            )"
+                                                            :key="field.key"
+                                                            :value="field.key"
+                                                        >
+                                                            {{ field.display }}
+                                                        </option>
+                                                        <option value="__index">
+                                                            Rij Nummer
+                                                        </option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Y-axis selector -->
+                                                <div>
+                                                    <label
+                                                        class="block text-xs font-medium text-gray-700 mb-1"
+                                                    >
+                                                        Y-as (Waarde)
+                                                    </label>
+                                                    <select
+                                                        v-model="
+                                                            message.selectedYAxis
+                                                        "
+                                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                    >
+                                                        <option value="">
+                                                            Kies Y-as veld
+                                                        </option>
+                                                        <option
+                                                            v-for="field in getNumericFields(
+                                                                message
+                                                            )"
+                                                            :key="field.key"
+                                                            :value="field.key"
+                                                        >
+                                                            {{ field.display }}
+                                                        </option>
+                                                        <option value="__count">
+                                                            Aantal (Tel Records)
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <!-- Aggregatie opties voor numerieke Y-as -->
+                                            <div
+                                                v-if="
+                                                    message.selectedYAxis &&
+                                                    message.selectedYAxis !==
+                                                        '__count'
+                                                "
+                                                class="mt-3"
+                                            >
+                                                <label
+                                                    class="block text-xs font-medium text-gray-700 mb-1"
+                                                >
+                                                    Aggregatie
+                                                </label>
+                                                <div class="flex gap-2">
+                                                    <button
+                                                        v-for="aggType in aggregationTypes"
+                                                        :key="aggType.value"
+                                                        @click="
+                                                            message.selectedAggregation =
+                                                                aggType.value
+                                                        "
+                                                        :class="[
+                                                            'px-2 py-1 text-xs rounded border transition-colors',
+                                                            (message.selectedAggregation ||
+                                                                'sum') ===
+                                                            aggType.value
+                                                                ? 'bg-green-100 border-green-300 text-green-700'
+                                                                : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50',
+                                                        ]"
+                                                    >
+                                                        {{ aggType.label }}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <!-- AG Chart component -->
+                                        <!-- Chart preview -->
                                         <div
+                                            v-if="
+                                                message.selectedXAxis &&
+                                                message.selectedYAxis
+                                            "
                                             class="w-full h-96 bg-white rounded-lg border border-gray-200"
                                         >
                                             <ag-charts
                                                 class="w-full h-full"
                                                 :options="
-                                                    getChartOptions(message)
+                                                    getCustomChartOptions(
+                                                        message
+                                                    )
                                                 "
                                             />
                                         </div>
 
-                                        <p
-                                            v-if="
-                                                parseTableMessage(
-                                                    message.message
-                                                ).below
-                                            "
-                                            class="mt-3 text-sm leading-relaxed"
+                                        <!-- Placeholder when no axes selected -->
+                                        <div
+                                            v-else
+                                            class="w-full h-96 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center"
                                         >
-                                            {{
-                                                parseTableMessage(
-                                                    message.message
-                                                ).below
-                                            }}
-                                        </p>
+                                            <div
+                                                class="text-center text-gray-500"
+                                            >
+                                                <i
+                                                    class="fas fa-chart-bar text-3xl mb-2"
+                                                ></i>
+                                                <p class="text-sm">
+                                                    Selecteer X-as en Y-as om de
+                                                    grafiek te bekijken
+                                                </p>
+                                            </div>
+                                        </div>
                                     </template>
 
                                     <template v-else>
@@ -192,34 +307,11 @@
                                 </div>
 
                                 <!-- Tabel weergave met AG Grid -->
-                                <div
-                                    v-else-if="
-                                        message.displayAsTable &&
-                                        hasTableData(message)
-                                    "
-                                >
-                                    <p
-                                        v-if="
-                                            parseTableMessage(message.message)
-                                                .above
-                                        "
-                                        class="mb-3 text-sm leading-relaxed"
-                                    >
-                                        {{
-                                            parseTableMessage(message.message)
-                                                .above
-                                        }}
-                                    </p>
-
-                                    <template
-                                        v-if="
-                                            parseTableMessage(message.message)
-                                                .rows.length > 0
-                                        "
-                                    >
+                                <div v-else-if="message.displayAsTable">
+                                    <template v-if="message.json">
                                         <!-- AG Grid component -->
                                         <div
-                                            class="w-full h-96 bg-white rounded-lg border border-gray-200"
+                                            class="w-[100%] h-96 bg-white rounded-lg border border-gray-200"
                                         >
                                             <ag-grid-vue
                                                 class="ag-theme-alpine w-full h-full"
@@ -231,34 +323,9 @@
                                                 "
                                                 :defaultColDef="defaultColDef"
                                                 :gridOptions="gridOptions"
+                                                :enableCharts="true"
                                             />
                                         </div>
-
-                                        <p
-                                            v-if="
-                                                parseTableMessage(
-                                                    message.message
-                                                ).below
-                                            "
-                                            class="mt-3 text-sm leading-relaxed"
-                                        >
-                                            {{
-                                                parseTableMessage(
-                                                    message.message
-                                                ).below
-                                            }}
-                                        </p>
-                                    </template>
-
-                                    <template v-else>
-                                        <div
-                                            class="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200"
-                                            v-html="
-                                                parseTableMessage(
-                                                    message.message
-                                                ).below
-                                            "
-                                        ></div>
                                     </template>
                                 </div>
 
@@ -311,7 +378,7 @@
                 </div>
 
                 <div
-                    class="flex mflex-col justify-center items-center w-full gap-4 px-2 py-3"
+                    class="flex mflex-col justify-center items-center w-full gap-4 px-2 pt-3"
                 >
                     <!-- Source selection and message input row -->
                     <div class="flex flex-col md:flex-row gap-3 w-full">
@@ -438,155 +505,683 @@ export default {
                 rowHeight: 45,
                 headerHeight: 45,
                 animateRows: true,
-                pagination: true,
-                paginationPageSize: 15,
+                pagination: false,
+                paginationPageSize: 1000,
                 suppressRowClickSelection: true,
             },
             // Chart types
             availableChartTypes: [
-                { value: "column", label: "Kolom" },
+                // { value: "column", label: "Kolom" },
                 { value: "bar", label: "Balk" },
                 { value: "line", label: "Lijn" },
-                { value: "pie", label: "Taart" },
-                { value: "doughnut", label: "Donut" },
                 { value: "area", label: "Vlak" },
+            ],
+            aggregationTypes: [
+                { value: "sum", label: "Som" },
+                { value: "avg", label: "Gemiddelde" },
+                { value: "count", label: "Aantal" },
+                { value: "min", label: "Minimum" },
+                { value: "max", label: "Maximum" },
             ],
         };
     },
     methods: {
-        // Stel weergave modus in
+        hasChartData(message) {
+            if (message.send_by !== "ai") return false;
+
+            // Controleer eerst of message.json bestaat en niet leeg is
+            if (!message.json || Object.keys(message.json).length === 0) {
+                return false;
+            }
+
+            // Als json bestaat en het is een array, controleer voor visualiseerbare data
+            if (Array.isArray(message.json) && message.json.length > 0) {
+                return this.hasVisualizableData(message.json);
+            }
+
+            return false;
+        },
         setDisplayMode(message, mode) {
             message.displayAsTable = mode === "table";
             message.displayAsChart = mode === "chart";
-        },
 
-        // Controleer of een message tabel data heeft
-        hasTableData(message) {
-            if (message.send_by !== "ai") return false;
-            const parsed = this.parseTableMessage(message.message);
-            return parsed.rows.length > 0;
-        },
+            // Stel default axes in als ze nog niet zijn ingesteld
+            if (
+                mode === "chart" &&
+                (!message.selectedXAxis || !message.selectedYAxis)
+            ) {
+                const fields = this.getAvailableFields(message);
+                const numericFields = this.getNumericFields(message);
 
-        // Controleer of een message geschikt is voor grafieken
-        hasChartData(message) {
-            if (message.send_by !== "ai") return false;
-            const parsed = this.parseTableMessage(message.message);
-
-            if (parsed.rows.length === 0) return false;
-
-            // Zoek naar numerieke kolommen
-            const numericColumns = this.getNumericColumns(parsed);
-            return numericColumns.length > 0;
-        },
-
-        // Vind numerieke kolommen in de data
-        getNumericColumns(parsed) {
-            const numericColumns = [];
-
-            parsed.headers.forEach((header, index) => {
-                const values = parsed.rows.map((row) => row[index]);
-                const numericValues = values.filter((val) => {
-                    if (!val || val === "") return false;
-                    const num = parseFloat(
-                        val.toString().replace(/[^\d.-]/g, "")
+                // Probeer slimme defaults te kiezen
+                if (!message.selectedXAxis && fields.length > 0) {
+                    // Zoek een geschikt categorisch veld
+                    const categoricalField = fields.find(
+                        (f) => !numericFields.some((nf) => nf.key === f.key)
                     );
-                    return !isNaN(num);
+                    message.selectedXAxis = categoricalField
+                        ? categoricalField.key
+                        : fields[0].key;
+                }
+
+                if (!message.selectedYAxis && numericFields.length > 0) {
+                    message.selectedYAxis = numericFields[0].key;
+                } else if (!message.selectedYAxis) {
+                    message.selectedYAxis = "__count";
+                }
+            }
+        },
+        getAvailableFields(message) {
+            if (
+                !message.json ||
+                !Array.isArray(message.json) ||
+                message.json.length === 0
+            ) {
+                return [];
+            }
+
+            const firstItem = message.json[0];
+            return Object.keys(firstItem).map((key) => ({
+                key: key,
+                display: this.getFieldDisplayName(key),
+            }));
+        },
+        getNumericFields(message) {
+            if (
+                !message.json ||
+                !Array.isArray(message.json) ||
+                message.json.length === 0
+            ) {
+                return [];
+            }
+
+            const data = message.json;
+            const firstItem = data[0];
+            const numericFields = [];
+
+            Object.keys(firstItem).forEach((key) => {
+                // Check of het veld numerieke waarden bevat
+                const hasNumericValues = data.some((item) => {
+                    const value = item[key];
+                    return (
+                        value !== null &&
+                        value !== undefined &&
+                        !isNaN(parseFloat(value)) &&
+                        isFinite(value)
+                    );
                 });
 
-                // Als meer dan 50% van de waarden numeriek zijn
-                if (numericValues.length > values.length * 0.5) {
-                    numericColumns.push({
-                        header,
-                        index,
-                        values: values.map((val) => {
-                            if (!val || val === "") return 0;
-                            const num = parseFloat(
-                                val.toString().replace(/[^\d.-]/g, "")
-                            );
-                            return isNaN(num) ? 0 : num;
-                        }),
+                if (hasNumericValues) {
+                    numericFields.push({
+                        key: key,
+                        display: this.getFieldDisplayName(key),
                     });
                 }
             });
 
-            return numericColumns;
+            return numericFields;
         },
-
-        // Genereer chart opties voor AG Charts
-        getChartOptions(message) {
-            const parsed = this.parseTableMessage(message.message);
+        getCustomChartOptions(message) {
             const chartType = message.selectedChartType || "column";
-            const numericColumns = this.getNumericColumns(parsed);
+            const xAxis = message.selectedXAxis;
+            const yAxis = message.selectedYAxis;
+            const aggregation = message.selectedAggregation || "sum";
 
-            if (numericColumns.length === 0) {
+            if (!xAxis || !yAxis || !message.json) {
                 return {};
             }
 
-            // Maak data array voor de chart
-            const chartData = parsed.rows.map((row, index) => {
-                const dataPoint = {
-                    category: row[0] || `Item ${index + 1}`, // Gebruik eerste kolom als categorie
-                };
+            // Prepareer data gebaseerd op selecties
+            const chartData = this.prepareCustomChartData(
+                message.json,
+                xAxis,
+                yAxis,
+                aggregation
+            );
 
-                numericColumns.forEach((col) => {
-                    dataPoint[col.header] = col.values[index];
-                });
+            if (!chartData || chartData.length === 0) {
+                return {};
+            }
 
-                return dataPoint;
-            });
+            // Sorteer en limiteer data
+            const sortedData = chartData
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 50); // Verhoog limiet naar 50 voor meer detail
+
+            const title = this.generateCustomChartTitle(
+                xAxis,
+                yAxis,
+                aggregation
+            );
 
             const baseOptions = {
-                data: chartData,
+                data: sortedData,
                 title: {
-                    text: `${parsed.headers[0] || "Data"} Analyse`,
+                    text: title,
                     fontSize: 16,
                     fontWeight: "bold",
-                },
-                subtitle: {
-                    text: `Gebaseerd op ${parsed.rows.length} items`,
-                    fontSize: 12,
                 },
                 padding: {
                     top: 20,
                     right: 20,
-                    bottom: 20,
-                    left: 20,
+                    bottom: 60,
+                    left: 80,
                 },
             };
 
-            // Chart type specifieke configuratie
+            // Genereer specifieke chart configuratie
+            return this.generateCustomChartConfig(
+                baseOptions,
+                chartType,
+                xAxis,
+                yAxis
+            );
+        },
+        prepareCustomChartData(data, xAxis, yAxis, aggregation) {
+            if (yAxis === "__count") {
+                // Tel items per categorie
+                const counts = {};
+                data.forEach((item) => {
+                    const category =
+                        xAxis === "__index"
+                            ? `Item ${data.indexOf(item) + 1}`
+                            : (item[xAxis] || "Onbekend").toString();
+                    counts[category] = (counts[category] || 0) + 1;
+                });
+
+                return Object.entries(counts).map(([category, count]) => ({
+                    category: category,
+                    value: count,
+                }));
+            } else {
+                // Groepeer data op X-as en aggregeer Y-as waarden
+                const groups = {};
+
+                data.forEach((item) => {
+                    const category =
+                        xAxis === "__index"
+                            ? `Item ${data.indexOf(item) + 1}`
+                            : (item[xAxis] || "Onbekend").toString();
+
+                    const value = parseFloat(item[yAxis]) || 0;
+
+                    if (!groups[category]) {
+                        groups[category] = [];
+                    }
+                    groups[category].push(value);
+                });
+
+                // Aggregeer de waarden per groep
+                return Object.entries(groups)
+                    .map(([category, values]) => ({
+                        category: category,
+                        value: this.aggregateValues(values, aggregation),
+                    }))
+                    .filter(
+                        (item) => item.value !== null && !isNaN(item.value)
+                    );
+            }
+        },
+        aggregateValues(values, aggregation) {
+            const validValues = values.filter(
+                (v) => v !== null && !isNaN(v) && isFinite(v)
+            );
+
+            if (validValues.length === 0) return 0;
+
+            switch (aggregation) {
+                case "sum":
+                    return validValues.reduce((sum, val) => sum + val, 0);
+                case "avg":
+                    return (
+                        validValues.reduce((sum, val) => sum + val, 0) /
+                        validValues.length
+                    );
+                case "count":
+                    return validValues.length;
+                case "min":
+                    return Math.min(...validValues);
+                case "max":
+                    return Math.max(...validValues);
+                default:
+                    return validValues.reduce((sum, val) => sum + val, 0);
+            }
+        },
+
+        // Genereer custom chart titel
+        generateCustomChartTitle(xAxis, yAxis, aggregation) {
+            const xName = this.getFieldDisplayName(xAxis);
+            const yName = this.getFieldDisplayName(yAxis);
+
+            if (yAxis === "__count") {
+                return `Aantal per ${xName}`;
+            }
+
+            const aggLabel =
+                {
+                    sum: "Totaal",
+                    avg: "Gemiddelde",
+                    count: "Aantal",
+                    min: "Minimum",
+                    max: "Maximum",
+                }[aggregation] || "Totaal";
+
+            return `${aggLabel} ${yName} per ${xName}`;
+        },
+
+        // Genereer custom chart configuratie
+        generateCustomChartConfig(baseOptions, chartType, xAxis, yAxis) {
+            const xAxisTitle = this.getFieldDisplayName(xAxis);
+            const yAxisTitle = this.getFieldDisplayName(yAxis);
+
+            const commonAxes = [
+                {
+                    type: "category",
+                    position: "bottom",
+                    title: { text: xAxisTitle },
+                    label: {
+                        rotation: baseOptions.data.length > 10 ? -45 : 0,
+                        fontSize: 11,
+                    },
+                },
+                {
+                    type: "number",
+                    position: "left",
+                    title: { text: yAxisTitle },
+                    label: {
+                        fontSize: 11,
+                    },
+                },
+            ];
+
             switch (chartType) {
-                case "pie":
-                case "doughnut":
-                    // Voor pie charts, gebruik de eerste numerieke kolom
-                    const firstNumericCol = numericColumns[0];
+                case "bar":
                     return {
                         ...baseOptions,
+                        axes: commonAxes,
                         series: [
                             {
-                                type:
-                                    chartType === "doughnut" ? "donut" : "pie",
-                                angleKey: firstNumericCol.header,
-                                categoryKey: "category",
-                                label: {
-                                    enabled: true,
-                                },
+                                type: "bar",
+                                xKey: "category",
+                                yKey: "value",
+                                fill: "#3B82F6",
                                 tooltip: {
-                                    renderer: ({
-                                        datum,
-                                        angleKey,
-                                        categoryKey,
-                                    }) => {
-                                        return {
-                                            content: `${datum[categoryKey]}: ${datum[angleKey]}`,
-                                        };
-                                    },
+                                    renderer: ({ datum }) => ({
+                                        content: `${xAxisTitle}: ${
+                                            datum.category
+                                        }<br/>${yAxisTitle}: ${datum.value.toLocaleString()}`,
+                                    }),
                                 },
                             },
                         ],
                     };
 
                 case "line":
+                    return {
+                        ...baseOptions,
+                        axes: commonAxes,
+                        series: [
+                            {
+                                type: "line",
+                                xKey: "category",
+                                yKey: "value",
+                                stroke: "#3B82F6",
+                                strokeWidth: 2,
+                                marker: {
+                                    enabled: true,
+                                    fill: "#3B82F6",
+                                    size: 6,
+                                },
+                                tooltip: {
+                                    renderer: ({ datum }) => ({
+                                        content: `${xAxisTitle}: ${
+                                            datum.category
+                                        }<br/>${yAxisTitle}: ${datum.value.toLocaleString()}`,
+                                    }),
+                                },
+                            },
+                        ],
+                    };
+
+                case "area":
+                    return {
+                        ...baseOptions,
+                        axes: commonAxes,
+                        series: [
+                            {
+                                type: "area",
+                                xKey: "category",
+                                yKey: "value",
+                                fill: "rgba(59, 130, 246, 0.3)",
+                                stroke: "#3B82F6",
+                                strokeWidth: 2,
+                                tooltip: {
+                                    renderer: ({ datum }) => ({
+                                        content: `${xAxisTitle}: ${
+                                            datum.category
+                                        }<br/>${yAxisTitle}: ${datum.value.toLocaleString()}`,
+                                    }),
+                                },
+                            },
+                        ],
+                    };
+
+                default: // column
+                    return {
+                        ...baseOptions,
+                        axes: commonAxes,
+                        series: [
+                            {
+                                type: "bar",
+                                xKey: "category",
+                                yKey: "value",
+                                fill: "#3B82F6",
+                                tooltip: {
+                                    renderer: ({ datum }) => ({
+                                        content: `${xAxisTitle}: ${
+                                            datum.category
+                                        }<br/>${yAxisTitle}: ${datum.value.toLocaleString()}`,
+                                    }),
+                                },
+                            },
+                        ],
+                    };
+            }
+        },
+
+        hasTableData(message) {
+            if (message.send_by !== "ai") return false;
+
+            // Controleer eerst of message.json bestaat en niet leeg is
+            if (!message.json || Object.keys(message.json).length === 0) {
+                return false;
+            }
+
+            // Als json bestaat, controleer of het een array is met data
+            if (Array.isArray(message.json) && message.json.length > 0) {
+                return true;
+            }
+
+            // Fallback naar de oude parseTableMessage methode
+            const parsed = this.parseTableMessage(message.message);
+            return parsed.rows.length > 0;
+        },
+        // Hoofdmethode om zinvolle chart opties te genereren
+        getChartOptions(message) {
+            const chartType = message.selectedChartType || "bar";
+
+            if (
+                !message.json ||
+                !Array.isArray(message.json) ||
+                message.json.length === 0
+            ) {
+                return {};
+            }
+
+            // Analyseer en aggregeer de data voor zinvolle visualisaties
+            const aggregatedOptions = this.createMeaningfulChartOptions(
+                message.json,
+                chartType
+            );
+
+            if (!aggregatedOptions) {
+                return {};
+            }
+
+            return aggregatedOptions;
+        },
+        // Helper methodes
+        getFieldDisplayName(fieldName) {
+            const displayNames = {
+                amount: "Bedrag (€)",
+                quantity: "Uren",
+                date: "Datum",
+                employee: "Medewerker",
+                customer: "Klant",
+                task: "Taak",
+                projectdescription: "Project",
+                count: "Aantal",
+            };
+
+            return displayNames[fieldName] || fieldName;
+        },
+        hasChartData(message) {
+            if (message.send_by !== "ai") return false;
+
+            // Controleer of er JSON data is
+            if (
+                !message.json ||
+                !Array.isArray(message.json) ||
+                message.json.length === 0
+            ) {
+                return false;
+            }
+
+            // Controleer of het eerste object minstens 2 velden heeft
+            const firstItem = message.json[0];
+            const keys = Object.keys(firstItem);
+
+            // We hebben minstens 2 velden nodig voor een zinvolle chart
+            return keys.length >= 2;
+        },
+
+        getChartOptions(message) {
+            const chartType = message.selectedChartType || "bar";
+
+            if (
+                !message.json ||
+                !Array.isArray(message.json) ||
+                message.json.length === 0
+            ) {
+                return {};
+            }
+
+            const data = message.json;
+            const firstItem = data[0];
+            const keys = Object.keys(firstItem);
+
+            // Zoek de beste combinatie van velden voor de chart
+            const { categoryField, valueField } = this.getBestFieldCombination(
+                data,
+                keys
+            );
+
+            if (!categoryField || !valueField) {
+                return {};
+            }
+
+            // Prepareer de data voor de chart
+            const chartData = this.prepareChartData(
+                data,
+                categoryField,
+                valueField
+            );
+
+            // Genereer chart opties gebaseerd op het type
+            return this.generateChartOptions(
+                chartData,
+                categoryField,
+                valueField,
+                chartType
+            );
+        },
+
+        getBestFieldCombination(data, keys) {
+            let categoryField = null;
+            let valueField = null;
+
+            // Zoek numerieke velden (voor Y-as)
+            const numericFields = keys.filter((key) => {
+                return data.some((item) => {
+                    const value = item[key];
+                    return (
+                        value !== null &&
+                        value !== undefined &&
+                        !isNaN(parseFloat(value)) &&
+                        isFinite(value) &&
+                        parseFloat(value) !== 0
+                    );
+                });
+            });
+
+            // Zoek categorische velden (voor X-as)
+            const categoricalFields = keys.filter((key) => {
+                return (
+                    !numericFields.includes(key) &&
+                    data.some(
+                        (item) =>
+                            item[key] && item[key].toString().trim() !== ""
+                    )
+                );
+            });
+
+            // Kies de beste velden
+            if (numericFields.length > 0) {
+                valueField = numericFields[0]; // Eerste numerieke veld
+
+                if (categoricalFields.length > 0) {
+                    categoryField = categoricalFields[0]; // Eerste categorische veld
+                } else {
+                    // Als er geen categorisch veld is, gebruik index
+                    categoryField = "__index";
+                }
+            } else {
+                // Als er geen numerieke velden zijn, tel de items per categorie
+                if (categoricalFields.length > 0) {
+                    categoryField = categoricalFields[0];
+                    valueField = "__count";
+                }
+            }
+
+            return { categoryField, valueField };
+        },
+
+        prepareChartData(data, categoryField, valueField) {
+            if (valueField === "__count") {
+                // Tel items per categorie
+                const counts = {};
+                data.forEach((item) => {
+                    const category = item[categoryField] || "Onbekend";
+                    counts[category] = (counts[category] || 0) + 1;
+                });
+
+                return Object.entries(counts).map(([category, count]) => ({
+                    category: category,
+                    value: count,
+                }));
+            } else if (categoryField === "__index") {
+                // Gebruik index als categorie
+                return data
+                    .map((item, index) => ({
+                        category: `Item ${index + 1}`,
+                        value: parseFloat(item[valueField]) || 0,
+                    }))
+                    .filter((item) => item.value > 0);
+            } else {
+                // Normale data mapping
+                return data
+                    .map((item) => {
+                        const category = item[categoryField] || "Onbekend";
+                        const value = parseFloat(item[valueField]) || 0;
+                        return { category: category.toString(), value: value };
+                    })
+                    .filter((item) => item.value > 0);
+            }
+        },
+
+        generateChartOptions(chartData, categoryField, valueField, chartType) {
+            // Sorteer data op waarde (hoogste eerst) en limiteer tot top 20
+            const sortedData = chartData
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 20);
+
+            const title = this.generateChartTitle(categoryField, valueField);
+
+            const baseOptions = {
+                data: sortedData,
+                title: {
+                    text: title,
+                    fontSize: 16,
+                    fontWeight: "bold",
+                },
+                padding: {
+                    top: 20,
+                    right: 20,
+                    bottom: 40,
+                    left: 60,
+                },
+            };
+
+            switch (chartType) {
+                case "bar":
+                    return {
+                        ...baseOptions,
+                        axes: [
+                            {
+                                type: "category",
+                                position: "bottom",
+                                title: {
+                                    text: this.getFieldDisplayName(
+                                        categoryField
+                                    ),
+                                },
+                            },
+                            {
+                                type: "number",
+                                position: "left",
+                                title: {
+                                    text: this.getFieldDisplayName(valueField),
+                                },
+                            },
+                        ],
+                        series: [
+                            {
+                                type: "bar",
+                                xKey: "category",
+                                yKey: "number",
+                                fill: "#3B82F6",
+                            },
+                        ],
+                    };
+
+                case "line":
+                    return {
+                        ...baseOptions,
+                        axes: [
+                            {
+                                type: "category",
+                                position: "bottom",
+                                title: {
+                                    text: this.getFieldDisplayName(
+                                        categoryField
+                                    ),
+                                },
+                                label: {
+                                    rotation: -45,
+                                },
+                            },
+                            {
+                                type: "number",
+                                position: "left",
+                                title: {
+                                    text: this.getFieldDisplayName(valueField),
+                                },
+                            },
+                        ],
+                        series: [
+                            {
+                                type: "line",
+                                xKey: "category",
+                                yKey: "value",
+                                stroke: "#3B82F6",
+                                marker: {
+                                    enabled: true,
+                                    fill: "#3B82F6",
+                                },
+                            },
+                        ],
+                    };
+
                 case "area":
                     return {
                         ...baseOptions,
@@ -595,52 +1190,31 @@ export default {
                                 type: "category",
                                 position: "bottom",
                                 title: {
-                                    text: parsed.headers[0] || "Categorie",
+                                    text: this.getFieldDisplayName(
+                                        categoryField
+                                    ),
+                                },
+                                label: {
+                                    rotation: -45,
                                 },
                             },
                             {
                                 type: "number",
-                                position: "left",
-                                title: { text: "Waarde" },
-                            },
-                        ],
-                        series: numericColumns.map((col) => ({
-                            type: chartType,
-                            xKey: "category",
-                            yKey: col.header,
-                            marker:
-                                chartType === "line"
-                                    ? { enabled: true }
-                                    : undefined,
-                            fill:
-                                chartType === "area"
-                                    ? "rgba(54, 162, 235, 0.2)"
-                                    : undefined,
-                        })),
-                    };
-
-                case "bar":
-                    return {
-                        ...baseOptions,
-                        axes: [
-                            {
-                                type: "number",
-                                position: "bottom",
-                                title: { text: "Waarde" },
-                            },
-                            {
-                                type: "category",
                                 position: "left",
                                 title: {
-                                    text: parsed.headers[0] || "Categorie",
+                                    text: this.getFieldDisplayName(valueField),
                                 },
                             },
                         ],
-                        series: numericColumns.map((col) => ({
-                            type: "bar",
-                            xKey: col.header,
-                            yKey: "category",
-                        })),
+                        series: [
+                            {
+                                type: "area",
+                                xKey: "category",
+                                yKey: "value",
+                                fill: "rgba(59, 130, 246, 0.3)",
+                                stroke: "#3B82F6",
+                            },
+                        ],
                     };
 
                 default: // column
@@ -651,26 +1225,139 @@ export default {
                                 type: "category",
                                 position: "bottom",
                                 title: {
-                                    text: parsed.headers[0] || "Categorie",
+                                    text: this.getFieldDisplayName(
+                                        categoryField
+                                    ),
+                                },
+                                label: {
+                                    rotation: sortedData.length > 5 ? -45 : 0,
                                 },
                             },
                             {
                                 type: "number",
                                 position: "left",
-                                title: { text: "Waarde" },
+                                title: {
+                                    text: this.getFieldDisplayName(valueField),
+                                },
                             },
                         ],
-                        series: numericColumns.map((col) => ({
-                            type: "column",
-                            xKey: "category",
-                            yKey: col.header,
-                        })),
+                        series: [
+                            {
+                                type: "bar",
+                                xKey: "category",
+                                yKey: "value",
+                                fill: "#3B82F6",
+                            },
+                        ],
                     };
             }
         },
 
-        // Genereer row data voor AG Grid
+        generateChartTitle(categoryField, valueField) {
+            const categoryName = this.getFieldDisplayName(categoryField);
+            const valueName = this.getFieldDisplayName(valueField);
+
+            if (valueField === "__count") {
+                return `Aantal per ${categoryName}`;
+            } else if (categoryField === "__index") {
+                return `${valueName} per Item`;
+            } else {
+                return `${valueName} per ${categoryName}`;
+            }
+        },
+
+        getFieldDisplayName(fieldName) {
+            // Verbeterde field name mapping
+            const displayNames = {
+                // Algemene velden
+                amount: "Bedrag (€)",
+                quantity: "Aantal",
+                count: "Aantal",
+                __count: "Aantal",
+                __index: "Item",
+
+                // Tijd gerelateerd
+                date: "Datum",
+                time: "Tijd",
+                datum: "Datum",
+                tijd: "Tijd",
+                created_at: "Aangemaakt op",
+                updated_at: "Bijgewerkt op",
+
+                // Uren en tijd
+                hours: "Uren",
+                uren: "Uren",
+                totaal_uren: "Totaal Uren",
+                total_hours: "Totaal Uren",
+
+                // Personen
+                employee: "Medewerker",
+                medewerker: "Medewerker",
+                user: "Gebruiker",
+                customer: "Klant",
+                klant: "Klant",
+
+                // Project gerelateerd
+                project: "Project",
+                task: "Taak",
+                taak: "Taak",
+                description: "Beschrijving",
+                beschrijving: "Beschrijving",
+                projectdescription: "Project Beschrijving",
+
+                // Status en type
+                status: "Status",
+                type: "Type",
+                category: "Categorie",
+                categorie: "Categorie",
+
+                // Financieel
+                price: "Prijs (€)",
+                cost: "Kosten (€)",
+                revenue: "Omzet (€)",
+                profit: "Winst (€)",
+            };
+
+            // Zoek eerst exacte match
+            const lowerFieldName = fieldName.toLowerCase();
+            if (displayNames[lowerFieldName]) {
+                return displayNames[lowerFieldName];
+            }
+
+            // Zoek gedeeltelijke matches
+            for (const [key, value] of Object.entries(displayNames)) {
+                if (
+                    lowerFieldName.includes(key) ||
+                    key.includes(lowerFieldName)
+                ) {
+                    return value;
+                }
+            }
+
+            // Fallback: maak fieldname mooier
+            return fieldName
+                .replace(/_/g, " ")
+                .replace(/([A-Z])/g, " $1")
+                .split(" ")
+                .map(
+                    (word) =>
+                        word.charAt(0).toUpperCase() +
+                        word.slice(1).toLowerCase()
+                )
+                .join(" ")
+                .trim();
+        },
         getTableRowData(message) {
+            // Probeer eerst JSON data te gebruiken
+            if (
+                message.json &&
+                Array.isArray(message.json) &&
+                message.json.length > 0
+            ) {
+                return message.json;
+            }
+
+            // Fallback naar oude methode
             const parsed = this.parseTableMessage(message.message);
             return parsed.rows.map((row) => {
                 const obj = {};
@@ -680,9 +1367,33 @@ export default {
                 return obj;
             });
         },
-
-        // Genereer column definitions voor AG Grid
         getTableColumnDefs(message) {
+            // Probeer eerst JSON data te gebruiken
+            if (
+                message.json &&
+                Array.isArray(message.json) &&
+                message.json.length > 0
+            ) {
+                const firstItem = message.json[0];
+                return Object.keys(firstItem).map((key) => ({
+                    field: key,
+                    headerName: key,
+                    sortable: true,
+                    filter: true,
+                    resizable: true,
+                    cellRenderer: (params) => {
+                        if (
+                            typeof params.value === "string" &&
+                            params.value.includes("http")
+                        ) {
+                            return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
+                        }
+                        return params.value;
+                    },
+                }));
+            }
+
+            // Fallback naar oude methode
             const parsed = this.parseTableMessage(message.message);
             return parsed.headers.map((header) => ({
                 field: header,
@@ -690,9 +1401,7 @@ export default {
                 sortable: true,
                 filter: true,
                 resizable: true,
-                // Aangepaste cell renderer voor specifieke kolommen indien nodig
                 cellRenderer: (params) => {
-                    // Bijvoorbeeld voor URL's of speciale formatting
                     if (
                         typeof params.value === "string" &&
                         params.value.includes("http")
@@ -703,7 +1412,6 @@ export default {
                 },
             }));
         },
-
         async sendMessage() {
             this.no_message = false;
             if (this.form.message === "" || this.form.source === "x") {
@@ -737,7 +1445,10 @@ export default {
                         ...message,
                         displayAsTable: false,
                         displayAsChart: false,
-                        selectedChartType: "column",
+                        selectedChartType: "bar",
+                        selectedXAxis: null,
+                        selectedYAxis: null,
+                        selectedAggregation: "sum",
                     });
                 }
 
@@ -766,7 +1477,10 @@ export default {
                             ...bot_message,
                             displayAsTable: false,
                             displayAsChart: false,
-                            selectedChartType: "column",
+                            selectedChartType: "bar",
+                            selectedXAxis: null,
+                            selectedYAxis: null,
+                            selectedAggregation: "sum",
                         });
                     }
                 } catch (error) {
@@ -781,7 +1495,6 @@ export default {
                     "There was an error fetching the information. Please try again.";
             }
         },
-
         formatDate(date) {
             const options = {
                 year: "numeric",
@@ -805,7 +1518,6 @@ export default {
             const previousDate = new Date(messages[index - 1].created_at);
             return currentDate.toDateString() !== previousDate.toDateString();
         },
-
         scrollToBottom() {
             this.$nextTick(() => {
                 const container = this.$refs.messagecontainer;
@@ -814,7 +1526,6 @@ export default {
                 }
             });
         },
-
         parseTableMessage(message) {
             const projectRegex = /^\d+\.\s\*\*(.+?)\*\*/;
             const fieldRegex = /^(.+?):\s(.+)$/;
@@ -826,6 +1537,30 @@ export default {
             let aboveLines = [];
             let belowLines = [];
 
+            const trimmedMessage = message.trim();
+
+            // Fallback 1: Probeer te parsen als JSON-array van objecten
+            try {
+                const json = JSON.parse(trimmedMessage);
+                if (Array.isArray(json) && typeof json[0] === "object") {
+                    const headers = Array.from(
+                        new Set(json.flatMap((obj) => Object.keys(obj)))
+                    );
+                    const rows = json.map((obj) =>
+                        headers.map((key) => obj[key] ?? "")
+                    );
+                    return {
+                        above: "",
+                        headers,
+                        rows,
+                        below: "",
+                    };
+                }
+            } catch (e) {
+                // Geen geldig JSON? Ga verder met reguliere parsing
+            }
+
+            // Fallback 2: klassieke genummerde projectnotatie
             for (let i = 0; i < lines.length; i++) {
                 const rawLine = lines[i];
                 const line = rawLine.trim();
@@ -833,9 +1568,7 @@ export default {
                 const projectMatch = line.match(projectRegex);
 
                 if (projectMatch) {
-                    if (!insideProjects) {
-                        insideProjects = true;
-                    }
+                    if (!insideProjects) insideProjects = true;
                     if (current) projects.push(current);
                     current = { Titel: projectMatch[1] };
                 } else if (insideProjects && current) {
@@ -892,7 +1625,11 @@ export default {
             ...m,
             displayAsTable: false,
             displayAsChart: false,
-            selectedChartType: "column",
+            selectedChartType: "bar",
+            // Nieuwe chart configuratie properties
+            selectedXAxis: null,
+            selectedYAxis: null,
+            selectedAggregation: "sum",
         }));
         this.scrollToBottom();
     },
@@ -910,7 +1647,7 @@ export default {
 
 <style>
 /* @import "ag-grid-community/styles/ag-grid.css"; */
-@import "ag-grid-community/styles/ag-theme-alpine.css";
+/* @import     "ag-grid-community/styles/ag-theme-alpine.css"; */
 .typing-dot {
     animation: pulse 1.4s infinite ease-in-out;
     opacity: 0.4;

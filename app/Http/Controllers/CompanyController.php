@@ -61,6 +61,19 @@ class CompanyController extends Controller
         return redirect()->back();
     }
 
+    public function delete($guid, Request $request)
+    {
+        $this->authorizeAdmin();
+
+        $company = Company::where('guid', $guid)->first();
+
+        abort_unless($company, 403, "This company does not exist");
+
+        $company->delete();
+
+        return redirect()->route('company.get');
+    }
+
 
     private function authorizeAdmin(): void
     {

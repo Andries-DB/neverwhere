@@ -1,22 +1,30 @@
 <template>
     <Head :title="company.company" />
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
-        <div class="flex items-center justify-between">
+        <div
+            class="flex md:flex-row gap-4 md:gap-0 flex-col md:items-center items-start justify-between"
+        >
             <h1 class="text-black font-bold text-4xl">{{ company.company }}</h1>
 
             <div class="flex gap-2">
-                <SecondaryButton
+                <PrimaryButton
                     @click="toggleEdit"
                     v-if="show_sort === 'settings'"
                 >
                     <i class="fas fa-edit mr-2"></i>Pas aan
-                </SecondaryButton>
+                </PrimaryButton>
                 <PrimaryButton
                     v-if="editCompany && show_sort === 'settings'"
                     @click="saveCompany"
                 >
                     <i class="fas fa-check mr-2"></i>Sla op
                 </PrimaryButton>
+                <SecondaryButton
+                    v-if="show_sort === 'settings'"
+                    @click="deleteCompany"
+                >
+                    <i class="fas fa-trash-alt mr-2"></i>Verwijder
+                </SecondaryButton>
                 <PrimaryButton
                     @click="toggleAddUser"
                     v-if="show_sort === 'users'"
@@ -72,73 +80,74 @@
         </div>
 
         <div v-if="this.show_sort === 'users'">
-            <!-- Default settings -->
-            <table class="w-full text-sm text-left rtl:text-right mt-6">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3">Name</th>
-                        <th scope="col" class="px-6 py-3">Email</th>
-                        <th scope="col" class="px-6 py-3">Bronnen</th>
+            <div class="overflow-x-auto mt-6">
+                <table class="w-full text-sm text-left rtl:text-right">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Name</th>
+                            <th scope="col" class="px-6 py-3">Email</th>
+                            <th scope="col" class="px-6 py-3">Bronnen</th>
 
-                        <th scope="col" class="px-6 py-3">
-                            <span class="sr-only">Aanpassen</span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr
-                        class="bg-white border-b border-gray-200"
-                        v-for="user in company.users"
-                    >
-                        <th
-                            scope="row"
-                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                            <th scope="col" class="px-6 py-3">
+                                <span class="sr-only">Aanpassen</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            class="bg-white border-b border-gray-200"
+                            v-for="user in company.users"
                         >
-                            {{ user.name }}
-                        </th>
-                        <td class="px-6 py-4">{{ user.email }}</td>
-                        <td class="px-6 py-4">
-                            <div class="flex flex-wrap gap-2">
-                                <span
-                                    v-for="source in user.sources"
-                                    :key="source.id"
-                                    class="px-2 py-1 rounded text-black text-sm font-medium"
-                                    :style="{
-                                        backgroundColor:
-                                            source.hex_color || '#999',
-                                    }"
-                                >
-                                    {{ source.name }}
-                                </span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <a
-                                :href="
-                                    route('company.user.read', {
-                                        guid: company.guid,
-                                        user_guid: user.guid,
-                                    })
-                                "
-                                class="font-medium text-blue-600 hover:underline"
-                                >Pas aan</a
+                            <th
+                                scope="row"
+                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                             >
-                        </td>
-                    </tr>
-                    <tr
-                        class="bg-white border-b border-gray-200"
-                        v-if="this.company.users.length < 1"
-                    >
-                        <th
-                            scope="row"
-                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
-                            colspan="4"
+                                {{ user.name }}
+                            </th>
+                            <td class="px-6 py-4">{{ user.email }}</td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        v-for="source in user.sources"
+                                        :key="source.id"
+                                        class="px-2 py-1 rounded text-black text-sm text-center font-medium min-w-[80px]"
+                                        :style="{
+                                            backgroundColor:
+                                                source.hex_color || '#999',
+                                        }"
+                                    >
+                                        {{ source.name }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <a
+                                    :href="
+                                        route('company.user.read', {
+                                            guid: company.guid,
+                                            user_guid: user.guid,
+                                        })
+                                    "
+                                    class="font-medium text-blue-600 hover:underline"
+                                    >Pas aan</a
+                                >
+                            </td>
+                        </tr>
+                        <tr
+                            class="bg-white border-b border-gray-200"
+                            v-if="this.company.users.length < 1"
                         >
-                            Geen resultaten gevonden
-                        </th>
-                    </tr>
-                </tbody>
-            </table>
+                            <th
+                                scope="row"
+                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                                colspan="4"
+                            >
+                                Geen resultaten gevonden
+                            </th>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </AuthenticatedLayout>
 
@@ -213,6 +222,16 @@ export default {
                 }),
                 {
                     // onSuccess: () => this.toggleEdit(),
+                    onError: (error) => console.log(error),
+                }
+            );
+        },
+        deleteCompany() {
+            this.form.delete(
+                route("company.delete", {
+                    id: this.company.guid,
+                }),
+                {
                     onError: (error) => console.log(error),
                 }
             );

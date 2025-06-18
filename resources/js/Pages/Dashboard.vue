@@ -114,7 +114,7 @@ export default {
             });
         },
         formatDate(dateString) {
-            const date = parseISO(dateString); // parseert ISO string naar Date object
+            const date = parseISO(dateString + "Z");
 
             if (isToday(date)) {
                 // Als het vandaag is: toon enkel het uur, bv. 14:35

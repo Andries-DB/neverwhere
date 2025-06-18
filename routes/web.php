@@ -15,22 +15,19 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-// Route::get('/dashboard', function () {
-//     return Inertia::render('Dashboard');
-// })->middleware(['auth', 'verified',  HandleInertiaRequests::class])->name('dashboard');
 
 Route::middleware(['auth', HandleInertiaRequests::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'show'])->name('dashboard');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/companies', [CompanyController::class, 'index'])->name('company.get');
     Route::post('/companies', [CompanyController::class, 'store'])->name('company.create');
     Route::get('/companies/{guid}', [CompanyController::class, 'show'])->name('company.read');
     Route::patch('/companies/{guid}', [CompanyController::class, 'update'])->name('company.update');
-    Route::delete('/companies/{guid}', [CompanyController::class, 'destroy'])->name('company.destroy');
+    Route::delete('/companies/{guid}', [CompanyController::class, 'delete'])->name('company.delete');
 
     Route::get('/companies/{guid}/{user_guid}', [UserController::class, 'show'])->name('company.user.read');
     Route::post('/companies/{guid}', [UserController::class, 'store'])->name('company.user.store');

@@ -23,6 +23,7 @@
     "dependencies": {
         "ag-charts-vue3": "^11.3.2",
         "ag-grid-vue3": "^33.3.2",
-        "date-fns": "^4.1.0"
+        "date-fns": "^4.1.0",
+        "tailwind-scrollbar-hide": "^4.0.0"
     }
 }

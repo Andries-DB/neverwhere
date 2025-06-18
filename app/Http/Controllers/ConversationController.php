@@ -80,7 +80,7 @@ class ConversationController extends Controller
 
         $user = $request->user();
 
-        $response = Http::post($source->webhook, [
+        $response = Http::timeout(60)->post($source->webhook, [
             'message_id' => $conversation->id,
             'type' => 'respond',
             'input' => $lastUserMessage->message,
@@ -95,12 +95,15 @@ class ConversationController extends Controller
         }
 
         $json = $response->json();
+        // dd($json);
 
         $botMessage = $conversation->messages()->create([
             'guid' => (string) Str::uuid(),
             'user_id' => $user->id,
             'message' => $json['output'] ?? '',
             'send_by' => 'ai',
+            ...(isset($json['data']['json']) ? ['json' => json_decode($json['data']['json'], true)] : []),
+
         ]);
 
         return [
