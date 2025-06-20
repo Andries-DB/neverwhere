@@ -15,4 +15,9 @@ class Company extends Model
     {
         return $this->belongsToMany(User::class)->withTimestamps();
     }
+
+    public function sources()
+    {
+        return $this->hasMany(Source::class);
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\PinnedGraph;
 use App\Models\Source;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -14,10 +15,13 @@ class ConversationController extends Controller
     public function read($guid)
     {
         $conversation = Conversation::where('guid', $guid)->with('messages', 'user', 'user.sources')->firstOrFail();
+        $pinned_charts = PinnedGraph::with('message')->where('user_id', auth()->user()->id)->get();
 
+        // dd($pinned_charts);
 
         return Inertia::render('Conversations/Read', [
-            'conversation' => $conversation
+            'conversation' => $conversation,
+            'pinned_charts' => $pinned_charts,
         ]);
     }
 
@@ -90,20 +94,21 @@ class ConversationController extends Controller
             ],
         ]);
 
+
         if ($response->failed()) {
             return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
         }
 
         $json = $response->json();
-        // dd($json);
 
         $botMessage = $conversation->messages()->create([
             'guid' => (string) Str::uuid(),
             'user_id' => $user->id,
             'message' => $json['output'] ?? '',
+            'sql_query' => $json['query'] ?? '',
+            'respond_type' => $json['type'] ?? 'text',
             'send_by' => 'ai',
             ...(isset($json['data']['json']) ? ['json' => json_decode($json['data']['json'], true)] : []),
-
         ]);
 
         return [
@@ -111,6 +116,64 @@ class ConversationController extends Controller
                 $botMessage->toArray(),
                 ['displayAsTable' => false, 'displayAsChart' => false]
             ),
+        ];
+    }
+
+    public function delete(string $guid)
+    {
+        $conversation = Conversation::where('guid', $guid)->first();
+
+        abort_unless($conversation, 403, "This source does not exist");
+
+        $conversation->delete();
+
+        return redirect()->back();
+    }
+
+    public function pinChart(Request $request)
+    {
+        PinnedGraph::create([
+            'user_id' => auth()->id(),
+            'message_id' => $request->messageId,
+            'title' => $request->title ?? null,
+            'sort_chart' => $request->type,
+            '_x' => $request->xAxis,
+            '_y' => $request->yAxis,
+            '_agg' => $request->aggregation,
+            ...(isset($request->data) ? ['json' => $request->data] : []),
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Chart pinned successfully.',
+        ];
+    }
+
+    public function unpinChart($id, Request $request)
+    {
+        $pinned_graph = PinnedGraph::find($id);
+
+        abort_unless($pinned_graph, 403, "This pinned graph does not exist");
+
+        $pinned_graph->delete();
+
+        return redirect()->back();
+    }
+
+    public function unpinChartByMessage($id, Request $request)
+    {
+
+        $pinned_graph = PinnedGraph::where('message_id', $id)
+            ->where('user_id', auth()->user()->id)
+            ->first();
+
+        abort_unless($pinned_graph, 403, "This pinned graph does not exist");
+
+        $pinned_graph->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Chart unpinned successfully.',
         ];
     }
 }

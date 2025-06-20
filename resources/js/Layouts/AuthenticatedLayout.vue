@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onMounted, watch, computed, onUnmounted } from "vue";
 import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink.vue";
 import { Link, useForm, usePage } from "@inertiajs/vue3";
@@ -8,6 +8,7 @@ import { defineProps } from "vue";
 const showingNavigationDropdown = ref(false);
 const sidebarCollapsed = ref(false);
 const page = usePage();
+const openDropdown = ref(null);
 
 const toggleSidebar = () => {
     sidebarCollapsed.value = !sidebarCollapsed.value;
@@ -30,6 +31,14 @@ const filteredSidebarItems = computed(() => {
     return [];
 });
 
+const toggleDropdown = (convId) => {
+    openDropdown.value = openDropdown.value === convId ? null : convId;
+};
+
+const closeDropdown = () => {
+    openDropdown.value = null;
+};
+
 const form = useForm({});
 
 // Sidebar menu items
@@ -45,16 +54,23 @@ const sidebarItems = [
         name: "Bedrijven",
         route: "company.get",
         routes: ["company.get", "company.read", "company.user.read"],
-        icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
+        icon: "M3 21h18M5 21V7l8-4v18M9 9h1m0 4h1m4-4h1m0 4h1",
         role: "admin",
     },
     {
-        name: "Bronnen",
-        route: "source.get",
-        routes: ["source.get", "source.read"],
-        icon: "M3 7.5L12 3l6 6-9 9-6-6V7.5z M7.5 7.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z",
+        name: "Gebruikers",
+        route: "user.get",
+        routes: ["user.get", "user.read"],
+        icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
         role: "admin",
     },
+    // {
+    //     name: "Bronnen",
+    //     route: "source.get",
+    //     routes: ["source.get", "source.read"],
+    //     icon: "M3 7.5L12 3l6 6-9 9-6-6V7.5z M7.5 7.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z",
+    //     role: "admin",
+    // },
 ];
 
 const isActive = (routes) => {
@@ -73,11 +89,32 @@ function createConversation() {
     });
 }
 
+const deleteConversation = (guid) => {
+    form.delete(route("conversation.delete", guid), {
+        onSuccess: () => {
+            // Optioneel: success message
+            console.log("Conversatie verwijderd");
+        },
+        onError: () => {
+            // Optioneel: error message
+            console.log("Kon conversatie niet verwijderen");
+        },
+    });
+
+    openDropdown.value = null;
+};
+
 onMounted(() => {
     const saved = localStorage.getItem("sidebarCollapsed");
     if (saved !== null) {
         sidebarCollapsed.value = JSON.parse(saved);
     }
+
+    document.addEventListener("click", closeDropdown);
+});
+
+onUnmounted(() => {
+    document.removeEventListener("click", closeDropdown);
 });
 
 // Watch for changes and save to localStorage
@@ -211,33 +248,93 @@ watch(sidebarCollapsed, (newValue) => {
                             v-if="$page.props.conversations?.length"
                             class="space-y-0.5"
                         >
-                            <Link
+                            <div
                                 v-for="conv in $page.props.conversations"
                                 :key="conv.id"
-                                :href="route('conversation.read', conv.guid)"
-                                class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200"
+                                class="group relative flex items-center rounded-md transition-all duration-200 pr-1"
                                 :class="{
-                                    'bg-blue-50 text-blue-700 shadow-sm':
-                                        route().current(
-                                            'conversation.read',
-                                            conv.guid
-                                        ),
-                                    'text-slate-700 hover:bg-slate-100 hover:text-slate-900':
+                                    'bg-blue-50 shadow-sm': route().current(
+                                        'conversation.read',
+                                        conv.guid
+                                    ),
+                                    'hover:bg-slate-100':
                                         !$page.props.currentConversationId ||
                                         $page.props.conversations !== conv.id,
                                 }"
                             >
-                                <span
-                                    class="truncate"
+                                <Link
+                                    :href="
+                                        route('conversation.read', conv.guid)
+                                    "
+                                    class="flex-1 flex items-center px-3 py-2.5 text-sm font-medium truncate"
                                     :class="{
-                                        'text-center w-full': sidebarCollapsed,
+                                        'text-blue-700': route().current(
+                                            'conversation.read',
+                                            conv.guid
+                                        ),
+                                        'text-slate-700 hover:text-slate-900':
+                                            !$page.props
+                                                .currentConversationId ||
+                                            $page.props.conversations !==
+                                                conv.id,
                                     }"
                                 >
-                                    {{ conv.title || "Niewe conversatie" }}
-                                </span>
-                            </Link>
-                        </div>
+                                    <span
+                                        class="truncate"
+                                        :class="{
+                                            'text-center  w-full':
+                                                sidebarCollapsed,
+                                        }"
+                                    >
+                                        {{ conv.title || "Nieuwe conversatie" }}
+                                    </span>
+                                </Link>
 
+                                <!-- Delete dropdown menu -->
+                                <div
+                                    v-if="!sidebarCollapsed"
+                                    class="relative"
+                                    @click.stop
+                                >
+                                    <button
+                                        @click="toggleDropdown(conv.id)"
+                                        class="p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-slate-200"
+                                        :class="{
+                                            'hover:bg-blue-100':
+                                                route().current(
+                                                    'conversation.read',
+                                                    conv.guid
+                                                ),
+                                        }"
+                                    >
+                                        <svg
+                                            class="w-4 h-4 text-slate-500"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path
+                                                d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+                                            ></path>
+                                        </svg>
+                                    </button>
+
+                                    <!-- Dropdown menu -->
+                                    <div
+                                        v-if="openDropdown === conv.id"
+                                        class="absolute right-0 top-full mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-50"
+                                    >
+                                        <button
+                                            @click="
+                                                deleteConversation(conv.guid)
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150"
+                                        >
+                                            Verwijderen
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div
                             v-else-if="!sidebarCollapsed"
                             class="px-3 py-2 text-sm text-slate-400 italic"

@@ -34,16 +34,28 @@ Route::middleware(['auth', HandleInertiaRequests::class])->group(function () {
     Route::patch('/companies/{guid}/{user_guid}', [UserController::class, 'update'])->name('company.user.update');
     Route::delete('/companies/{guid}/{user_guid}', [UserController::class, 'delete'])->name('company.user.delete');
 
-    Route::get('/sources', [SourceController::class, 'index'])->name('source.get');
+    Route::get('/companies/{guid}/source/{source_id}', [SourceController::class, 'read'])->name('company.source.read');
+    Route::patch('/companies/{guid}/sources/{source_id}', [SourceController::class, 'update'])->name('company.source.update');
+    Route::delete('/companies/{guid}/sources/{source_id}', [SourceController::class, 'delete'])->name('company.source.delete');
     Route::post('/sources', [SourceController::class, 'store'])->name('source.create');
-    Route::get('/sources/{id}', [SourceController::class, 'read'])->name('source.read');
-    Route::patch('/sources/{id}', [SourceController::class, 'update'])->name('source.update');
-    Route::delete('/sources/{id}', [SourceController::class, 'delete'])->name('source.delete');
+
+    Route::get('/users', [UserController::class, 'index'])->name('user.get');
+    Route::post('/users', [UserController::class, 'store'])->name('user.create');
+    Route::get('/users/{guid}', [UserController::class, 'read'])->name('user.read');
+    Route::patch('/users/{guid}', [UserController::class, 'update_only_user'])->name('user.update');
+    Route::delete('/users/{guid}', [UserController::class, 'delete_only_user'])->name('user.delete');
+
 
     Route::get('/conversation/{guid}', [ConversationController::class, 'read'])->name('conversation.read');
     Route::post('/conversation', [ConversationController::class, 'create'])->name('conversation.create');
+    Route::delete('/conversation/{guid}', [ConversationController::class, 'delete'])->name('conversation.delete');
+
     Route::get('/conversation/{guid}/message', [ConversationController::class, 'postUserMessage'])->name('conversation.postUserMessage');
     Route::get('/conversation/{guid}/bot-response', [ConversationController::class, 'getBotResponse'])->name('conversation.getBotResponse');
+
+    Route::post('/conversation/pin', [ConversationController::class, 'pinChart'])->name('conversation.pinChart');
+    Route::delete('/conversation/pin/{id}', [ConversationController::class, 'unpinChart'])->name('conversation.unpinChart');
+    Route::delete('/conversation/message/pin/{id}', [ConversationController::class, 'unpinChartByMessage'])->name('conversation.unpinChartByMessage');
 });
 
 require __DIR__ . '/auth.php';

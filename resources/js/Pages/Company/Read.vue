@@ -31,6 +31,12 @@
                 >
                     + Voeg nieuwe gebruiker toe
                 </PrimaryButton>
+                <PrimaryButton
+                    @click="toggleAddSource"
+                    v-if="show_sort === 'sources'"
+                >
+                    + Voeg nieuwe bron toe
+                </PrimaryButton>
             </div>
         </div>
 
@@ -48,6 +54,15 @@
                     @click="changeSort('settings')"
                 >
                     Instellingen
+                </button>
+                <button
+                    :class="[
+                        'px-4 py-1 rounded-md text-center text-sm',
+                        show_sort === 'sources' ? 'bg-gray-200' : 'bg-gray-300',
+                    ]"
+                    @click="changeSort('sources')"
+                >
+                    Bronnen
                 </button>
                 <button
                     :class="[
@@ -79,12 +94,72 @@
             </div>
         </div>
 
+        <div v-if="this.show_sort === 'sources'" class="mt-6">
+            <table class="w-full text-sm text-left rtl:text-right">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Naam</th>
+                        <th scope="col" class="px-6 py-3">Webhook</th>
+
+                        <th scope="col" class="px-6 py-3">
+                            <span class="sr-only">Aanpassen</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                        class="bg-white border-b border-gray-200"
+                        v-for="source in this.company.sources"
+                    >
+                        <th
+                            scope="row"
+                            class="px-6 py-4 flex items-center font-medium text-gray-900 whitespace-nowrap"
+                        >
+                            <span
+                                class="inline-block w-4 h-4 rounded mr-2"
+                                :style="{ backgroundColor: source.hex_color }"
+                            ></span>
+                            {{ source.name }}
+                        </th>
+                        <td class="px-6 py-4 truncate max-w-[300px]">
+                            {{ source.webhook }}
+                        </td>
+
+                        <td class="px-6 py-4 text-right">
+                            <a
+                                :href="
+                                    route('company.source.read', {
+                                        guid: this.company.guid,
+                                        source_id: source.id,
+                                    })
+                                "
+                                class="font-medium text-blue-600 hover:underline"
+                                >Pas aan</a
+                            >
+                        </td>
+                    </tr>
+                    <tr
+                        class="bg-white border-b border-gray-200"
+                        v-if="this.company.sources.length < 1"
+                    >
+                        <th
+                            scope="row"
+                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                            colspan="3"
+                        >
+                            Geen resutaten gevonden
+                        </th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
         <div v-if="this.show_sort === 'users'">
             <div class="overflow-x-auto mt-6">
                 <table class="w-full text-sm text-left rtl:text-right">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3">Name</th>
+                            <th scope="col" class="px-6 py-3">Naam</th>
                             <th scope="col" class="px-6 py-3">Email</th>
                             <th scope="col" class="px-6 py-3">Bronnen</th>
 
@@ -155,7 +230,12 @@
         :close="toggleAddUser"
         :show="addUser"
         :company="this.company"
-        :sources="sources"
+        :sources="this.company.sources"
+    />
+    <CreateSources
+        :close="toggleAddSource"
+        :show="addSource"
+        :company="this.company"
     />
 </template>
 
@@ -168,6 +248,7 @@ import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import InputError from "@/Components/InputError.vue";
 import Create from "./Users/Create.vue";
+import CreateSources from "./Sources/Create.vue";
 
 export default {
     name: "",
@@ -180,10 +261,11 @@ export default {
         InputError,
         InputLabel,
         Create,
+        CreateSources,
     },
     props: {
         company: Object,
-        sources: Array,
+        // sources: Array,
     },
     data() {
         return {
@@ -192,6 +274,7 @@ export default {
             }),
             show_sort: "settings",
             editCompany: false,
+            addSource: false,
             addUser: false,
             breadcrumbs: [
                 { title: "Dashboard", href: "/dashboard" },
@@ -241,6 +324,9 @@ export default {
         },
         toggleAddUser() {
             this.addUser = !this.addUser;
+        },
+        toggleAddSource() {
+            this.addSource = !this.addSource;
         },
     },
     computed: {},

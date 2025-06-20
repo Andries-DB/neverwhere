@@ -14,13 +14,6 @@
             />
 
             <TextInput
-                v-model="form.color"
-                label="Kleur"
-                placeholder="Kleur"
-                :class="{ 'border-red-500': form.errors.color }"
-            />
-
-            <TextInput
                 v-model="form.webhook"
                 label="Webhook"
                 placeholder="Webhook"
@@ -55,6 +48,7 @@ export default {
     props: {
         close: Function,
         show: Boolean,
+        company: Object,
     },
     data() {
         return {
@@ -63,6 +57,7 @@ export default {
                 name: "",
                 color: "",
                 webhook: "",
+                company: this.company.id,
             }),
         };
     },

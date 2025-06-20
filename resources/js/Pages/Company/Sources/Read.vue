@@ -37,19 +37,6 @@
                 </div>
 
                 <div class="w-full mt-2">
-                    <InputLabel for="color" value="Kleur*" />
-                    <TextInput
-                        id="color"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="form.hex_color"
-                        :disabled="!editSource"
-                        placeholder="Kleur"
-                    />
-                    <InputError class="mt-2" :message="form.errors.hex_color" />
-                </div>
-
-                <div class="w-full mt-2">
                     <InputLabel for="webhook" value="Webhook*" />
                     <TextInput
                         id="webhook"
@@ -88,6 +75,7 @@ export default {
     },
     props: {
         source: Object,
+        company: Object,
     },
     data() {
         return {
@@ -99,16 +87,32 @@ export default {
             editSource: false,
             breadcrumbs: [
                 { title: "Dashboard", href: "/dashboard" },
-                { title: "Sources", href: "/sources" },
-                { title: this.source.name, href: "/sources/" + this.source.id },
+                { title: "Bedrijven", href: "/companies" },
+                {
+                    title: this.company.company,
+                    href: "/companies/" + this.company.guid,
+                },
+                {
+                    title: "Bronnen",
+                    href: "/companies/" + this.company.guid,
+                },
+                {
+                    title: this.source.name,
+                    href:
+                        "/companies/" +
+                        this.company.guid +
+                        "/sources/" +
+                        this.source.id,
+                },
             ],
         };
     },
     methods: {
         saveSource() {
             this.form.patch(
-                route("source.update", {
-                    id: this.source.id,
+                route("company.source.update", {
+                    guid: this.company.guid,
+                    source_id: this.source.id,
                 }),
                 {
                     onSuccess: () => this.toggleEdit(),
@@ -118,8 +122,9 @@ export default {
         },
         deleteSource() {
             this.form.delete(
-                route("source.delete", {
-                    id: this.source.id,
+                route("company.source.delete", {
+                    guid: this.company.guid,
+                    source_id: this.source.id,
                 }),
                 {
                     onError: (error) => console.log(error),

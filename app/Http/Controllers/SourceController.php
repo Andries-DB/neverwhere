@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Source;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,43 +18,46 @@ class SourceController extends Controller
         ]);
     }
 
-    public function read($id)
+    public function read($guid, $source_id)
     {
         $this->authorizeAdmin();
 
-        $source = Source::find($id);
+        $company = Company::where('guid', $guid)->firstOrFail();
+        $source = Source::find($source_id);
 
         abort_unless($source, 403, "This source does not exist");
 
-        return Inertia::render('Sources/Read', [
-            'source' => $source
+        return Inertia::render('Company/Sources/Read', [
+            'source' => $source,
+            'company' => $company
         ]);
     }
 
     public function store(Request $request)
     {
+        // dd($request->all());
         $this->authorizeAdmin();
 
         $request->validate([
             'name' => 'required|string|max:255|unique:sources,name',
-            'color' => 'required',
             'webhook' => 'nullable'
         ]);
 
         Source::create([
             'name' => $request->name,
             'hex_color' => $request->color,
-            'webhook' => $request->webhook
+            'webhook' => $request->webhook,
+            'company_id' => $request->company
         ]);
 
-        return redirect()->route('source.get')->with('success', 'Source aangemaakt.');
+        return redirect()->back();
     }
 
-    public function update($id, Request $request)
+    public function update($guid, $source_id, Request $request)
     {
         $this->authorizeAdmin();
 
-        $source = Source::where('id', $id)->first();
+        $source = Source::where('id', $source_id)->first();
         $data = $request->all();
         $source->update($data);
 

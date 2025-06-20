@@ -62,4 +62,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Conversation::class);
     }
+
+    public function pinnedGraphs()
+    {
+        return $this->hasMany(PinnedGraph::class);
+    }
 }

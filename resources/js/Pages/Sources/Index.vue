@@ -82,7 +82,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
-import Create from "./Create.vue";
+import Create from "../Company/Sources/Create.vue";
 
 export default {
     name: "",

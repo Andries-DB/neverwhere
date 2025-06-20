@@ -12,7 +12,9 @@ class Message extends Model
         'conversation_id',
         'send_by',
         'message',
-        'json'
+        'json',
+        'sql_query',
+        'respond_type',
     ];
 
     protected $casts = [
@@ -31,5 +33,10 @@ class Message extends Model
     public function conversation()
     {
         return $this->belongsTo(Conversation::class);
+    }
+
+    public function pinnedGraphs()
+    {
+        return $this->hasMany(PinnedGraph::class);
     }
 }
