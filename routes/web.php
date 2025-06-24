@@ -3,6 +3,7 @@
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\UserController;
@@ -10,6 +11,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Symfony\Component\Mime\MessageConverter;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -56,6 +58,15 @@ Route::middleware(['auth', HandleInertiaRequests::class])->group(function () {
     Route::post('/conversation/pin', [ConversationController::class, 'pinChart'])->name('conversation.pinChart');
     Route::delete('/conversation/pin/{id}', [ConversationController::class, 'unpinChart'])->name('conversation.unpinChart');
     Route::delete('/conversation/message/pin/{id}', [ConversationController::class, 'unpinChartByMessage'])->name('conversation.unpinChartByMessage');
+    Route::patch('/conversation/chart/{id}', [ConversationController::class, 'updateChartTitle'])->name('conversation.updateChartTitle');
+    Route::post('/conversation/pin/table', [ConversationController::class, 'pinTable'])->name('conversation.pinTable');
+    Route::delete('/conversation/message/pin/{id}', [ConversationController::class, 'unpinTableByMessage'])->name('conversation.unpinTable');
+    Route::delete('/conversation/table/pin/{id}', [ConversationController::class, 'unpinTable'])->name('conversation.unpinTable');
+
+    Route::post('/conversation/likemessage', [ConversationController::class, 'likeMessage'])->name('conversation.likeMessage');
+    Route::post('/conversation/dislikemessage', [ConversationController::class, 'dislikeMessage'])->name('conversation.dislikeMessage');
+
+    Route::get('/message/{guid}', [MessageController::class, 'read'])->name('message.read');
 });
 
 require __DIR__ . '/auth.php';

@@ -25,7 +25,7 @@
                 <p>
                     Start een nieuwe conversatie door op de knop hierboven te
                     klikken.<br />
-                    Je recente gesprekken verschijnen hier.
+                    Je gepinde informatie verschijnt hier.
                 </p>
             </section>
 
@@ -43,21 +43,96 @@
                         <!-- Header -->
                         <div class="px-6 py-4 border-b border-gray-100">
                             <div class="flex justify-between items-start">
-                                <div>
-                                    <h3
-                                        class="text-lg font-medium text-gray-900"
+                                <div class="flex-1 mr-3">
+                                    <!-- Editable Title -->
+                                    <div
+                                        v-if="editingTitleId !== graph.id"
+                                        @click="startEditingTitle(graph)"
+                                        class="group cursor-pointer"
+                                        :title="'Klik om titel te bewerken'"
                                     >
-                                        {{
-                                            graph.title || getGraphTitle(graph)
-                                        }}
-                                    </h3>
-                                    <p class="text-sm text-gray-500 mt-1">
-                                        {{ getGraphSubtitle(graph) }}
-                                    </p>
+                                        <h3
+                                            class="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center"
+                                        >
+                                            {{
+                                                graph.title ||
+                                                getGraphTitle(graph)
+                                            }}
+                                            <svg
+                                                class="w-4 h-4 ml-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                                />
+                                            </svg>
+                                        </h3>
+                                    </div>
+
+                                    <!-- Edit Mode -->
+                                    <div
+                                        v-else
+                                        class="flex items-center space-x-2"
+                                    >
+                                        <input
+                                            ref="titleInput"
+                                            v-model="editingTitle"
+                                            @keydown.enter="saveTitle(graph.id)"
+                                            @keydown.escape="cancelEditingTitle"
+                                            @blur="saveTitle(graph.id)"
+                                            class="flex-1 text-lg font-medium text-gray-900 bg-transparent border-blue-500 focus:outline-none focus:border-blue-600 transition-colors"
+                                            :placeholder="getGraphTitle(graph)"
+                                        />
+                                        <div class="flex space-x-1">
+                                            <button
+                                                @click="saveTitle(graph.id)"
+                                                class="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+                                                title="Opslaan"
+                                            >
+                                                <svg
+                                                    class="w-4 h-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M5 13l4 4L19 7"
+                                                    />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                @click="cancelEditingTitle"
+                                                class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                                                title="Annuleren"
+                                            >
+                                                <svg
+                                                    class="w-4 h-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <button
                                     @click="unpinGraph(graph.id)"
-                                    class="text-gray-400 hover:text-gray-600 transition-colors"
+                                    class="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
                                     title="Losmaken"
                                 >
                                     <svg
@@ -129,6 +204,73 @@
                     </div>
                 </div>
             </section>
+
+            <section v-if="pinned_tables?.length" class="space-y-4">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    Vastgepinde Tabellen
+                </h2>
+
+                <div class="grid grid-cols-1 xl:grid-cols-1 gap-6">
+                    <div
+                        v-for="table in pinned_tables"
+                        :key="table.id"
+                        class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                        <!-- Header -->
+                        <div class="px-6 py-4 border-b border-gray-100">
+                            <div class="flex justify-between items-start">
+                                <button
+                                    @click="unpinTable(table.id)"
+                                    class="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                                    title="Losmaken"
+                                >
+                                    <svg
+                                        class="w-4 h-4"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path d="M10 2L3 9h4v7h6V9h4l-7-7z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Chart -->
+                        <div class="p-6">
+                            <div
+                                class="w-full h-64 bg-white rounded border border-gray-100"
+                            >
+                                <ag-grid-vue
+                                    ref="agGrid"
+                                    class="ag-theme-alpine w-full h-full"
+                                    :rowData="getTableRowData(table)"
+                                    :columnDefs="getTableColumnDefs(table)"
+                                    :defaultColDef="defaultColDef"
+                                    :gridOptions="gridOptions"
+                                    rowSelection="multiple"
+                                    @grid-ready="onGridReady"
+                                    @range-selection-changed="
+                                        onRangeSelectionChanged
+                                    "
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div
+                            class="px-6 py-3 bg-gray-50 border-t border-gray-100 rounded-b-lg"
+                        >
+                            <div
+                                class="flex justify-between items-center text-xs text-gray-500"
+                            >
+                                <span
+                                    >{{ table.json?.length || 0 }} records</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </AuthenticatedLayout>
 </template>
@@ -138,15 +280,33 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, useForm } from "@inertiajs/vue3";
 import { format, isToday, parseISO } from "date-fns";
 import { AgCharts } from "ag-charts-vue3";
+import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
+
+import { AgGridVue } from "ag-grid-vue3";
+import "ag-grid-enterprise"; // Dit activeert alle enterprise features
+import { ModuleRegistry } from "ag-grid-community";
+import {
+    AllEnterpriseModule,
+    LicenseManager,
+    IntegratedChartsModule,
+} from "ag-grid-enterprise";
+
+ModuleRegistry.registerModules([
+    AllEnterpriseModule,
+    IntegratedChartsModule.with(AgChartsEnterpriseModule),
+]);
+LicenseManager.setLicenseKey(import.meta.env.VITE_AG_KEY);
 
 export default {
     components: {
         AuthenticatedLayout,
         Head,
         AgCharts,
+        AgGridVue,
     },
     props: {
         pinned_graphs: Array,
+        pinned_tables: Array,
     },
     data() {
         return {
@@ -165,6 +325,45 @@ export default {
                 { value: "min", label: "Minimum" },
                 { value: "max", label: "Maximum" },
             ],
+            localPinnedGraphs: [...this.pinned_graphs],
+            editingTitleId: null,
+            editingTitle: "",
+            savingTitleId: null,
+            defaultColDef: {
+                sortable: true,
+                filter: true,
+                resizable: true,
+                flex: 1,
+                minWidth: 100,
+                enableValue: true,
+                enableRowGroup: true,
+                enablePivot: true,
+                chartDataType: "category", // of 'series', 'time', 'excluded'
+            },
+            gridOptions: {
+                rowHeight: 45,
+                headerHeight: 45,
+                animateRows: true,
+                pagination: false,
+                paginationPageSize: 1000,
+                enableCharts: true,
+                enableRangeSelection: true, // Nodig voor charts
+                suppressRowClickSelection: true,
+                enableRowGroup: true,
+                enablePivot: true,
+                enableValue: true,
+                chartThemes: ["ag-default", "ag-material", "ag-pastel"],
+                getContextMenuItems: (params) => {
+                    return [
+                        "copy",
+                        "copyWithHeaders",
+                        "separator",
+                        "chartRange",
+                        "separator",
+                        "export",
+                    ];
+                },
+            },
         };
     },
     methods: {
@@ -176,6 +375,69 @@ export default {
                 onError: (errors) => {},
             });
         },
+        // Nieuwe methodes voor titel bewerking
+        startEditingTitle(graph) {
+            this.editingTitleId = graph.id;
+            this.editingTitle = graph.title || this.getGraphTitle(graph);
+
+            // Focus de input na een korte delay zodat het element bestaat
+            this.$nextTick(() => {
+                if (this.$refs.titleInput) {
+                    this.$refs.titleInput.focus();
+                    this.$refs.titleInput.select();
+                }
+            });
+        },
+        cancelEditingTitle() {
+            this.editingTitleId = null;
+            this.editingTitle = "";
+        },
+        async saveTitle(graphId) {
+            if (this.savingTitleId) return; // Voorkom dubbele saves
+
+            const graph = this.pinned_graphs.find((g) => g.id === graphId);
+            if (!graph) return;
+
+            // Als de titel niet is veranderd, gewoon annuleren
+            const originalTitle = graph.title || this.getGraphTitle(graph);
+            if (this.editingTitle.trim() === originalTitle) {
+                this.cancelEditingTitle();
+                return;
+            }
+
+            this.savingTitleId = graphId;
+
+            try {
+                // Maak een nieuwe form instance voor de title update
+                const titleForm = useForm({
+                    title: this.editingTitle.trim(),
+                });
+
+                await new Promise((resolve, reject) => {
+                    titleForm.patch(
+                        route("conversation.updateChartTitle", graphId),
+                        {
+                            onSuccess: () => {
+                                // Update de lokale data
+                                graph.title = this.editingTitle.trim();
+                                this.cancelEditingTitle();
+                                resolve();
+                            },
+                            onError: (errors) => {
+                                console.error("Error updating title:", errors);
+                                // Je kunt hier een toast notificatie tonen
+                                reject(errors);
+                            },
+                        }
+                    );
+                });
+            } catch (error) {
+                console.error("Failed to save title:", error);
+                // Optioneel: toon een error message aan de gebruiker
+            } finally {
+                this.savingTitleId = null;
+            }
+        },
 
         formatDate(dateString) {
             const date = parseISO(dateString + "Z");
@@ -185,6 +447,22 @@ export default {
             } else {
                 return format(date, "dd MMM");
             }
+        },
+        isNumericField(fieldName, data) {
+            if (!data || data.length === 0) return false;
+
+            // Check eerste paar records
+            const sampleValues = data
+                .slice(0, 5)
+                .map((item) => item[fieldName])
+                .filter((val) => val != null && val !== "");
+
+            if (sampleValues.length === 0) return false;
+
+            return sampleValues.every((value) => {
+                const num = parseFloat(value);
+                return !isNaN(num) && isFinite(num);
+            });
         },
 
         getGraphTitle(graph) {
@@ -771,20 +1049,160 @@ export default {
             // Handle unpinning logic - you'll need to implement this based on your backend
             this.form.delete(route("conversation.unpinChart", graphId), {
                 onSuccess: () => {
-                    this.pinned_graphs = this.pinned_graphs.filter(
-                        (g) => g.id !== graphId
+                    const index = this.pinned_graphs.findIndex(
+                        (g) => g.id === graphId
                     );
+                    if (index !== -1) {
+                        this.pinned_graphs.splice(index, 1); // werkt reactief
+                    }
                 },
                 onError: (errors) => {
                     console.log("Error unpinning graph:", errors);
                 },
             });
         },
-    },
-    computed: {
-        numberOfSkeletons() {
-            return Math.max(0, 3 - (this.conversations?.length || 0));
+
+        unpinTable(tableId) {
+            this.form.delete(route("conversation.unpinTable", tableId), {
+                onSuccess: () => {
+                    const index = this.pinned_tables.findIndex(
+                        (t) => t.id === tableId
+                    );
+                    if (index !== -1) {
+                        this.pinned_tables.splice(index, 1);
+                    }
+                },
+                onError: (errors) => {
+                    console.log("Error unpinning graph:", errors);
+                },
+            });
         },
+
+        // Table functions
+        hasTableData(message) {
+            if (message.send_by !== "ai") return false;
+
+            // Controleer eerst of message.json bestaat en niet leeg is
+            if (!message.json || Object.keys(message.json).length === 0) {
+                return false;
+            }
+
+            // Als json bestaat, controleer of het een array is met data
+            if (Array.isArray(message.json) && message.json.length > 0) {
+                return true;
+            }
+
+            // Fallback naar de oude parseTableMessage methode
+            const parsed = this.parseTableMessage(message.message);
+            return parsed.rows.length > 0;
+        },
+        getTableRowData(message) {
+            if (
+                message.json &&
+                Array.isArray(message.json) &&
+                message.json.length > 0
+            ) {
+                return message.json;
+            }
+
+            // Fallback naar oude methode
+            const parsed = this.parseTableMessage(message.message);
+
+            return parsed.rows.map((row) => {
+                const obj = {};
+                parsed.headers.forEach((header, index) => {
+                    obj[header] = row[index] || "";
+                });
+                return obj;
+            });
+        },
+        getTableColumnDefs(message) {
+            if (
+                message.json &&
+                Array.isArray(message.json) &&
+                message.json.length > 0
+            ) {
+                const firstItem = message.json[0];
+                return Object.keys(firstItem).map((key) => {
+                    const isNumeric = this.isNumericField(key, message.json);
+                    const isDate = this.isDateField(key, message.json);
+
+                    return {
+                        field: key,
+                        headerName: this.getFieldDisplayName(key),
+                        sortable: true,
+                        filter: isNumeric
+                            ? "agNumberColumnFilter"
+                            : "agTextColumnFilter",
+                        resizable: true,
+                        enableRowGroup: !isNumeric, // Numerieke velden niet grouperen
+                        enablePivot: true,
+                        enableValue: isNumeric, // Alleen numerieke velden als waarden
+
+                        // Chart configuratie
+                        chartDataType: isNumeric
+                            ? "series"
+                            : isDate
+                            ? "time"
+                            : "category",
+
+                        // Type-specifieke configuratie
+                        ...(isNumeric && {
+                            type: "numericColumn",
+                            cellClass: "number-cell",
+                            aggFunc: "sum",
+                        }),
+
+                        ...(isDate && {
+                            type: "dateColumn",
+                            cellClass: "date-cell",
+                        }),
+
+                        menuTabs: [
+                            "filterMenuTab",
+                            "generalMenuTab",
+                            "columnsMenuTab",
+                        ],
+                        cellRenderer: (params) => {
+                            if (
+                                typeof params.value === "string" &&
+                                params.value.includes("http")
+                            ) {
+                                return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
+                            }
+                            return params.value;
+                        },
+                    };
+                });
+            }
+
+            // Fallback naar oude methode...
+            const parsed = this.parseTableMessage(message.message);
+            return parsed.headers.map((header) => ({
+                field: header,
+                headerName: header,
+                sortable: true,
+                filter: true,
+                resizable: true,
+                enableRowGroup: true,
+                enablePivot: true,
+                enableValue: true,
+                chartDataType: "category",
+                menuTabs: ["filterMenuTab", "generalMenuTab", "columnsMenuTab"],
+                cellRenderer: (params) => {
+                    if (
+                        typeof params.value === "string" &&
+                        params.value.includes("http")
+                    ) {
+                        return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
+                    }
+                    return params.value;
+                },
+            }));
+        },
+    },
+    mounted() {
+        this.localPinnedGraphs = [...this.pinned_graphs];
     },
 };
 </script>

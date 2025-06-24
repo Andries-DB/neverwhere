@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Conversation;
 use App\Models\PinnedGraph;
+use App\Models\PinnedTable;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -34,9 +35,15 @@ class DashboardController extends Controller
             ->with('message', 'message.conversation')
             ->get();
 
+        $pinned_tables = PinnedTable::where('user_id', auth()->id())
+            ->orderBy('created_at', 'desc')
+            ->with('message', 'message.conversation')
+            ->get();
+
         return Inertia::render('Dashboard', [
             // 'conversations' => $conversations,
             'pinned_graphs' => $pinned_graphs,
+            'pinned_tables' => $pinned_tables,
         ]);
     }
 }

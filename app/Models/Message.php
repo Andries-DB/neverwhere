@@ -15,11 +15,16 @@ class Message extends Model
         'json',
         'sql_query',
         'respond_type',
+        'thumbs_up',
+        'thumbs_down'
     ];
 
     protected $casts = [
         'send_by' => 'string',
-        'json' => 'array',
+        'json' => 'encrypted:array',
+        'message' => 'encrypted',
+        'sql_query' => 'encrypted'
+
     ];
 
 

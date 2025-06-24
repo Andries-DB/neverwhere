@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\PinnedGraph;
+use App\Models\PinnedTable;
 use App\Models\Source;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -15,13 +17,11 @@ class ConversationController extends Controller
     public function read($guid)
     {
         $conversation = Conversation::where('guid', $guid)->with('messages', 'user', 'user.sources')->firstOrFail();
-        $pinned_charts = PinnedGraph::with('message')->where('user_id', auth()->user()->id)->get();
-
-        // dd($pinned_charts);
 
         return Inertia::render('Conversations/Read', [
             'conversation' => $conversation,
-            'pinned_charts' => $pinned_charts,
+            'pinned_charts' => PinnedGraph::with('message')->where('user_id', auth()->user()->id)->get(),
+            'pinned_tables' => PinnedTable::with('message')->where('user_id', auth()->user()->id)->get(),
         ]);
     }
 
@@ -59,7 +59,9 @@ class ConversationController extends Controller
             'message' => array_merge(
                 $message->toArray(),
                 ['displayAsTable' => false],
-                ['displayAsChart' => false]
+                ['displayAsChart' => false],
+                ['thumbs_up' => 0],
+                ['thumbs_down' => 0]
             )
         ];
     }
@@ -111,6 +113,8 @@ class ConversationController extends Controller
             ...(isset($json['data']['json']) ? ['json' => json_decode($json['data']['json'], true)] : []),
         ]);
 
+
+
         return [
             'bot_message' => array_merge(
                 $botMessage->toArray(),
@@ -127,7 +131,7 @@ class ConversationController extends Controller
 
         $conversation->delete();
 
-        return redirect()->back();
+        return redirect()->route('dashboard');
     }
 
     public function pinChart(Request $request)
@@ -157,7 +161,49 @@ class ConversationController extends Controller
 
         $pinned_graph->delete();
 
-        return redirect()->back();
+        return redirect()->route('dashboard');
+    }
+
+    public function pinTable(Request $request)
+    {
+        // dd($request->all());
+        PinnedTable::create([
+            'user_id' => auth()->id(),
+            'message_id' => $request->messageId,
+            ...(isset($request->data) ? ['json' => $request->data] : []),
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Chart pinned successfully.',
+        ];
+    }
+
+    public function unpinTable($id, Request $request)
+    {
+        $pinned_table = PinnedTable::find($id);
+
+        abort_unless($pinned_table, 403, "This pinned graph does not exist");
+
+        $pinned_table->delete();
+
+        return redirect()->route('dashboard');
+    }
+
+    public function unpinTableByMessage($id, Request $request)
+    {
+        $pinned_table = PinnedTable::where('message_id', $id)
+            ->where('user_id', auth()->user()->id)
+            ->first();
+
+        abort_unless($pinned_table, 403, "This pinned graph does not exist");
+
+        $pinned_table->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Chart unpinned successfully.',
+        ];
     }
 
     public function unpinChartByMessage($id, Request $request)
@@ -174,6 +220,60 @@ class ConversationController extends Controller
         return [
             'success' => true,
             'message' => 'Chart unpinned successfully.',
+        ];
+    }
+
+    public function updateChartTitle($id, Request $request)
+    {
+        $pinned_graph = PinnedGraph::find($id);
+
+        abort_unless($pinned_graph, 403, "This pinned graph does not exist");
+
+        $pinned_graph->title = $request->title;
+        $pinned_graph->save();
+
+        return redirect()->back();
+    }
+
+    public function likeMessage(Request $request)
+    {
+        $message_id = $request->input('messageId');
+
+        $message = Message::find($message_id);
+
+        if (!$message) {
+            return response()->json(['error' => 'Message not found'], 404);
+        }
+
+        // Put thumbs up on true, thumbs down on false
+        $message->thumbs_up = true;
+        $message->thumbs_down = false;
+        $message->save();
+
+        return [
+            'success' => true,
+            'message' => 'Chart pinned successfully.',
+        ];
+    }
+
+    public function dislikeMessage(Request $request)
+    {
+        $message_id = $request->input('messageId');
+
+        $message = Message::find($message_id);
+
+        if (!$message) {
+            return response()->json(['error' => 'Message not found'], 404);
+        }
+
+        // Put thumbs up on true, thumbs down on false
+        $message->thumbs_up = false;
+        $message->thumbs_down = true;
+        $message->save();
+
+        return [
+            'success' => true,
+            'message' => 'Chart pinned successfully.',
         ];
     }
 }

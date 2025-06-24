@@ -221,6 +221,7 @@ watch(sidebarCollapsed, (newValue) => {
                     <div>
                         <button
                             @click="createConversation"
+                            :disabled="form.processing"
                             class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full mb-2"
                         >
                             <svg
@@ -473,18 +474,17 @@ watch(sidebarCollapsed, (newValue) => {
                     <div
                         class="items-center space-x-2 text-sm min-w-0 overflow-x-auto whitespace-nowrap hidden md:flex"
                     >
-                        <template
+                        <!-- <template
                             v-for="(crumb, index) in breadcrumbs"
                             :key="index"
                         >
                             <template v-if="index === breadcrumbs.length - 1">
-                                <!-- Laatste crumb, actief, geen link -->
+                                <!-- Laatste crumb, actief, geen link
                                 <span class="text-slate-900 font-medium">{{
                                     crumb.title
                                 }}</span>
                             </template>
                             <template v-else>
-                                <!-- Andere crumbs, als link of tekst -->
                                 <template v-if="crumb.href">
                                     <a
                                         :href="crumb.href"
@@ -501,7 +501,7 @@ watch(sidebarCollapsed, (newValue) => {
                                 </template>
                             </template>
 
-                            <!-- Pijltje tussen crumbs, niet na de laatste -->
+                          
                             <svg
                                 v-if="index < breadcrumbs.length - 1"
                                 class="w-4 h-4 text-slate-400 flex-shrink-0"
@@ -514,7 +514,7 @@ watch(sidebarCollapsed, (newValue) => {
                                     clip-rule="evenodd"
                                 />
                             </svg>
-                        </template>
+                        </template> -->
                     </div>
                 </div>
 

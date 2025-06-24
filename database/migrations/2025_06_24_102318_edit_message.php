@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            $table->longText('json')->nullable()->after('message');
+            $table->boolean('thumbs_up')->default(0)->after('respond_type');
+            $table->boolean('thumbs_down')->default(0)->after('thumbs_up');
         });
     }
 

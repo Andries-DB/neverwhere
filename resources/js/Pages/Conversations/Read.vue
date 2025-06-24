@@ -10,7 +10,7 @@
                 >
                     <div
                         ref="messagecontainer"
-                        class="overflow-y-scroll flex-1 p-3 xl:max-h-[73vh] lg:max-h-[500px] md:max-h-[475px] max-h-[65vh] flex flex-col gap-4"
+                        class="overflow-y-scroll flex-1 p-3 xl:max-h-[73vh] lg:max-h-[500px] md:max-h-[475px] max-h-[65vh] flex flex-col gap-4 relative"
                     >
                         <template
                             v-for="(message, index) in messages"
@@ -24,7 +24,7 @@
                             </div>
 
                             <div
-                                class="p-3 rounded-lg shadow-sm"
+                                class="p-3 rounded-lg shadow-sm relative"
                                 :class="{
                                     'bg-gray-300 text-gray-900 self-end max-w-[75%]':
                                         message.send_by === 'user',
@@ -161,39 +161,6 @@
                                                 class="grid grid-cols-1 md:grid-cols-4 gap-4"
                                             >
                                                 <!-- Chart type selector -->
-                                                <!-- <div>
-                                                    <label
-                                                        class="block text-xs font-medium text-gray-700 mb-1"
-                                                    >
-                                                        Grafiek Type
-                                                    </label>
-                                                    <div
-                                                        class="flex flex-wrap gap-1"
-                                                    >
-                                                        <button
-                                                            v-for="chartType in availableChartTypes"
-                                                            :key="
-                                                                chartType.value
-                                                            "
-                                                            @click="
-                                                                message.selectedChartType =
-                                                                    chartType.value
-                                                            "
-                                                            :class="[
-                                                                'px-2 py-1 text-xs rounded border transition-colors',
-                                                                (message.selectedChartType ||
-                                                                    'column') ===
-                                                                chartType.value
-                                                                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                                                                    : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50',
-                                                            ]"
-                                                        >
-                                                            {{
-                                                                chartType.label
-                                                            }}
-                                                        </button>
-                                                    </div>
-                                                </div> -->
                                                 <div>
                                                     <label
                                                         class="block text-xs font-medium text-gray-700 mb-1"
@@ -215,9 +182,6 @@
                                                         >
                                                             {{ field.label }}
                                                         </option>
-                                                        <!-- <option value="__index">
-                                                            Rij Nummer
-                                                        </option> -->
                                                     </select>
                                                 </div>
 
@@ -316,39 +280,6 @@
                                                     </select>
                                                 </div>
                                             </div>
-
-                                            <!-- Aggregatie opties voor numerieke Y-as -->
-                                            <!-- <div
-                                                v-if="
-                                                    message.selectedYAxis &&
-                                                    message.selectedYAxis !==
-                                                        '__count'
-                                                "
-                                                class="mt-3"
-                                            >
-                                                <label
-                                                    class="block text-xs font-medium text-gray-700 mb-1"
-                                                >
-                                                    Aggregatie
-                                                </label>
-                                                <select
-                                                    v-model="
-                                                        message.selectedAggregation
-                                                    "
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                >
-                                                    <option
-                                                        v-for="(
-                                                            field, key
-                                                        ) in aggregationTypes"
-                                                        :key="key"
-                                                        :value="field.value"
-                                                    >
-                                                        {{ field.label }}
-                                                    </option>
-                                                
-                                                </select>
-                                            </div> -->
                                         </div>
 
                                         <!-- Chart preview -->
@@ -399,6 +330,35 @@
 
                                 <!-- Tabel weergave met AG Grid -->
                                 <div v-else-if="message.displayAsTable">
+                                    <div class="mb-3 flex justify-end relative">
+                                        <button
+                                            :class="[
+                                                'absolute -top-10 right-3 z-10 transition-all duration-200 ease-in-out',
+                                                'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
+                                                isTablePinned(message)
+                                                    ? 'bg-slate-200 text-slate-700 border-slate-300 hover:bg-slate-300'
+                                                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200',
+                                                clickedMessageId === message.id
+                                                    ? 'animate-pop'
+                                                    : '',
+                                            ]"
+                                            @click="togglePinTable(message)"
+                                            :title="
+                                                isTablePinned(message)
+                                                    ? 'Loskoppelen van Dashboard'
+                                                    : 'Vastzetten op Dashboard'
+                                            "
+                                        >
+                                            <i
+                                                :class="[
+                                                    'text-base',
+                                                    isTablePinned(message)
+                                                        ? 'fas fa-times'
+                                                        : 'fas fa-thumbtack',
+                                                ]"
+                                            ></i>
+                                        </button>
+                                    </div>
                                     <template v-if="message.json">
                                         <!-- AG Grid component met chart ondersteuning -->
                                         <div
@@ -451,17 +411,60 @@
                                     {{ message.message }}
                                 </p>
 
-                                <p
-                                    :class="[
-                                        'text-[10px] mt-1',
-                                        message.user_id ===
-                                        $page.props.auth.user.id
-                                            ? 'text-gray-500 text-right'
-                                            : 'text-gray-600',
-                                    ]"
+                                <div
+                                    class="flex items-center justify-end gap-2 mt-1 text-[10px]"
                                 >
-                                    {{ formatTime(message.created_at) }}
-                                </p>
+                                    <button
+                                        class="p-1 rounded transition-colors"
+                                        :class="{
+                                            'text-green-600 bg-green-50':
+                                                message.thumbs_up === 1,
+                                            'text-gray-400 hover:text-green-700 hover:bg-green-50':
+                                                message.thumbs_up !== 1,
+                                        }"
+                                        @click="onThumbsUp(message)"
+                                        title="Vind ik goed"
+                                        v-if="message.send_by === 'ai'"
+                                    >
+                                        <i class="fas fa-thumbs-up"></i>
+                                    </button>
+
+                                    <button
+                                        class="p-1 rounded transition-colors"
+                                        :class="{
+                                            'text-red-600 bg-red-50':
+                                                message.thumbs_down === 1,
+                                            'text-gray-400 hover:text-red-600 hover:bg-gray-50':
+                                                message.thumbs_down !== 1,
+                                        }"
+                                        @click="onThumbsDown(message)"
+                                        title="Vind ik niet goed"
+                                        v-if="message.send_by === 'ai'"
+                                    >
+                                        <i class="fas fa-thumbs-down"></i>
+                                    </button>
+
+                                    <p
+                                        :class="[
+                                            message.user_id ===
+                                            $page.props.auth.user.id
+                                                ? 'text-gray-500'
+                                                : 'text-gray-600',
+                                        ]"
+                                    >
+                                        {{ formatTime(message.created_at) }}
+                                    </p>
+                                </div>
+
+                                <a
+                                    v-if="message.send_by === 'ai'"
+                                    :href="route('message.read', message.guid)"
+                                    target="_blank"
+                                    class="absolute -top-2 -right-2 bg-slate-300 text-gray-600 hover:text-gray-800 hover:bg-slate-200 rounded-full px-2 py-1 transition-all"
+                                    title="Bekijk in detail"
+                                >
+                                    <i class="fas fa-expand-alt"></i>
+                                </a>
                             </div>
                         </template>
 
@@ -498,15 +501,15 @@
                     class="flex flex-col justify-center items-center w-full gap-4 px-2 pt-3"
                 >
                     <!-- Source selection and message input row -->
-                    <div class="flex gap-3 items-start w-full">
+                    <div class="flex flex-col-reverse gap-3 items-start w-full">
                         <!-- Source selector -->
-                        <div class="w-48 flex flex-col items-start">
-                            <label class="block text-xs text-gray-600 mb-1"
+                        <div class="w-full flex items-center gap-2">
+                            <label class="block text-xs text-gray-600"
                                 >Bron</label
                             >
                             <select
                                 v-model="form.source"
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-transparent focus:ring-none focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                class="w-full text-sm border-none rounded-md bg-transparent focus:ring-none focus:ring-blue-500 focus:border-none transition-colors"
                             >
                                 <option
                                     v-for="(source, index) in conversation.user
@@ -520,10 +523,7 @@
                         </div>
 
                         <!-- Message input with send button -->
-                        <div class="flex-1">
-                            <label class="block text-xs text-gray-600 mb-1"
-                                >Bericht</label
-                            >
+                        <div class="flex-1 w-full">
                             <div
                                 class="flex items-stretch rounded-md w-full border border-gray-300 overflow-hidden focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all"
                             >
@@ -532,7 +532,7 @@
                                     rows="1"
                                     v-model="form.message"
                                     @input="autoResize"
-                                    @keyup.enter.exact="sendMessage"
+                                    @keydown.enter.exact.prevent="sendMessage"
                                     ref="messageTextarea"
                                     class="flex-1 resize-none bg-transparent border-none focus:ring-0 focus:outline-none placeholder:text-gray-500 px-3 py-2 text-sm leading-snug max-h-40 overflow-y-auto"
                                     placeholder="Stuur een bericht..."
@@ -610,6 +610,7 @@ export default {
     props: {
         conversation: Object,
         pinned_charts: Array,
+        pinned_tables: Array,
     },
     data() {
         return {
@@ -679,76 +680,166 @@ export default {
                 { value: "max", label: "Maximum" },
             ],
             pinnedCharts: [],
+            pinnedTables: [],
             clickedMessageId: null,
         };
     },
     methods: {
-        autoResize() {
-            const textarea = this.$refs.messageTextarea;
-            if (textarea) {
-                textarea.style.height = "auto"; // Reset
-                textarea.style.height = textarea.scrollHeight + "px"; // Groei
+        // Table functions
+        hasTableData(message) {
+            if (message.send_by !== "ai") return false;
+
+            // Controleer eerst of message.json bestaat en niet leeg is
+            if (!message.json || Object.keys(message.json).length === 0) {
+                return false;
             }
+
+            // Als json bestaat, controleer of het een array is met data
+            if (Array.isArray(message.json) && message.json.length > 0) {
+                return true;
+            }
+
+            // Fallback naar de oude parseTableMessage methode
+            const parsed = this.parseTableMessage(message.message);
+            return parsed.rows.length > 0;
         },
-        isDateField(fieldName, data) {
-            if (!data || data.length === 0) return false;
+        getTableRowData(message) {
+            if (
+                message.json &&
+                Array.isArray(message.json) &&
+                message.json.length > 0
+            ) {
+                return message.json;
+            }
 
-            // Check eerste paar records om te zien of het veld datum-achtige waarden bevat
-            const sampleValues = data
-                .slice(0, 5)
-                .map((item) => item[fieldName])
-                .filter((val) => val != null);
+            // Fallback naar oude methode
+            const parsed = this.parseTableMessage(message.message);
 
-            if (sampleValues.length === 0) return false;
-
-            return sampleValues.some((value) => {
-                if (!value) return false;
-
-                // Check verschillende datum formaten
-                const str = value.toString();
-
-                // ISO datum format (YYYY-MM-DD of YYYY-MM-DDTHH:mm:ss)
-                if (/^\d{4}-\d{2}-\d{2}/.test(str)) return true;
-
-                // DD/MM/YYYY of MM/DD/YYYY
-                if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) return true;
-
-                // DD-MM-YYYY of MM-DD-YYYY
-                if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) return true;
-
-                // Probeer Date parsing
-                const parsed = new Date(str);
-                return !isNaN(parsed.getTime()) && parsed.getFullYear() > 1900;
+            return parsed.rows.map((row) => {
+                const obj = {};
+                parsed.headers.forEach((header, index) => {
+                    obj[header] = row[index] || "";
+                });
+                return obj;
             });
         },
-        parseDate(value) {
-            if (!value) return null;
-
-            const str = value.toString();
-
-            // Probeer verschillende formaten
-            let date = new Date(str);
-
-            // Als standaard parsing faalt, probeer DD/MM/YYYY
+        getTableColumnDefs(message) {
             if (
-                isNaN(date.getTime()) &&
-                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)
+                message.json &&
+                Array.isArray(message.json) &&
+                message.json.length > 0
             ) {
-                const parts = str.split("/");
-                // Assumeer DD/MM/YYYY (Europees formaat)
-                date = new Date(parts[2], parts[1] - 1, parts[0]);
+                const firstItem = message.json[0];
+                return Object.keys(firstItem).map((key) => {
+                    const isNumeric = this.isNumericField(key, message.json);
+                    const isDate = this.isDateField(key, message.json);
+
+                    return {
+                        field: key,
+                        headerName: this.getFieldDisplayName(key),
+                        sortable: true,
+                        filter: isNumeric
+                            ? "agNumberColumnFilter"
+                            : "agTextColumnFilter",
+                        resizable: true,
+                        enableRowGroup: !isNumeric, // Numerieke velden niet grouperen
+                        enablePivot: true,
+                        enableValue: isNumeric, // Alleen numerieke velden als waarden
+
+                        // Chart configuratie
+                        chartDataType: isNumeric
+                            ? "series"
+                            : isDate
+                            ? "time"
+                            : "category",
+
+                        // Type-specifieke configuratie
+                        ...(isNumeric && {
+                            type: "numericColumn",
+                            cellClass: "number-cell",
+                            aggFunc: "sum",
+                        }),
+
+                        ...(isDate && {
+                            type: "dateColumn",
+                            cellClass: "date-cell",
+                        }),
+
+                        menuTabs: [
+                            "filterMenuTab",
+                            "generalMenuTab",
+                            "columnsMenuTab",
+                        ],
+                        cellRenderer: (params) => {
+                            if (
+                                typeof params.value === "string" &&
+                                params.value.includes("http")
+                            ) {
+                                return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
+                            }
+                            return params.value;
+                        },
+                    };
+                });
             }
 
-            // Als nog steeds niet geldig, probeer DD-MM-YYYY
-            if (isNaN(date.getTime()) && /^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) {
-                const parts = str.split("-");
-                if (parts[2].length === 4) {
-                    // DD-MM-YYYY
-                    date = new Date(parts[2], parts[1] - 1, parts[0]);
-                }
+            // Fallback naar oude methode...
+            const parsed = this.parseTableMessage(message.message);
+            return parsed.headers.map((header) => ({
+                field: header,
+                headerName: header,
+                sortable: true,
+                filter: true,
+                resizable: true,
+                enableRowGroup: true,
+                enablePivot: true,
+                enableValue: true,
+                chartDataType: "category",
+                menuTabs: ["filterMenuTab", "generalMenuTab", "columnsMenuTab"],
+                cellRenderer: (params) => {
+                    if (
+                        typeof params.value === "string" &&
+                        params.value.includes("http")
+                    ) {
+                        return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
+                    }
+                    return params.value;
+                },
+            }));
+        },
+        togglePinTable(message) {
+            this.clickedMessageId = message.id;
+
+            if (this.isTablePinned(message)) {
+                this.unpinTable(message);
+            } else {
+                this.pinTable(message);
             }
 
-            return isNaN(date.getTime()) ? null : date;
+            setTimeout(() => {
+                this.clickedMessageId = null;
+            }, 300); // reset na animatie
+        },
+
+        // Chart functions
+        hasChartData(message) {
+            if (message.send_by !== "ai") return false;
+
+            // Controleer of er JSON data is
+            if (
+                !message.json ||
+                !Array.isArray(message.json) ||
+                message.json.length === 0
+            ) {
+                return false;
+            }
+
+            // Controleer of het eerste object minstens 2 velden heeft
+            const firstItem = message.json[0];
+            const keys = Object.keys(firstItem);
+
+            // We hebben minstens 2 velden nodig voor een zinvolle chart
+            return keys.length >= 2;
         },
         togglePinChart(message) {
             this.clickedMessageId = message.id;
@@ -763,102 +854,6 @@ export default {
             setTimeout(() => {
                 this.clickedMessageId = null;
             }, 300); // reset na animatie
-        },
-        hasChartData(message) {
-            if (message.send_by !== "ai") return false;
-
-            // Controleer eerst of message.json bestaat en niet leeg is
-            if (!message.json || Object.keys(message.json).length === 0) {
-                return false;
-            }
-
-            // Als json bestaat en het is een array, controleer voor visualiseerbare data
-            if (Array.isArray(message.json) && message.json.length > 0) {
-                return this.hasVisualizableData(message.json);
-            }
-
-            return false;
-        },
-        setDisplayMode(message, mode) {
-            message.displayAsTable = mode === "table";
-            message.displayAsChart = mode === "chart";
-            message.displayAsQuery = mode === "sql_query";
-
-            // Stel default axes in als ze nog niet zijn ingesteld
-            if (
-                mode === "chart" &&
-                (!message.selectedXAxis || !message.selectedYAxis)
-            ) {
-                const fields = this.getAvailableFields(message);
-                const numericFields = this.getNumericFields(message);
-
-                // Probeer slimme defaults te kiezen
-                if (!message.selectedXAxis && fields.length > 0) {
-                    // Zoek een geschikt categorisch veld
-                    const categoricalField = fields.find(
-                        (f) => !numericFields.some((nf) => nf.key === f.key)
-                    );
-                    message.selectedXAxis = categoricalField
-                        ? categoricalField.key
-                        : fields[0].key;
-                }
-
-                if (!message.selectedYAxis && numericFields.length > 0) {
-                    message.selectedYAxis = numericFields[0].key;
-                } else if (!message.selectedYAxis) {
-                    message.selectedYAxis = "__count";
-                }
-            }
-        },
-        getAvailableFields(message) {
-            if (
-                !message.json ||
-                !Array.isArray(message.json) ||
-                message.json.length === 0
-            ) {
-                return [];
-            }
-
-            const firstItem = message.json[0];
-            return Object.keys(firstItem).map((key) => ({
-                key: key,
-                display: this.getFieldDisplayName(key),
-            }));
-        },
-        getNumericFields(message) {
-            if (
-                !message.json ||
-                !Array.isArray(message.json) ||
-                message.json.length === 0
-            ) {
-                return [];
-            }
-
-            const data = message.json;
-            const firstItem = data[0];
-            const numericFields = [];
-
-            Object.keys(firstItem).forEach((key) => {
-                // Check of het veld numerieke waarden bevat
-                const hasNumericValues = data.some((item) => {
-                    const value = item[key];
-                    return (
-                        value !== null &&
-                        value !== undefined &&
-                        !isNaN(parseFloat(value)) &&
-                        isFinite(value)
-                    );
-                });
-
-                if (hasNumericValues) {
-                    numericFields.push({
-                        key: key,
-                        display: this.getFieldDisplayName(key),
-                    });
-                }
-            });
-
-            return numericFields;
         },
         getCustomChartOptions(message) {
             const chartType = message.selectedChartType || "column";
@@ -1154,378 +1149,6 @@ export default {
                     };
             }
         },
-        hasTableData(message) {
-            if (message.send_by !== "ai") return false;
-
-            // Controleer eerst of message.json bestaat en niet leeg is
-            if (!message.json || Object.keys(message.json).length === 0) {
-                return false;
-            }
-
-            // Als json bestaat, controleer of het een array is met data
-            if (Array.isArray(message.json) && message.json.length > 0) {
-                return true;
-            }
-
-            // Fallback naar de oude parseTableMessage methode
-            const parsed = this.parseTableMessage(message.message);
-            return parsed.rows.length > 0;
-        },
-        getChartOptions(message) {
-            const chartType = message.selectedChartType || "bar";
-
-            if (
-                !message.json ||
-                !Array.isArray(message.json) ||
-                message.json.length === 0
-            ) {
-                return {};
-            }
-
-            // Analyseer en aggregeer de data voor zinvolle visualisaties
-            const aggregatedOptions = this.createMeaningfulChartOptions(
-                message.json,
-                chartType
-            );
-
-            if (!aggregatedOptions) {
-                return {};
-            }
-
-            return aggregatedOptions;
-        },
-        getFieldDisplayName(fieldName) {
-            const displayNames = {
-                amount: "Bedrag (€)",
-                quantity: "Uren",
-                date: "Datum",
-                employee: "Medewerker",
-                customer: "Klant",
-                task: "Taak",
-                projectdescription: "Project",
-                count: "Aantal",
-            };
-
-            return displayNames[fieldName] || fieldName;
-        },
-        hasChartData(message) {
-            if (message.send_by !== "ai") return false;
-
-            // Controleer of er JSON data is
-            if (
-                !message.json ||
-                !Array.isArray(message.json) ||
-                message.json.length === 0
-            ) {
-                return false;
-            }
-
-            // Controleer of het eerste object minstens 2 velden heeft
-            const firstItem = message.json[0];
-            const keys = Object.keys(firstItem);
-
-            // We hebben minstens 2 velden nodig voor een zinvolle chart
-            return keys.length >= 2;
-        },
-        getChartOptions(message) {
-            const chartType = message.selectedChartType || "bar";
-
-            if (
-                !message.json ||
-                !Array.isArray(message.json) ||
-                message.json.length === 0
-            ) {
-                return {};
-            }
-
-            const data = message.json;
-            const firstItem = data[0];
-            const keys = Object.keys(firstItem);
-
-            // Zoek de beste combinatie van velden voor de chart
-            const { categoryField, valueField } = this.getBestFieldCombination(
-                data,
-                keys
-            );
-
-            if (!categoryField || !valueField) {
-                return {};
-            }
-
-            // Prepareer de data voor de chart
-            const chartData = this.prepareChartData(
-                data,
-                categoryField,
-                valueField
-            );
-
-            // Genereer chart opties gebaseerd op het type
-            return this.generateChartOptions(
-                chartData,
-                categoryField,
-                valueField,
-                chartType
-            );
-        },
-        getBestFieldCombination(data, keys) {
-            let categoryField = null;
-            let valueField = null;
-
-            // Zoek numerieke velden (voor Y-as)
-            const numericFields = keys.filter((key) => {
-                return data.some((item) => {
-                    const value = item[key];
-                    return (
-                        value !== null &&
-                        value !== undefined &&
-                        !isNaN(parseFloat(value)) &&
-                        isFinite(value) &&
-                        parseFloat(value) !== 0
-                    );
-                });
-            });
-
-            // Zoek categorische velden (voor X-as)
-            const categoricalFields = keys.filter((key) => {
-                return (
-                    !numericFields.includes(key) &&
-                    data.some(
-                        (item) =>
-                            item[key] && item[key].toString().trim() !== ""
-                    )
-                );
-            });
-
-            // Kies de beste velden
-            if (numericFields.length > 0) {
-                valueField = numericFields[0]; // Eerste numerieke veld
-
-                if (categoricalFields.length > 0) {
-                    categoryField = categoricalFields[0]; // Eerste categorische veld
-                } else {
-                    // Als er geen categorisch veld is, gebruik index
-                    categoryField = "__index";
-                }
-            } else {
-                // Als er geen numerieke velden zijn, tel de items per categorie
-                if (categoricalFields.length > 0) {
-                    categoryField = categoricalFields[0];
-                    valueField = "__count";
-                }
-            }
-
-            return { categoryField, valueField };
-        },
-        prepareChartData(data, categoryField, valueField) {
-            const isXAxisDate = this.isDateField(categoryField, data);
-
-            if (valueField === "__count") {
-                // Tel items per categorie
-                const counts = {};
-                data.forEach((item) => {
-                    let category;
-
-                    if (isXAxisDate) {
-                        const dateValue = this.parseDate(item[categoryField]);
-                        category = dateValue
-                            ? dateValue.toISOString().split("T")[0]
-                            : "Onbekend";
-                    } else {
-                        category = item[categoryField] || "Onbekend";
-                    }
-
-                    counts[category] = (counts[category] || 0) + 1;
-                });
-
-                let entries = Object.entries(counts);
-
-                // Sorteer datums chronologisch
-                if (isXAxisDate) {
-                    entries.sort(([a], [b]) => new Date(a) - new Date(b));
-                }
-
-                return entries.map(([category, count]) => ({
-                    category: isXAxisDate ? new Date(category) : category,
-                    value: count,
-                }));
-            } else if (categoryField === "__index") {
-                // Gebruik index als categorie
-                return data
-                    .map((item, index) => ({
-                        category: `Item ${index + 1}`,
-                        value: parseFloat(item[valueField]) || 0,
-                    }))
-                    .filter((item) => item.value > 0);
-            } else {
-                // Normale data mapping
-                return data
-                    .map((item) => {
-                        let category;
-
-                        if (isXAxisDate) {
-                            const dateValue = this.parseDate(
-                                item[categoryField]
-                            );
-                            category = dateValue || "Onbekend";
-                        } else {
-                            category = (
-                                item[categoryField] || "Onbekend"
-                            ).toString();
-                        }
-
-                        const value = parseFloat(item[valueField]) || 0;
-                        return { category: category, value: value };
-                    })
-                    .filter((item) => item.value > 0)
-                    .sort((a, b) => {
-                        // Sorteer datums chronologisch
-                        if (
-                            isXAxisDate &&
-                            a.category instanceof Date &&
-                            b.category instanceof Date
-                        ) {
-                            return a.category - b.category;
-                        }
-                        return 0;
-                    });
-            }
-        },
-        generateChartOptions(chartData, categoryField, valueField, chartType) {
-            // Check of het datum data betreft
-            const isXAxisDate =
-                chartData.length > 0 && chartData[0].category instanceof Date;
-
-            // Voor datums: sorteer chronologisch, anders op waarde
-            let sortedData;
-            if (isXAxisDate) {
-                sortedData = chartData
-                    .sort((a, b) => a.category - b.category)
-                    .slice(0, 50);
-            } else {
-                sortedData = chartData
-                    .sort((a, b) => b.value - a.value)
-                    .slice(0, 20);
-            }
-
-            const title = this.generateChartTitle(categoryField, valueField);
-
-            const baseOptions = {
-                data: sortedData,
-                title: {
-                    text: title,
-                    fontSize: 16,
-                    fontWeight: "bold",
-                },
-                padding: {
-                    top: 20,
-                    right: 20,
-                    bottom: 40,
-                    left: 60,
-                },
-            };
-
-            // Configureer axes gebaseerd op datum of categorie
-            const xAxisConfig = {
-                type: isXAxisDate ? "time" : "category",
-                position: "bottom",
-                title: {
-                    text: this.getFieldDisplayName(categoryField),
-                },
-                label: {
-                    rotation: !isXAxisDate && sortedData.length > 5 ? -45 : 0,
-                    format: isXAxisDate ? "%d/%m/%Y" : undefined,
-                },
-            };
-
-            const yAxisConfig = {
-                type: "number",
-                position: "left",
-                title: {
-                    text: this.getFieldDisplayName(valueField),
-                },
-            };
-
-            const tooltipRenderer = ({ datum }) => {
-                const xValue = isXAxisDate
-                    ? datum.category.toLocaleDateString("nl-NL")
-                    : datum.category;
-
-                return {
-                    content: `${this.getFieldDisplayName(
-                        categoryField
-                    )}: ${xValue}<br/>${this.getFieldDisplayName(
-                        valueField
-                    )}: ${datum.value.toLocaleString()}`,
-                };
-            };
-
-            switch (chartType) {
-                case "bar":
-                    return {
-                        ...baseOptions,
-                        axes: [xAxisConfig, yAxisConfig],
-                        series: [
-                            {
-                                type: "bar",
-                                xKey: "category",
-                                yKey: "value",
-                                fill: "#3B82F6",
-                                tooltip: { renderer: tooltipRenderer },
-                            },
-                        ],
-                    };
-
-                case "line":
-                    return {
-                        ...baseOptions,
-                        axes: [xAxisConfig, yAxisConfig],
-                        series: [
-                            {
-                                type: "line",
-                                xKey: "category",
-                                yKey: "value",
-                                stroke: "#3B82F6",
-                                marker: {
-                                    enabled: true,
-                                    fill: "#3B82F6",
-                                },
-                                tooltip: { renderer: tooltipRenderer },
-                            },
-                        ],
-                    };
-
-                case "area":
-                    return {
-                        ...baseOptions,
-                        axes: [xAxisConfig, yAxisConfig],
-                        series: [
-                            {
-                                type: "area",
-                                xKey: "category",
-                                yKey: "value",
-                                fill: "rgba(59, 130, 246, 0.3)",
-                                stroke: "#3B82F6",
-                                tooltip: { renderer: tooltipRenderer },
-                            },
-                        ],
-                    };
-
-                default: // column
-                    return {
-                        ...baseOptions,
-                        axes: [xAxisConfig, yAxisConfig],
-                        series: [
-                            {
-                                type: "bar",
-                                xKey: "category",
-                                yKey: "value",
-                                fill: "#3B82F6",
-                                tooltip: { renderer: tooltipRenderer },
-                            },
-                        ],
-                    };
-            }
-        },
         generateChartTitle(categoryField, valueField) {
             const categoryName = this.getFieldDisplayName(categoryField);
             const valueName = this.getFieldDisplayName(valueField);
@@ -1537,6 +1160,158 @@ export default {
             } else {
                 return `${valueName} per ${categoryName}`;
             }
+        },
+
+        // Switch methods
+        setDisplayMode(message, mode) {
+            message.displayAsTable = mode === "table";
+            message.displayAsChart = mode === "chart";
+            message.displayAsQuery = mode === "sql_query";
+
+            // Stel default axes in als ze nog niet zijn ingesteld
+            if (
+                mode === "chart" &&
+                (!message.selectedXAxis || !message.selectedYAxis)
+            ) {
+                const fields = this.getAvailableFields(message);
+                const numericFields = this.getNumericFields(message);
+
+                // Probeer slimme defaults te kiezen
+                if (!message.selectedXAxis && fields.length > 0) {
+                    // Zoek een geschikt categorisch veld
+                    const categoricalField = fields.find(
+                        (f) => !numericFields.some((nf) => nf.key === f.key)
+                    );
+                    message.selectedXAxis = categoricalField
+                        ? categoricalField.key
+                        : fields[0].key;
+                }
+
+                if (!message.selectedYAxis && numericFields.length > 0) {
+                    message.selectedYAxis = numericFields[0].key;
+                } else if (!message.selectedYAxis) {
+                    message.selectedYAxis = "__count";
+                }
+            }
+        },
+        getAvailableFields(message) {
+            if (
+                !message.json ||
+                !Array.isArray(message.json) ||
+                message.json.length === 0
+            ) {
+                return [];
+            }
+
+            const firstItem = message.json[0];
+            return Object.keys(firstItem).map((key) => ({
+                key: key,
+                display: this.getFieldDisplayName(key),
+            }));
+        },
+        getNumericFields(message) {
+            if (
+                !message.json ||
+                !Array.isArray(message.json) ||
+                message.json.length === 0
+            ) {
+                return [];
+            }
+
+            const data = message.json;
+            const firstItem = data[0];
+            const numericFields = [];
+
+            Object.keys(firstItem).forEach((key) => {
+                // Check of het veld numerieke waarden bevat
+                const hasNumericValues = data.some((item) => {
+                    const value = item[key];
+                    return (
+                        value !== null &&
+                        value !== undefined &&
+                        !isNaN(parseFloat(value)) &&
+                        isFinite(value)
+                    );
+                });
+
+                if (hasNumericValues) {
+                    numericFields.push({
+                        key: key,
+                        display: this.getFieldDisplayName(key),
+                    });
+                }
+            });
+
+            return numericFields;
+        },
+
+        // Helpers
+        autoResize() {
+            const textarea = this.$refs.messageTextarea;
+            if (textarea) {
+                textarea.style.height = "auto"; // Reset
+                textarea.style.height = textarea.scrollHeight + "px"; // Groei
+            }
+        },
+        isDateField(fieldName, data) {
+            if (!data || data.length === 0) return false;
+
+            // Check eerste paar records om te zien of het veld datum-achtige waarden bevat
+            const sampleValues = data
+                .slice(0, 5)
+                .map((item) => item[fieldName])
+                .filter((val) => val != null);
+
+            if (sampleValues.length === 0) return false;
+
+            return sampleValues.some((value) => {
+                if (!value) return false;
+
+                // Check verschillende datum formaten
+                const str = value.toString();
+
+                // ISO datum format (YYYY-MM-DD of YYYY-MM-DDTHH:mm:ss)
+                if (/^\d{4}-\d{2}-\d{2}/.test(str)) return true;
+
+                // DD/MM/YYYY of MM/DD/YYYY
+                if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) return true;
+
+                // DD-MM-YYYY of MM-DD-YYYY
+                if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) return true;
+
+                // Probeer Date parsing
+                const parsed = new Date(str);
+                return !isNaN(parsed.getTime()) && parsed.getFullYear() > 1900;
+            });
+        },
+        parseDate(value) {
+            if (!value) return null;
+
+            const str = value.toString();
+
+            // Probeer verschillende formaten
+            let date = new Date(str);
+
+            // Als standaard parsing faalt, probeer DD/MM/YYYY
+            if (
+                isNaN(date.getTime()) &&
+                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)
+            ) {
+                const parts = str.split("/");
+                // Assumeer DD/MM/YYYY (Europees formaat)
+                date = new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+
+            // Als nog steeds niet geldig, probeer DD-MM-YYYY
+            if (isNaN(date.getTime()) && /^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) {
+                const parts = str.split("-");
+                if (parts[2].length === 4) {
+                    // DD-MM-YYYY
+                    date = new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+            }
+
+            return isNaN(date.getTime()) ? null : date;
         },
         getFieldDisplayName(fieldName) {
             // Verbeterde field name mapping
@@ -1619,111 +1394,6 @@ export default {
                 .join(" ")
                 .trim();
         },
-        getTableRowData(message) {
-            if (
-                message.json &&
-                Array.isArray(message.json) &&
-                message.json.length > 0
-            ) {
-                console.log("Using JSON data for table rows" + message.json);
-                return message.json;
-            }
-
-            // Fallback naar oude methode
-            const parsed = this.parseTableMessage(message.message);
-
-            return parsed.rows.map((row) => {
-                const obj = {};
-                parsed.headers.forEach((header, index) => {
-                    obj[header] = row[index] || "";
-                });
-                return obj;
-            });
-        },
-        getTableColumnDefs(message) {
-            if (
-                message.json &&
-                Array.isArray(message.json) &&
-                message.json.length > 0
-            ) {
-                const firstItem = message.json[0];
-                return Object.keys(firstItem).map((key) => {
-                    const isNumeric = this.isNumericField(key, message.json);
-                    const isDate = this.isDateField(key, message.json);
-
-                    return {
-                        field: key,
-                        headerName: this.getFieldDisplayName(key),
-                        sortable: true,
-                        filter: isNumeric
-                            ? "agNumberColumnFilter"
-                            : "agTextColumnFilter",
-                        resizable: true,
-                        enableRowGroup: !isNumeric, // Numerieke velden niet grouperen
-                        enablePivot: true,
-                        enableValue: isNumeric, // Alleen numerieke velden als waarden
-
-                        // Chart configuratie
-                        chartDataType: isNumeric
-                            ? "series"
-                            : isDate
-                            ? "time"
-                            : "category",
-
-                        // Type-specifieke configuratie
-                        ...(isNumeric && {
-                            type: "numericColumn",
-                            cellClass: "number-cell",
-                            aggFunc: "sum",
-                        }),
-
-                        ...(isDate && {
-                            type: "dateColumn",
-                            cellClass: "date-cell",
-                        }),
-
-                        menuTabs: [
-                            "filterMenuTab",
-                            "generalMenuTab",
-                            "columnsMenuTab",
-                        ],
-                        cellRenderer: (params) => {
-                            if (
-                                typeof params.value === "string" &&
-                                params.value.includes("http")
-                            ) {
-                                return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
-                            }
-                            return params.value;
-                        },
-                    };
-                });
-            }
-
-            // Fallback naar oude methode...
-            const parsed = this.parseTableMessage(message.message);
-            return parsed.headers.map((header) => ({
-                field: header,
-                headerName: header,
-                sortable: true,
-                filter: true,
-                resizable: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                enableValue: true,
-                chartDataType: "category",
-                menuTabs: ["filterMenuTab", "generalMenuTab", "columnsMenuTab"],
-                cellRenderer: (params) => {
-                    if (
-                        typeof params.value === "string" &&
-                        params.value.includes("http")
-                    ) {
-                        return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
-                    }
-                    return params.value;
-                },
-            }));
-        },
         isNumericField(fieldName, data) {
             if (!data || data.length === 0) return false;
 
@@ -1739,96 +1409,6 @@ export default {
                 const num = parseFloat(value);
                 return !isNaN(num) && isFinite(num);
             });
-        },
-        async sendMessage() {
-            if (!this.form.message.trim()) return;
-            this.no_message = false;
-            if (this.form.message === "" || this.form.source === "x") {
-                this.no_message = true;
-                return;
-            }
-
-            const params = new URLSearchParams({
-                message: this.form.message,
-                conversation: this.form.conversation.guid,
-                source: this.form.source.id || "",
-            });
-
-            try {
-                const userresponse = await fetch(
-                    `${route(
-                        "conversation.postUserMessage",
-                        this.conversation.guid
-                    )}?${params.toString()}`,
-                    {
-                        headers: { Accept: "application/json" },
-                    }
-                );
-
-                if (!userresponse.ok)
-                    throw new Error("Network response was not ok");
-
-                const { message = [] } = await userresponse.json();
-                if (message && message.created_at) {
-                    this.messages.push({
-                        ...message,
-                        displayAsTable: false,
-                        displayAsChart: false,
-                        displayAsQuery: false,
-                        selectedChartType: "bar",
-                        selectedXAxis: null,
-                        selectedYAxis: null,
-                        selectedAggregation: "sum",
-                    });
-                }
-
-                this.form.message = "";
-                this.loading = true;
-                this.autoResize(); // Reset textarea hoogte
-
-                try {
-                    const botresponse = await fetch(
-                        `${route(
-                            "conversation.getBotResponse",
-                            this.conversation.guid
-                        )}?${params.toString()}`,
-                        {
-                            headers: { Accept: "application/json" },
-                        }
-                    );
-
-                    if (!botresponse.ok)
-                        throw new Error("Network response was not ok");
-
-                    const { bot_message = [] } = await botresponse.json();
-
-                    this.loading = false;
-                    if (bot_message && bot_message.created_at) {
-                        this.messages.push({
-                            ...bot_message,
-                            displayAsTable:
-                                bot_message.respond_type === "Table",
-                            displayAsChart:
-                                bot_message.respond_type === "Chart",
-                            displayAsQuery:
-                                bot_message.respond_type === "Query",
-                            selectedChartType: "bar",
-                            selectedXAxis: null,
-                            selectedYAxis: null,
-                            selectedAggregation: "sum",
-                        });
-                    }
-                } catch (error) {
-                    setTimeout(() => {
-                        this.loading = false;
-                        this.error =
-                            "There was an error fetching the information. Please try again.";
-                    }, 1000);
-                }
-            } catch (error) {
-                this.error =
-                    "There was an error fetching the information. Please try again.";
-            }
         },
         formatDate(date) {
             const options = {
@@ -1951,6 +1531,114 @@ export default {
                 below: belowLines.join("\n").trim(),
             };
         },
+        isChartPinned(message) {
+            return this.pinnedCharts.some(
+                (chart) => chart.messageId === message.id
+            );
+        },
+        isTablePinned(message) {
+            return this.pinnedTables.some(
+                (table) => table.messageId === message.id
+            );
+        },
+
+        // Requests
+        async sendMessage() {
+            if (!this.form.message.trim()) return;
+            this.no_message = false;
+            if (this.form.message === "" || this.form.source === "x") {
+                this.no_message = true;
+                return;
+            }
+
+            const params = new URLSearchParams({
+                message: this.form.message,
+                conversation: this.form.conversation.guid,
+                source: this.form.source.id || "",
+            });
+
+            try {
+                const userresponse = await fetch(
+                    `${route(
+                        "conversation.postUserMessage",
+                        this.conversation.guid
+                    )}?${params.toString()}`,
+                    {
+                        headers: { Accept: "application/json" },
+                    }
+                );
+
+                if (!userresponse.ok)
+                    throw new Error("Network response was not ok");
+
+                const { message = [] } = await userresponse.json();
+                if (message && message.created_at) {
+                    this.messages.push({
+                        ...message,
+                        displayAsTable: false,
+                        displayAsChart: false,
+                        displayAsQuery: false,
+                        thumbs_up: 0,
+                        thumbs_down: 0,
+                        selectedChartType: "bar",
+                        selectedXAxis: null,
+                        selectedYAxis: null,
+                        selectedAggregation: "sum",
+                    });
+                }
+
+                this.form.message = "";
+                this.$nextTick(() => {
+                    this.autoResize(); // Reset hoogte correct na DOM-update
+                });
+                this.loading = true;
+
+                try {
+                    const botresponse = await fetch(
+                        `${route(
+                            "conversation.getBotResponse",
+                            this.conversation.guid
+                        )}?${params.toString()}`,
+                        {
+                            headers: { Accept: "application/json" },
+                        }
+                    );
+
+                    if (!botresponse.ok)
+                        throw new Error("Network response was not ok");
+
+                    const { bot_message = [] } = await botresponse.json();
+
+                    this.loading = false;
+                    if (bot_message && bot_message.created_at) {
+                        this.messages.push({
+                            ...bot_message,
+                            displayAsTable:
+                                bot_message.respond_type === "Table",
+                            displayAsChart:
+                                bot_message.respond_type === "Chart",
+                            displayAsQuery:
+                                bot_message.respond_type === "Query",
+                            thumbs_up: 0,
+                            thumbs_down: 0,
+                            selectedChartType: "bar",
+                            selectedXAxis: null,
+                            selectedYAxis: null,
+                            selectedAggregation: "sum",
+                        });
+                    }
+                } catch (error) {
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.error =
+                            "There was an error fetching the information. Please try again.";
+                    }, 1000);
+                }
+            } catch (error) {
+                this.error =
+                    "There was an error fetching the information. Please try again.";
+            }
+        },
         async pinChart(message) {
             const title = this.generateChartTitle(
                 message.selectedXAxis,
@@ -2034,39 +1722,194 @@ export default {
                 );
             }
         },
-        isChartPinned(message) {
-            return this.pinnedCharts.some(
-                (chart) => chart.messageId === message.id
-            );
+        async onThumbsUp(message) {
+            try {
+                const response = await fetch(
+                    route("conversation.likeMessage"),
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                            "X-CSRF-TOKEN": document
+                                .querySelector('meta[name="csrf-token"]')
+                                .getAttribute("content"),
+                        },
+                        body: JSON.stringify({
+                            messageId: message.id,
+                        }),
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to pin chart");
+                }
+
+                // Zet het bericht lokaal op liked
+                const index = this.messages.findIndex(
+                    (m) => m.id === message.id
+                );
+
+                console.log("Message liked successfully", this.messages[index]);
+
+                if (index !== -1) {
+                    this.messages[index].thumbs_up = 1;
+                    this.messages[index].thumbs_down = 0;
+                }
+
+                console.log("Message liked successfully", this.messages[index]);
+            } catch (error) {
+                this.$refs.snackbar.show(
+                    "Er is een fout opgetreden bij het liken van het bericht",
+                    "error"
+                );
+            }
+        },
+        async onThumbsDown(message) {
+            try {
+                const response = await fetch(
+                    route("conversation.dislikeMessage"),
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                            "X-CSRF-TOKEN": document
+                                .querySelector('meta[name="csrf-token"]')
+                                .getAttribute("content"),
+                        },
+                        body: JSON.stringify({
+                            messageId: message.id,
+                        }),
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to pin chart");
+                }
+
+                // Zet het bericht lokaal op liked
+                const index = this.messages.findIndex(
+                    (m) => m.id === message.id
+                );
+
+                if (index !== -1) {
+                    this.messages[index].thumbs_up = 0;
+                    this.messages[index].thumbs_down = 1;
+                }
+
+                console.log(
+                    "Message disliked successfully",
+                    this.messages[index]
+                );
+            } catch (error) {
+                this.$refs.snackbar.show(
+                    "Er is een fout opgetreden bij het disliken van het bericht",
+                    "error"
+                );
+            }
+        },
+        async pinTable(message) {
+            try {
+                const response = await fetch(route("conversation.pinTable"), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN": document
+                            .querySelector('meta[name="csrf-token"]')
+                            .getAttribute("content"),
+                    },
+                    body: JSON.stringify({
+                        data: message.json,
+                        messageId: message.id,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to pin chart");
+                }
+
+                this.pinnedTables.push({
+                    messageId: message.id,
+                });
+
+                // Toon success feedback
+                this.$refs.snackbar.show(
+                    "Tabel is vastgezet op het dashboard!",
+                    "success"
+                );
+            } catch (error) {
+                this.$refs.snackbar.show(
+                    "Er is een fout opgetreden bij het vastzetten van de tabel",
+                    "error"
+                );
+            }
+        },
+        async unpinTable(message) {
+            try {
+                const response = await fetch(
+                    route("conversation.unpinTable", message.id),
+                    {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                            "X-CSRF-TOKEN": document
+                                .querySelector('meta[name="csrf-token"]')
+                                .getAttribute("content"),
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to pin chart");
+                }
+
+                this.pinnedTables = this.pinnedTables.filter(
+                    (table) => table.messageId !== message.id
+                );
+
+                this.$refs.snackbar.show(
+                    "Tabel is losgekoppeld van het dashboard!",
+                    "success"
+                );
+            } catch (error) {
+                this.$refs.snackbar.show(
+                    "Er is een fout opgetreden bij het loskoppelen van de tabel",
+                    "error"
+                );
+            }
         },
     },
-
     mounted() {
         this.messages = this.conversation.messages.map((m) => ({
             ...m,
             displayAsTable: m.respond_type === "Table",
             displayAsChart: m.respond_type === "Chart",
             displayAsQuery: m.respond_type === "Query",
+            thumbs_up: m.thumbs_up || 0,
+            thumbs_down: m.thumbs_down || 0,
             selectedChartType: "bar",
-            // Nieuwe chart configuratie properties
             selectedXAxis: null,
             selectedYAxis: null,
             selectedAggregation: "sum",
         }));
 
-        console.log("Mounted messages:", this.messages);
         if (!this.form.source && this.conversation.user.sources.length > 0) {
             this.form.source = this.conversation.user.sources[0];
         }
 
-        // Set all message ids from pinned charts into the pinnedCharts array
         this.pinnedCharts = this.pinned_charts.map((chart) => ({
             messageId: chart.message_id,
         }));
 
+        this.pinnedTables = this.pinned_tables.map((table) => ({
+            messageId: table.message_id,
+        }));
+
         this.scrollToBottom();
     },
-
     watch: {
         messages() {
             this.scrollToBottom();
