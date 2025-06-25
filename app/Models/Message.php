@@ -16,7 +16,8 @@ class Message extends Model
         'sql_query',
         'respond_type',
         'thumbs_up',
-        'thumbs_down'
+        'thumbs_down',
+        'feedback',
     ];
 
     protected $casts = [

@@ -1,3 +1,71 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.typing-dot {
+    animation: pulse 1.4s infinite ease-in-out;
+    opacity: 0.4;
+    display: inline-block;
+}
+
+.delay-200 {
+    animation-delay: 0.2s;
+}
+
+.delay-400 {
+    animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+    0%,
+    80%,
+    100% {
+        opacity: 0.4;
+    }
+    40% {
+        opacity: 1;
+    }
+}
+
+/* AG Grid customization */
+.ag-theme-alpine {
+    --ag-font-size: 13px;
+    --ag-header-height: 45px;
+    --ag-row-height: 45px;
+    --ag-border-color: #e5e7eb;
+    --ag-header-background-color: #f9fafb;
+}
+
+.ag-theme-alpine .ag-header-cell-text {
+    font-weight: 600;
+    color: #374151;
+}
+
+.ag-theme-alpine .ag-row {
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.ag-theme-alpine .ag-row:hover {
+    background-color: #f9fafb;
+}
+
+.ag-aria-description-container {
+    display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+@keyframes pop {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+.animate-pop {
+    animation: pop 0.3s ease-out;
+}

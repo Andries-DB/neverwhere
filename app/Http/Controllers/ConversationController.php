@@ -110,7 +110,7 @@ class ConversationController extends Controller
             'sql_query' => $json['query'] ?? '',
             'respond_type' => $json['type'] ?? 'text',
             'send_by' => 'ai',
-            ...(isset($json['data']['json']) ? ['json' => json_decode($json['data']['json'], true)] : []),
+            ...(isset($json['data']) ? ['json' => json_decode($json['data'], true)] : []),
         ]);
 
 
@@ -248,6 +248,7 @@ class ConversationController extends Controller
         // Put thumbs up on true, thumbs down on false
         $message->thumbs_up = true;
         $message->thumbs_down = false;
+        $message->feedback = null;
         $message->save();
 
         return [
@@ -258,7 +259,7 @@ class ConversationController extends Controller
 
     public function dislikeMessage(Request $request)
     {
-        $message_id = $request->input('messageId');
+        $message_id = $request->input('message_id');
 
         $message = Message::find($message_id);
 
@@ -269,11 +270,9 @@ class ConversationController extends Controller
         // Put thumbs up on true, thumbs down on false
         $message->thumbs_up = false;
         $message->thumbs_down = true;
+        $message->feedback = $request->input('feedback', null);
         $message->save();
 
-        return [
-            'success' => true,
-            'message' => 'Chart pinned successfully.',
-        ];
+        return;
     }
 }
