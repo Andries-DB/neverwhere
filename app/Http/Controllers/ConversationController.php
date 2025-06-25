@@ -102,7 +102,6 @@ class ConversationController extends Controller
         }
 
         $json = $response->json();
-
         $botMessage = $conversation->messages()->create([
             'guid' => (string) Str::uuid(),
             'user_id' => $user->id,
@@ -110,7 +109,10 @@ class ConversationController extends Controller
             'sql_query' => $json['query'] ?? '',
             'respond_type' => $json['type'] ?? 'text',
             'send_by' => 'ai',
-            ...(isset($json['data']) ? ['json' => json_decode($json['data'], true)] : []),
+            ...(isset($json['data'])
+                ? ['json' => is_string($json['data']) ? json_decode($json['data'], true) : $json['data']]
+                : []
+            )
         ]);
 
 

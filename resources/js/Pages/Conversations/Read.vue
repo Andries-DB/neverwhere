@@ -66,6 +66,7 @@
                                                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                                                 : 'bg-white text-blue-600 hover:bg-gray-100',
                                         ]"
+                                        v-if="message.respond_type !== 'Table'"
                                     >
                                         Tekst
                                     </button>
@@ -120,6 +121,7 @@
                                 >
                                     <div class="mb-3 flex justify-end">
                                         <button
+                                            v-if="!isChartPinned(message)"
                                             :class="[
                                                 'absolute -top-10 right-3 z-10 transition-all duration-200 ease-in-out',
                                                 'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
@@ -235,7 +237,7 @@
                                                             Kies X-as veld
                                                         </option>
                                                         <option
-                                                            v-for="field in getAvailableFields(
+                                                            v-for="field in getCategoricalFields(
                                                                 message
                                                             )"
                                                             :key="field.key"
@@ -332,6 +334,7 @@
                                 <div v-else-if="message.displayAsTable">
                                     <div class="mb-3 flex justify-end relative">
                                         <button
+                                            v-if="!isTablePinned(message)"
                                             :class="[
                                                 'absolute -top-10 right-3 z-10 transition-all duration-200 ease-in-out',
                                                 'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
@@ -650,6 +653,9 @@ export default {
                 enableRowGroup: true,
                 enablePivot: true,
                 chartDataType: "category", // of 'series', 'time', 'excluded'
+                autoHeight: true,
+
+                wrapText: true,
             },
             gridOptions: {
                 rowHeight: 45,
@@ -658,7 +664,7 @@ export default {
                 pagination: false,
                 paginationPageSize: 1000,
                 enableCharts: true,
-                enableRangeSelection: true, // Nodig voor charts
+                enableRangeSelection: true,
                 suppressRowClickSelection: true,
                 enableRowGroup: true,
                 enablePivot: true,
@@ -988,7 +994,7 @@ export default {
                     top: 20,
                     right: 20,
                     bottom: 60,
-                    left: 80,
+                    left: 20,
                 },
                 navigator: {
                     enabled: true,
@@ -1000,12 +1006,15 @@ export default {
                 },
             };
 
-            return this.generateCustomChartConfig(
+            const config = this.generateCustomChartConfig(
                 baseOptions,
                 chartType,
                 xAxis,
                 yAxis
             );
+
+            console.log(config);
+            return config;
         },
         sortChartData(chartData, xAxis) {
             // Bepaal of het datums zijn door te kijken naar het eerste item
@@ -1364,7 +1373,7 @@ export default {
                 mode === "chart" &&
                 (!message.selectedXAxis || !message.selectedYAxis)
             ) {
-                const fields = this.getAvailableFields(message);
+                const fields = this.getCategoricalFields(message);
                 const numericFields = this.getNumericFields(message);
 
                 // Probeer slimme defaults te kiezen
@@ -1385,7 +1394,7 @@ export default {
                 }
             }
         },
-        getAvailableFields(message) {
+        getCategoricalFields(message) {
             if (
                 !message.json ||
                 !Array.isArray(message.json) ||
@@ -1394,12 +1403,34 @@ export default {
                 return [];
             }
 
-            const firstItem = message.json[0];
-            return Object.keys(firstItem).map((key) => ({
-                key: key,
-                display: this.getFieldDisplayName(key),
-            }));
+            const data = message.json;
+            const firstItem = data[0];
+            const categoricalFields = [];
+
+            Object.keys(firstItem).forEach((key) => {
+                // Check of het veld numerieke waarden bevat
+                const hasNumericValues = data.some((item) => {
+                    const value = item[key];
+                    return (
+                        value !== null &&
+                        value !== undefined &&
+                        !isNaN(parseFloat(value)) &&
+                        isFinite(value)
+                    );
+                });
+
+                // Als het GEEN numerieke waarden heeft, is het categorisch
+                if (!hasNumericValues) {
+                    categoricalFields.push({
+                        key: key,
+                        display: this.getFieldDisplayName(key),
+                    });
+                }
+            });
+
+            return categoricalFields;
         },
+
         getNumericFields(message) {
             if (
                 !message.json ||

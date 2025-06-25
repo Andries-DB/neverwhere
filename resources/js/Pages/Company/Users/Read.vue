@@ -74,7 +74,7 @@
                     </label>
                     <div class="flex flex-wrap gap-2">
                         <div
-                            v-for="source in sources"
+                            v-for="source in company.sources"
                             :key="source.id"
                             @click="editUser && toggleSource(source.id)"
                             :class="[
@@ -125,7 +125,6 @@ export default {
     props: {
         company: Object,
         user: Object,
-        sources: Array,
     },
     data() {
         return {

@@ -34,7 +34,7 @@
                     Vastgepinde Grafieken
                 </h2>
 
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div class="grid gap-6">
                     <div
                         v-for="graph in pinned_graphs"
                         :key="graph.id"
@@ -375,6 +375,7 @@ export default {
                 onError: (errors) => {},
             });
         },
+
         // Nieuwe methodes voor titel bewerking
         startEditingTitle(graph) {
             this.editingTitleId = graph.id;
@@ -425,7 +426,6 @@ export default {
                             },
                             onError: (errors) => {
                                 console.error("Error updating title:", errors);
-                                // Je kunt hier een toast notificatie tonen
                                 reject(errors);
                             },
                         }
@@ -433,7 +433,6 @@ export default {
                 });
             } catch (error) {
                 console.error("Failed to save title:", error);
-                // Optioneel: toon een error message aan de gebruiker
             } finally {
                 this.savingTitleId = null;
             }
@@ -448,6 +447,82 @@ export default {
                 return format(date, "dd MMM");
             }
         },
+
+        // VERBETERDE DATE PARSING (zoals in de tweede code)
+        parseDate(value) {
+            if (!value) return null;
+
+            // Converteer naar string als het dat nog niet is
+            const dateStr = String(value).trim();
+
+            // Leeg of ongeldig
+            if (!dateStr || dateStr === "null" || dateStr === "undefined")
+                return null;
+
+            // Probeer verschillende datum formaten
+            const formats = [
+                /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // 2023-12-01T10:30:00
+                /^\d{4}-\d{2}-\d{2}/, // 2023-12-01
+                /^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/, // 01-12-2023 of 1/12/2023
+                /^\d{1,2}[-\/]\d{1,2}[-\/]\d{2}/, // 01-12-23
+                /^\d{13}$/, // 1640995200000
+                /^\d{10}$/, // 1640995200
+            ];
+
+            // Controleer of het een geldig datum formaat lijkt
+            const hasDateFormat = formats.some((format) =>
+                format.test(dateStr)
+            );
+
+            if (hasDateFormat) {
+                // Probeer als timestamp (milliseconds)
+                if (/^\d{13}$/.test(dateStr)) {
+                    const timestamp = parseInt(dateStr);
+                    const date = new Date(timestamp);
+                    return isNaN(date.getTime()) ? null : date;
+                }
+
+                // Probeer als timestamp (seconds)
+                if (/^\d{10}$/.test(dateStr)) {
+                    const timestamp = parseInt(dateStr) * 1000;
+                    const date = new Date(timestamp);
+                    return isNaN(date.getTime()) ? null : date;
+                }
+
+                // Probeer normale datum parsing
+                const date = new Date(dateStr);
+
+                // Controleer of datum geldig is en niet in de verre toekomst/verleden
+                if (!isNaN(date.getTime())) {
+                    const year = date.getFullYear();
+                    if (year >= 1900 && year <= 2100) {
+                        return date;
+                    }
+                }
+            }
+
+            return null;
+        },
+
+        // VERBETERDE DATE FIELD DETECTION (zoals in de tweede code)
+        isDateField(fieldName, data) {
+            if (!data || data.length === 0) return false;
+
+            // Check eerste 10 records (of minder als er minder zijn)
+            const sampleSize = Math.min(10, data.length);
+            let dateCount = 0;
+
+            for (let i = 0; i < sampleSize; i++) {
+                const value = data[i][fieldName];
+                if (this.parseDate(value)) {
+                    dateCount++;
+                }
+            }
+
+            // Als meer dan 70% van de samples geldige datums zijn
+            return dateCount / sampleSize > 0.7;
+        },
+
         isNumericField(fieldName, data) {
             if (!data || data.length === 0) return false;
 
@@ -501,8 +576,8 @@ export default {
                 return {};
             }
 
-            // Prepareer data gebaseerd op de pinned graph configuratie
-            const chartData = this.preparePinnedChartData(
+            // GEBRUIK VERBETERDE DATA PREPARATIE
+            const chartData = this.prepareChartData(
                 graph.json,
                 xAxis,
                 yAxis,
@@ -514,16 +589,13 @@ export default {
                 return {};
             }
 
-            // Sorteer en limiteer data
-            const sortedData = chartData
-                .sort((a, b) => b.value - a.value)
-                .slice(0, 50);
-
-            const title = this.generatePinnedChartTitle(
-                xAxis,
-                yAxis,
-                aggregation
+            // Sorteer en limiteer data met verbeterde functie
+            const sortedData = this.sortChartData(chartData, xAxis).slice(
+                0,
+                chartData.length
             );
+
+            const title = this.generateChartTitle(xAxis, yAxis, aggregation);
 
             const baseOptions = {
                 data: sortedData,
@@ -540,163 +612,189 @@ export default {
                 },
             };
 
-            const finalConfig = this.generatePinnedChartConfig(
+            const finalConfig = this.generateChartConfig(
                 baseOptions,
                 chartType,
                 xAxis,
                 yAxis
             );
 
+            console.log("Final chart options:", finalConfig);
             return finalConfig;
         },
 
-        // Voeg deze nieuwe helper methode toe aan je methods object:
-
-        isDateField(fieldName, data) {
-            if (!data || data.length === 0) return false;
-
-            // Check eerste paar records om te zien of het veld datum-achtige waarden bevat
-            const sampleValues = data
-                .slice(0, 5)
-                .map((item) => item[fieldName])
-                .filter((val) => val != null);
-
-            if (sampleValues.length === 0) return false;
-
-            return sampleValues.some((value) => {
-                if (!value) return false;
-
-                // Check verschillende datum formaten
-                const str = value.toString();
-
-                // ISO datum format (YYYY-MM-DD of YYYY-MM-DDTHH:mm:ss)
-                if (/^\d{4}-\d{2}-\d{2}/.test(str)) return true;
-
-                // DD/MM/YYYY of MM/DD/YYYY
-                if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) return true;
-
-                // DD-MM-YYYY of MM-DD-YYYY
-                if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) return true;
-
-                // Probeer Date parsing
-                const parsed = new Date(str);
-                return !isNaN(parsed.getTime()) && parsed.getFullYear() > 1900;
-            });
-        },
-
-        parseDate(value) {
-            if (!value) return null;
-
-            const str = value.toString();
-
-            // Probeer verschillende formaten
-            let date = new Date(str);
-
-            // Als standaard parsing faalt, probeer DD/MM/YYYY
-            if (
-                isNaN(date.getTime()) &&
-                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)
-            ) {
-                const parts = str.split("/");
-                // Assumeer DD/MM/YYYY (Europees formaat)
-                date = new Date(parts[2], parts[1] - 1, parts[0]);
+        prepareChartData(data, xAxis, yAxis, aggregation) {
+            if (!data || data.length === 0) {
+                console.warn("Geen data beschikbaar voor chart");
+                return [];
             }
 
-            // Als nog steeds niet geldig, probeer DD-MM-YYYY
-            if (isNaN(date.getTime()) && /^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) {
-                const parts = str.split("-");
-                if (parts[2].length === 4) {
-                    // DD-MM-YYYY
-                    date = new Date(parts[2], parts[1] - 1, parts[0]);
-                }
-            }
-
-            return isNaN(date.getTime()) ? null : date;
-        },
-
-        // Update je preparePinnedChartData methode:
-        preparePinnedChartData(data, xAxis, yAxis, aggregation) {
             const isXAxisDate = this.isDateField(xAxis, data);
 
             if (yAxis === "__count") {
-                // Tel items per categorie
-                const counts = {};
+                return this.prepareCountData(data, xAxis, isXAxisDate);
+            } else {
+                return this.prepareAggregatedData(
+                    data,
+                    xAxis,
+                    yAxis,
+                    aggregation,
+                    isXAxisDate
+                );
+            }
+        },
 
-                data.forEach((item) => {
-                    let category;
+        prepareCountData(data, xAxis, isXAxisDate) {
+            const counts = {};
 
-                    if (xAxis === "__index") {
-                        category = `Item ${data.indexOf(item) + 1}`;
-                    } else if (isXAxisDate) {
-                        const dateValue = this.parseDate(item[xAxis]);
-                        category = dateValue
-                            ? dateValue.toISOString().split("T")[0]
-                            : "Onbekend";
-                    } else {
-                        category = (item[xAxis] || "Onbekend").toString();
-                    }
+            data.forEach((item, index) => {
+                let category = this.getCategoryValue(
+                    item,
+                    xAxis,
+                    index,
+                    isXAxisDate
+                );
 
-                    counts[category] = (counts[category] || 0) + 1;
-                });
-
-                let entries = Object.entries(counts);
-
-                // Sorteer datums chronologisch, andere waarden op count
-                if (isXAxisDate) {
-                    entries.sort(([a], [b]) => new Date(a) - new Date(b));
-                } else {
-                    entries.sort(([, a], [, b]) => b - a);
+                if (category !== null) {
+                    const categoryKey =
+                        category instanceof Date
+                            ? category.toISOString()
+                            : String(category);
+                    counts[categoryKey] = (counts[categoryKey] || 0) + 1;
                 }
+            });
 
-                return entries.slice(0, 20).map(([category, count]) => ({
-                    category: isXAxisDate ? new Date(category) : category,
+            // Converteer naar array en sorteer
+            let entries = Object.entries(counts);
+
+            if (isXAxisDate) {
+                // Sorteer datums chronologisch
+                entries.sort(([a], [b]) => new Date(a) - new Date(b));
+                return entries.slice(0, 20).map(([categoryKey, count]) => ({
+                    category: new Date(categoryKey),
                     value: count,
                 }));
             } else {
-                // Groepeer data op X-as en aggregeer Y-as waarden
-                const groups = {};
-
-                data.forEach((item) => {
-                    let category;
-
-                    if (xAxis === "__index") {
-                        category = `Item ${data.indexOf(item) + 1}`;
-                    } else if (isXAxisDate) {
-                        const dateValue = this.parseDate(item[xAxis]);
-                        category = dateValue
-                            ? dateValue.toISOString().split("T")[0]
-                            : "Onbekend";
-                    } else {
-                        category = (item[xAxis] || "Onbekend").toString();
-                    }
-
-                    const value = parseFloat(item[yAxis]) || 0;
-
-                    if (!groups[category]) {
-                        groups[category] = [];
-                    }
-                    groups[category].push(value);
-                });
-
-                let aggregatedData = Object.entries(groups)
-                    .map(([category, values]) => ({
-                        category: isXAxisDate ? new Date(category) : category,
-                        value: this.aggregateValues(values, aggregation),
-                    }))
-                    .filter(
-                        (item) => item.value !== null && !isNaN(item.value)
-                    );
-
-                // Sorteer datums chronologisch, andere waarden op waarde
-                if (isXAxisDate) {
-                    aggregatedData.sort((a, b) => a.category - b.category);
-                } else {
-                    aggregatedData.sort((a, b) => b.value - a.value);
-                }
-
-                return aggregatedData.slice(0, 20);
+                // Sorteer op count (hoogste eerst)
+                entries.sort(([, a], [, b]) => b - a);
+                return entries.slice(0, 20).map(([category, count]) => ({
+                    category: category,
+                    value: count,
+                }));
             }
         },
+
+        prepareAggregatedData(data, xAxis, yAxis, aggregation, isXAxisDate) {
+            const groups = {};
+
+            data.forEach((item, index) => {
+                let category = this.getCategoryValue(
+                    item,
+                    xAxis,
+                    index,
+                    isXAxisDate
+                );
+
+                if (category !== null) {
+                    const categoryKey =
+                        category instanceof Date
+                            ? category.toISOString()
+                            : String(category);
+                    const value = this.parseNumericValue(item[yAxis]);
+
+                    if (value !== null) {
+                        if (!groups[categoryKey]) {
+                            groups[categoryKey] = [];
+                        }
+                        groups[categoryKey].push(value);
+                    }
+                }
+            });
+
+            // Converteer naar geaggregeerde data
+            let aggregatedData = Object.entries(groups)
+                .map(([categoryKey, values]) => {
+                    const aggregatedValue = this.aggregateValues(
+                        values,
+                        aggregation
+                    );
+
+                    return {
+                        category: isXAxisDate
+                            ? new Date(categoryKey)
+                            : categoryKey,
+                        value: aggregatedValue,
+                    };
+                })
+                .filter(
+                    (item) =>
+                        item.value !== null &&
+                        !isNaN(item.value) &&
+                        isFinite(item.value)
+                );
+
+            return aggregatedData.slice(0, 20);
+        },
+
+        getCategoryValue(item, xAxis, index, isXAxisDate) {
+            if (xAxis === "__index") {
+                return `Item ${index + 1}`;
+            }
+
+            const rawValue = item[xAxis];
+
+            // Controleer op lege waarden
+            if (
+                rawValue === null ||
+                rawValue === undefined ||
+                rawValue === ""
+            ) {
+                return "Onbekend";
+            }
+
+            if (isXAxisDate) {
+                const dateValue = this.parseDate(rawValue);
+                if (dateValue) {
+                    return dateValue;
+                } else {
+                    console.warn("Kon datum niet parsen:", rawValue);
+                    return null; // Skip invalid dates
+                }
+            } else {
+                return String(rawValue);
+            }
+        },
+
+        parseNumericValue(value) {
+            if (value === null || value === undefined || value === "") {
+                return null;
+            }
+
+            // Probeer als getal te parsen
+            const numValue = parseFloat(value);
+
+            // Controleer of het een geldig getal is
+            if (isNaN(numValue) || !isFinite(numValue)) {
+                return null;
+            }
+
+            return numValue;
+        },
+
+        sortChartData(chartData, xAxis) {
+            // Bepaal of het datums zijn door te kijken naar het eerste item
+            const isDateData =
+                chartData.length > 0 && chartData[0].category instanceof Date;
+
+            if (isDateData) {
+                // Sorteer datums chronologisch
+                return chartData.sort((a, b) => a.category - b.category);
+            } else {
+                // Sorteer andere waarden op waarde (hoogste eerst)
+                return chartData.sort((a, b) => b.value - a.value);
+            }
+        },
+
         aggregateValues(values, aggregation) {
             const validValues = values.filter(
                 (v) => v !== null && !isNaN(v) && isFinite(v)
@@ -723,7 +821,7 @@ export default {
             }
         },
 
-        generatePinnedChartTitle(xAxis, yAxis, aggregation) {
+        generateChartTitle(xAxis, yAxis, aggregation) {
             const xName = this.getFieldDisplayName(xAxis);
             const yName = this.getFieldDisplayName(yAxis);
 
@@ -742,186 +840,6 @@ export default {
 
             return `${aggLabel} ${yName} per ${xName}`;
         },
-        isDateField(fieldName, data) {
-            if (!data || data.length === 0) return false;
-
-            // Check eerste paar records om te zien of het veld datum-achtige waarden bevat
-            const sampleValues = data
-                .slice(0, 5)
-                .map((item) => item[fieldName])
-                .filter((val) => val != null);
-
-            if (sampleValues.length === 0) return false;
-
-            return sampleValues.some((value) => {
-                if (!value) return false;
-
-                // Check verschillende datum formaten
-                const str = value.toString();
-
-                // ISO datum format (YYYY-MM-DD of YYYY-MM-DDTHH:mm:ss)
-                if (/^\d{4}-\d{2}-\d{2}/.test(str)) return true;
-
-                // DD/MM/YYYY of MM/DD/YYYY
-                if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) return true;
-
-                // DD-MM-YYYY of MM-DD-YYYY
-                if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) return true;
-
-                // Probeer Date parsing
-                const parsed = new Date(str);
-                return !isNaN(parsed.getTime()) && parsed.getFullYear() > 1900;
-            });
-        },
-
-        parseDate(value) {
-            if (!value) return null;
-
-            const str = value.toString();
-
-            // Probeer verschillende formaten
-            let date = new Date(str);
-
-            // Als standaard parsing faalt, probeer DD/MM/YYYY
-            if (
-                isNaN(date.getTime()) &&
-                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)
-            ) {
-                const parts = str.split("/");
-                // Assumeer DD/MM/YYYY (Europees formaat)
-                date = new Date(parts[2], parts[1] - 1, parts[0]);
-            }
-
-            // Als nog steeds niet geldig, probeer DD-MM-YYYY
-            if (isNaN(date.getTime()) && /^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) {
-                const parts = str.split("-");
-                if (parts[2].length === 4) {
-                    // DD-MM-YYYY
-                    date = new Date(parts[2], parts[1] - 1, parts[0]);
-                }
-            }
-
-            return isNaN(date.getTime()) ? null : date;
-        },
-
-        generatePinnedChartConfig(baseOptions, chartType, xAxis, yAxis) {
-            const xAxisTitle = this.getFieldDisplayName(xAxis);
-            const yAxisTitle = this.getFieldDisplayName(yAxis);
-
-            const commonAxes = [
-                {
-                    type: "category",
-                    position: "bottom",
-                    title: { text: xAxisTitle },
-                    label: {
-                        rotation: baseOptions.data.length > 10 ? -45 : 0,
-                        fontSize: 11,
-                    },
-                },
-                {
-                    type: "number",
-                    position: "left",
-                    title: { text: yAxisTitle },
-                    label: {
-                        fontSize: 11,
-                    },
-                },
-            ];
-
-            switch (chartType) {
-                case "bar":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                type: "bar",
-                                xKey: "category",
-                                yKey: "value",
-                                fill: "#3B82F6",
-                                tooltip: {
-                                    renderer: ({ datum }) => ({
-                                        content: `${xAxisTitle}: ${
-                                            datum.category
-                                        }<br/>${yAxisTitle}: ${datum.value.toLocaleString()}`,
-                                    }),
-                                },
-                            },
-                        ],
-                    };
-
-                case "line":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                type: "line",
-                                xKey: "category",
-                                yKey: "value",
-                                stroke: "#3B82F6",
-                                strokeWidth: 2,
-                                marker: {
-                                    enabled: true,
-                                    fill: "#3B82F6",
-                                    size: 6,
-                                },
-                                tooltip: {
-                                    renderer: ({ datum }) => ({
-                                        content: `${xAxisTitle}: ${
-                                            datum.category
-                                        }<br/>${yAxisTitle}: ${datum.value.toLocaleString()}`,
-                                    }),
-                                },
-                            },
-                        ],
-                    };
-
-                case "area":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                type: "area",
-                                xKey: "category",
-                                yKey: "value",
-                                fill: "rgba(59, 130, 246, 0.3)",
-                                stroke: "#3B82F6",
-                                strokeWidth: 2,
-                                tooltip: {
-                                    renderer: ({ datum }) => ({
-                                        content: `${xAxisTitle}: ${
-                                            datum.category
-                                        }<br/>${yAxisTitle}: ${datum.value.toLocaleString()}`,
-                                    }),
-                                },
-                            },
-                        ],
-                    };
-
-                default: // column
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                type: "bar",
-                                xKey: "category",
-                                yKey: "value",
-                                fill: "#3B82F6",
-                                tooltip: {
-                                    renderer: ({ datum }) => ({
-                                        content: `${xAxisTitle}: ${
-                                            datum.category
-                                        }<br/>${yAxisTitle}: ${datum.value.toLocaleString()}`,
-                                    }),
-                                },
-                            },
-                        ],
-                    };
-            }
-        },
 
         getFieldDisplayName(fieldName) {
             if (fieldName === "__index") return "Rij Nummer";
@@ -932,7 +850,8 @@ export default {
                 .replace(/_/g, " ")
                 .replace(/\b\w/g, (l) => l.toUpperCase());
         },
-        generatePinnedChartConfig(baseOptions, chartType, xAxis, yAxis) {
+
+        generateChartConfig(baseOptions, chartType, xAxis, yAxis) {
             const xAxisTitle = this.getFieldDisplayName(xAxis);
             const yAxisTitle = this.getFieldDisplayName(yAxis);
 
@@ -969,9 +888,21 @@ export default {
                     ? datum.category.toLocaleDateString("nl-NL")
                     : datum.category;
 
+                const yValue =
+                    typeof datum.value === "number"
+                        ? datum.value.toLocaleString("nl-NL")
+                        : datum.value;
+
                 return {
-                    content: `${xAxisTitle}: ${xValue}<br/>${yAxisTitle}: ${datum.value.toLocaleString()}`,
+                    content: `${xAxisTitle}: ${xValue}<br/>${yAxisTitle}: ${yValue}`,
                 };
+            };
+
+            // Basis serie configuratie
+            const serieConfig = {
+                xKey: "category",
+                yKey: "value",
+                tooltip: { renderer: tooltipRenderer },
             };
 
             switch (chartType) {
@@ -981,11 +912,9 @@ export default {
                         axes: commonAxes,
                         series: [
                             {
+                                ...serieConfig,
                                 type: "bar",
-                                xKey: "category",
-                                yKey: "value",
                                 fill: "#3B82F6",
-                                tooltip: { renderer: tooltipRenderer },
                             },
                         ],
                     };
@@ -996,9 +925,8 @@ export default {
                         axes: commonAxes,
                         series: [
                             {
+                                ...serieConfig,
                                 type: "line",
-                                xKey: "category",
-                                yKey: "value",
                                 stroke: "#3B82F6",
                                 strokeWidth: 2,
                                 marker: {
@@ -1006,7 +934,6 @@ export default {
                                     fill: "#3B82F6",
                                     size: 6,
                                 },
-                                tooltip: { renderer: tooltipRenderer },
                             },
                         ],
                     };
@@ -1017,13 +944,11 @@ export default {
                         axes: commonAxes,
                         series: [
                             {
+                                ...serieConfig,
                                 type: "area",
-                                xKey: "category",
-                                yKey: "value",
                                 fill: "rgba(59, 130, 246, 0.3)",
                                 stroke: "#3B82F6",
                                 strokeWidth: 2,
-                                tooltip: { renderer: tooltipRenderer },
                             },
                         ],
                     };
@@ -1034,11 +959,9 @@ export default {
                         axes: commonAxes,
                         series: [
                             {
+                                ...serieConfig,
                                 type: "bar",
-                                xKey: "category",
-                                yKey: "value",
                                 fill: "#3B82F6",
-                                tooltip: { renderer: tooltipRenderer },
                             },
                         ],
                     };
@@ -1096,6 +1019,7 @@ export default {
             const parsed = this.parseTableMessage(message.message);
             return parsed.rows.length > 0;
         },
+
         getTableRowData(message) {
             if (
                 message.json &&
@@ -1116,6 +1040,7 @@ export default {
                 return obj;
             });
         },
+
         getTableColumnDefs(message) {
             if (
                 message.json &&

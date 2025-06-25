@@ -35,6 +35,8 @@ class DashboardController extends Controller
             ->with('message', 'message.conversation')
             ->get();
 
+        // dd($pinned_graphs);
+
         $pinned_tables = PinnedTable::where('user_id', auth()->id())
             ->orderBy('created_at', 'desc')
             ->with('message', 'message.conversation')

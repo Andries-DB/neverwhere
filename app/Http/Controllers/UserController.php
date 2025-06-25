@@ -56,16 +56,13 @@ class UserController extends Controller
     public function show($guid, $user_guid)
     {
         $this->authorizeAdmin();
-
-        $company = Company::where('guid', $guid)->firstOrFail();
+        $company = Company::where('guid', $guid)->with('sources')->firstOrFail();
         $user = User::where('guid', $user_guid)->with('sources')->firstOrFail();
 
-        $sources = Source::all();
 
         return Inertia::render('Company/Users/Read', [
             'company' => $company,
             'user' => $user,
-            'sources' => $sources
         ]);
     }
 

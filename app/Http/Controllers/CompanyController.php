@@ -38,6 +38,7 @@ class CompanyController extends Controller
 
     public function show($guid)
     {
+
         $this->authorizeAdmin();
 
         $company = Company::where('guid', $guid)->with('users', 'users.sources', 'sources')->firstOrFail();
