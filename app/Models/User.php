@@ -22,7 +22,10 @@ class User extends Authenticatable
         'email',
         'password',
         'guid',
-        'role'
+        'role',
+        'google2fa_secret',
+        'google2fa_enabled',
+        'two_factor_verified_at',
     ];
 
     /**
@@ -33,6 +36,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'google2fa_secret'
     ];
 
     /**
@@ -45,6 +49,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_verified_at' => 'datetime',
+            'google2fa_enabled' => 'boolean',
         ];
     }
 
@@ -66,5 +72,26 @@ class User extends Authenticatable
     public function pinnedGraphs()
     {
         return $this->hasMany(PinnedGraph::class);
+    }
+
+    public function needsTwoFactorVerification(): bool
+    {
+        if (!$this->google2fa_enabled) {
+            return false;
+        }
+
+        if (!$this->two_factor_verified_at) {
+            return true;
+        }
+
+        return $this->two_factor_verified_at->diffInDays(now()) >= 14;
+    }
+
+    /**
+     * Mark 2FA as verified
+     */
+    public function markTwoFactorAsVerified(): void
+    {
+        $this->update(['two_factor_verified_at' => now()]);
     }
 }

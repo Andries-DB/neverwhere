@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SourceController;
+use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -17,8 +18,22 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function () {
+    // 2FA Setup routes - alleen toegankelijk als 2FA nog niet is ingesteld
+    Route::get('/two-factor/setup', [TwoFactorController::class, 'setup'])->name('two-factor.setup');
+    Route::post('/two-factor/enable', [TwoFactorController::class, 'enable'])->name('two-factor.enable');
 
-Route::middleware(['auth', HandleInertiaRequests::class])->group(function () {
+    // 2FA Verification - alleen toegankelijk als 2FA is ingesteld maar verificatie nodig is
+    Route::get('/two-factor/verify', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
+    Route::post('/two-factor/verify', [TwoFactorController::class, 'confirmVerification'])->name('two-factor.confirm');
+
+    // 2FA Management - alleen toegankelijk na volledige verificatie
+    Route::get('/two-factor/manage', [TwoFactorController::class, 'manage'])->name('two-factor.manage');
+    Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
+});
+
+
+Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'show'])->name('dashboard');
 
     // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

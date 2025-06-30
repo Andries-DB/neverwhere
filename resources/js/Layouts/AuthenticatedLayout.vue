@@ -64,13 +64,14 @@ const sidebarItems = [
         icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
         role: "admin",
     },
-    // {
-    //     name: "Bronnen",
-    //     route: "source.get",
-    //     routes: ["source.get", "source.read"],
-    //     icon: "M3 7.5L12 3l6 6-9 9-6-6V7.5z M7.5 7.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z",
-    //     role: "admin",
-    // },
+    {
+        name: "2FA",
+        route: "two-factor.setup",
+        routes: ["two-factor.setup", "two-factor.manage"],
+        icon: "M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z M16.5 10V7a4.5 4.5 0 10-9 0v3m-1.5 0a1.5 1.5 0 00-1.5 1.5v7A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5v-7a1.5 1.5 0 00-1.5-1.5h-13z",
+
+        role: "user",
+    },
 ];
 
 const isActive = (routes) => {

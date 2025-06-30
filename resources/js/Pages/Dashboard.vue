@@ -34,7 +34,7 @@
                     Vastgepinde Grafieken
                 </h2>
 
-                <div class="grid gap-6">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <div
                         v-for="graph in pinned_graphs"
                         :key="graph.id"
