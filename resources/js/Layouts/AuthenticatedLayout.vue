@@ -4,6 +4,8 @@ import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink.vue";
 import { Link, useForm, usePage } from "@inertiajs/vue3";
 import { defineProps } from "vue";
+import DropdownLink from "@/Components/DropdownLink.vue";
+import NavLink from "@/Components/NavLink.vue";
 
 const showingNavigationDropdown = ref(false);
 const sidebarCollapsed = ref(false);
@@ -65,7 +67,7 @@ const sidebarItems = [
         role: "admin",
     },
     {
-        name: "2FA",
+        name: "Tweestapsverificatie",
         route: "two-factor.setup",
         routes: ["two-factor.setup", "two-factor.manage"],
         icon: "M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z M16.5 10V7a4.5 4.5 0 10-9 0v3m-1.5 0a1.5 1.5 0 00-1.5 1.5v7A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5v-7a1.5 1.5 0 00-1.5-1.5h-13z",
@@ -472,50 +474,45 @@ watch(sidebarCollapsed, (newValue) => {
                     </button>
 
                     <!-- Breadcrumb or Page Title -->
-                    <div
-                        class="items-center space-x-2 text-sm min-w-0 overflow-x-auto whitespace-nowrap hidden md:flex"
-                    >
-                        <!-- <template
-                            v-for="(crumb, index) in breadcrumbs"
-                            :key="index"
+                    <div class="flex items-center gap-4 text-sm hidden md:flex">
+                        <a
+                            :href="route('dashboard')"
+                            :class="{
+                                'bg-slate-100 text-slate-900 ':
+                                    route().current('dashboard'),
+                                'text-slate-600 hover:text-slate-900 hover:bg-slate-50':
+                                    !route().current('dashboard'),
+                            }"
+                            class="px-4 py-2 rounded-md transition-colors duration-200"
                         >
-                            <template v-if="index === breadcrumbs.length - 1">
-                                <!-- Laatste crumb, actief, geen link
-                                <span class="text-slate-900 font-medium">{{
-                                    crumb.title
-                                }}</span>
-                            </template>
-                            <template v-else>
-                                <template v-if="crumb.href">
-                                    <a
-                                        :href="crumb.href"
-                                        class="text-slate-500 hover:text-slate-700 flex-shrink-0"
-                                    >
-                                        {{ crumb.title }}
-                                    </a>
-                                </template>
-                                <template v-else>
-                                    <span
-                                        class="text-slate-500 flex-shrink-0"
-                                        >{{ crumb.title }}</span
-                                    >
-                                </template>
-                            </template>
+                            Dashboard
+                        </a>
 
-                          
-                            <svg
-                                v-if="index < breadcrumbs.length - 1"
-                                class="w-4 h-4 text-slate-400 flex-shrink-0"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
-                        </template> -->
+                        <!-- <a
+                            :href="route('dashboard')"
+                            :class="{
+                                'bg-slate-100 text-slate-900 font-semibold':
+                                    route().current('dashboard'),
+                                'text-slate-600 hover:text-slate-900 hover:bg-slate-50':
+                                    !route().current('dashboard'),
+                            }"
+                            class="px-4 py-2 rounded-md transition-colors duration-200"
+                        >
+                            Chats
+                        </a> -->
+
+                        <a
+                            :href="route('training.index')"
+                            :class="{
+                                'bg-slate-100 text-slate-900':
+                                    route().current('training.index'),
+                                'text-slate-600 hover:text-slate-900 hover:bg-slate-50':
+                                    !route().current('training.index'),
+                            }"
+                            class="px-4 py-2 rounded-md transition-colors duration-200"
+                        >
+                            Training
+                        </a>
                     </div>
                 </div>
 

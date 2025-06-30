@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SourceController;
+use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -82,6 +83,8 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::post('/conversation/dislikemessage', [ConversationController::class, 'dislikeMessage'])->name('conversation.dislikeMessage');
 
     Route::get('/message/{guid}', [MessageController::class, 'read'])->name('message.read');
+
+    Route::get('training', [TrainingController::class, 'index'])->name('training.index');
 });
 
 require __DIR__ . '/auth.php';

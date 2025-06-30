@@ -18,7 +18,7 @@
                         />
                     </svg>
                     <span class="text-green-600 font-medium"
-                        >2FA is actief</span
+                        >Tweestapsverificatie is actief</span
                     >
                 </div>
 
@@ -56,9 +56,6 @@
 
             <!-- Gevaar zone -->
             <div class="border-t pt-6">
-                <h3 class="text-lg font-medium text-red-600 mb-4">
-                    Gevaar Zone
-                </h3>
                 <div
                     class="bg-red-50 border border-red-200 rounded-md p-4 mb-4"
                 >
@@ -116,7 +113,7 @@
 
 <script setup>
 import { ref } from "vue";
-import { useForm, usePage } from "@inertiajs/vue3";
+import { useForm, usePage, Head } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 
 const { props } = usePage();

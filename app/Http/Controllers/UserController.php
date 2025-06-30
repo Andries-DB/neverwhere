@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\Source;
 use App\Models\User;
+use App\Notifications\UserInvitationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rules\Password as PasswordRule;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -31,7 +33,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => ['required', Password::defaults()],
+            'password' => ['required', PasswordRule::defaults()],
         ]);
 
         $company = Company::where('guid', $guid)->with('users')->firstOrFail();
@@ -43,6 +45,9 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'role' => 'user',
         ]);
+
+        $token = Password::createToken($user);
+        $user->notify(new UserInvitationNotification($token));
 
         $company->users()->attach($user->id);
 

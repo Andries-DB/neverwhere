@@ -860,6 +860,8 @@ export default {
                 baseOptions.data.length > 0 &&
                 baseOptions.data[0].category instanceof Date;
 
+            const maxLabelChars = 15;
+
             const xAxisConfig = {
                 type: isXAxisDate ? "time" : "category",
                 position: "bottom",
@@ -869,6 +871,16 @@ export default {
                         !isXAxisDate && baseOptions.data.length > 10 ? -45 : 0,
                     fontSize: 11,
                     format: isXAxisDate ? "%d/%m/%Y" : undefined,
+                    formatter: (params) => {
+                        let val = params.value;
+                        if (
+                            typeof val === "string" &&
+                            val.length > maxLabelChars
+                        ) {
+                            return val.slice(0, maxLabelChars) + "…";
+                        }
+                        return val;
+                    },
                 },
             };
 

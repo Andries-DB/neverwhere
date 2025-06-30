@@ -187,13 +187,7 @@
                                                     </select>
                                                 </div>
 
-                                                <div
-                                                    v-if="
-                                                        message.selectedYAxis &&
-                                                        message.selectedYAxis !==
-                                                            '__count'
-                                                    "
-                                                >
+                                                <div>
                                                     <label
                                                         class="block text-xs font-medium text-gray-700 mb-1"
                                                     >
@@ -237,7 +231,7 @@
                                                             Kies X-as veld
                                                         </option>
                                                         <option
-                                                            v-for="field in getCategoricalFields(
+                                                            v-for="field in getAllFields(
                                                                 message
                                                             )"
                                                             :key="field.key"
@@ -268,7 +262,7 @@
                                                             Kies Y-as veld
                                                         </option>
                                                         <option
-                                                            v-for="field in getNumericFields(
+                                                            v-for="field in getAllFields(
                                                                 message
                                                             )"
                                                             :key="field.key"
@@ -391,6 +385,12 @@
                                                     "
                                                 />
                                             </div>
+                                        </div>
+                                        <div
+                                            class="pt-3 text-xs ml-2 text-gray-600 border-t border-gray-200"
+                                        >
+                                            {{ message.json.length }}
+                                            records
                                         </div>
                                     </template>
                                 </div>
@@ -1013,7 +1013,6 @@ export default {
                 yAxis
             );
 
-            console.log(config);
             return config;
         },
         sortChartData(chartData, xAxis) {
@@ -1242,6 +1241,8 @@ export default {
                 baseOptions.data.length > 0 &&
                 baseOptions.data[0].category instanceof Date;
 
+            const maxLabelChars = 15;
+
             const xAxisConfig = {
                 type: isXAxisDate ? "time" : "category",
                 position: "bottom",
@@ -1249,8 +1250,18 @@ export default {
                 label: {
                     rotation:
                         !isXAxisDate && baseOptions.data.length > 10 ? -45 : 0,
-                    fontSize: 11,
+                    fontSize: 9,
                     format: isXAxisDate ? "%d/%m/%Y" : undefined,
+                    formatter: (params) => {
+                        let val = params.value;
+                        if (
+                            typeof val === "string" &&
+                            val.length > maxLabelChars
+                        ) {
+                            return val.slice(0, maxLabelChars) + "…";
+                        }
+                        return val;
+                    },
                 },
             };
 
@@ -1373,8 +1384,8 @@ export default {
                 mode === "chart" &&
                 (!message.selectedXAxis || !message.selectedYAxis)
             ) {
-                const fields = this.getCategoricalFields(message);
-                const numericFields = this.getNumericFields(message);
+                const fields = this.getAllFields(message);
+                const numericFields = this.getAllFields(message);
 
                 // Probeer slimme defaults te kiezen
                 if (!message.selectedXAxis && fields.length > 0) {
@@ -1394,7 +1405,7 @@ export default {
                 }
             }
         },
-        getCategoricalFields(message) {
+        getAllFields(message) {
             if (
                 !message.json ||
                 !Array.isArray(message.json) ||
@@ -1403,70 +1414,13 @@ export default {
                 return [];
             }
 
-            const data = message.json;
-            const firstItem = data[0];
-            const categoricalFields = [];
+            const firstItem = message.json[0];
 
-            Object.keys(firstItem).forEach((key) => {
-                // Check of het veld numerieke waarden bevat
-                const hasNumericValues = data.some((item) => {
-                    const value = item[key];
-                    return (
-                        value !== null &&
-                        value !== undefined &&
-                        !isNaN(parseFloat(value)) &&
-                        isFinite(value)
-                    );
-                });
-
-                // Als het GEEN numerieke waarden heeft, is het categorisch
-                if (!hasNumericValues) {
-                    categoricalFields.push({
-                        key: key,
-                        display: this.getFieldDisplayName(key),
-                    });
-                }
-            });
-
-            return categoricalFields;
+            return Object.keys(firstItem).map((key) => ({
+                key: key,
+                display: this.getFieldDisplayName(key),
+            }));
         },
-
-        getNumericFields(message) {
-            if (
-                !message.json ||
-                !Array.isArray(message.json) ||
-                message.json.length === 0
-            ) {
-                return [];
-            }
-
-            const data = message.json;
-            const firstItem = data[0];
-            const numericFields = [];
-
-            Object.keys(firstItem).forEach((key) => {
-                // Check of het veld numerieke waarden bevat
-                const hasNumericValues = data.some((item) => {
-                    const value = item[key];
-                    return (
-                        value !== null &&
-                        value !== undefined &&
-                        !isNaN(parseFloat(value)) &&
-                        isFinite(value)
-                    );
-                });
-
-                if (hasNumericValues) {
-                    numericFields.push({
-                        key: key,
-                        display: this.getFieldDisplayName(key),
-                    });
-                }
-            });
-
-            return numericFields;
-        },
-
         // Helpers
         autoResize() {
             const textarea = this.$refs.messageTextarea;
