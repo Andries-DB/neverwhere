@@ -209,8 +209,6 @@ onMounted(() => {
     if (saved !== null) {
         sidebarCollapsed.value = JSON.parse(saved);
     }
-
-    document.addEventListener("click", closeDropdown);
 });
 
 onUnmounted(() => {
@@ -663,7 +661,7 @@ watch(sidebarCollapsed, (newValue) => {
                     </button>
 
                     <!-- Breadcrumb or Page Title -->
-                    <div class="flex items-center gap-4 text-sm hidden md:flex">
+                    <div class="flex items-center md:gap-4 gap-1 text-sm">
                         <a
                             :href="route('dashboard')"
                             :class="{
