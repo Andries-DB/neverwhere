@@ -30,10 +30,6 @@
             </section>
 
             <section v-if="pinned_graphs?.length" class="space-y-4">
-                <h2 class="text-xl font-semibold text-gray-900">
-                    Vastgepinde Grafieken
-                </h2>
-
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <div
                         v-for="graph in pinned_graphs"
@@ -41,8 +37,8 @@
                         class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                     >
                         <!-- Header -->
-                        <div class="px-6 py-4 border-b border-gray-100">
-                            <div class="flex justify-between items-start">
+                        <div class="px-4 py-2 border-b border-gray-100">
+                            <div class="flex justify-between items-center">
                                 <div class="flex-1 mr-3">
                                     <!-- Editable Title -->
                                     <div
@@ -52,7 +48,7 @@
                                         :title="'Klik om titel te bewerken'"
                                     >
                                         <h3
-                                            class="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center"
+                                            class="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center"
                                         >
                                             {{
                                                 graph.title ||
@@ -147,7 +143,7 @@
                         </div>
 
                         <!-- Chart -->
-                        <div class="p-6">
+                        <div>
                             <div
                                 v-if="!getPinnedChartOptions(graph).data"
                                 class="text-red-500 text-sm mb-2"
@@ -160,7 +156,7 @@
                             </div>
 
                             <div
-                                class="w-full h-64 bg-white rounded border border-gray-100"
+                                class="w-full h-96 bg-white rounded border border-gray-100"
                             >
                                 <ag-charts
                                     v-if="
@@ -188,7 +184,7 @@
 
                         <!-- Footer -->
                         <div
-                            class="px-6 py-3 bg-gray-50 border-t border-gray-100 rounded-b-lg"
+                            class="px-4 py-2 bg-gray-50 border-t border-gray-100 rounded-b-lg"
                         >
                             <div
                                 class="flex justify-between items-center text-xs text-gray-500"
@@ -206,10 +202,6 @@
             </section>
 
             <section v-if="pinned_tables?.length" class="space-y-4">
-                <h2 class="text-xl font-semibold text-gray-900">
-                    Vastgepinde Tabellen
-                </h2>
-
                 <div class="grid grid-cols-1 xl:grid-cols-1 gap-6">
                     <div
                         v-for="table in pinned_tables"
@@ -217,7 +209,7 @@
                         class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                     >
                         <!-- Header -->
-                        <div class="px-6 py-4 border-b border-gray-100">
+                        <div class="px-4 py-2 border-b border-gray-100">
                             <div class="flex justify-between items-start">
                                 <button
                                     @click="unpinTable(table.id)"
@@ -236,24 +228,21 @@
                         </div>
 
                         <!-- Chart -->
-                        <div class="p-6">
-                            <div
-                                class="w-full h-64 bg-white rounded border border-gray-100"
-                            >
-                                <ag-grid-vue
-                                    ref="agGrid"
-                                    class="ag-theme-alpine w-full h-full"
-                                    :rowData="getTableRowData(table)"
-                                    :columnDefs="getTableColumnDefs(table)"
-                                    :defaultColDef="defaultColDef"
-                                    :gridOptions="gridOptions"
-                                    rowSelection="multiple"
-                                    @grid-ready="onGridReady"
-                                    @range-selection-changed="
-                                        onRangeSelectionChanged
-                                    "
-                                />
-                            </div>
+
+                        <div class="w-full h-96 bg-white">
+                            <ag-grid-vue
+                                ref="agGrid"
+                                class="ag-theme-alpine w-full h-full"
+                                :rowData="getTableRowData(table)"
+                                :columnDefs="getTableColumnDefs(table)"
+                                :defaultColDef="defaultColDef"
+                                :gridOptions="gridOptions"
+                                rowSelection="multiple"
+                                @grid-ready="onGridReady"
+                                @range-selection-changed="
+                                    onRangeSelectionChanged
+                                "
+                            />
                         </div>
 
                         <!-- Footer -->
@@ -599,15 +588,15 @@ export default {
 
             const baseOptions = {
                 data: sortedData,
-                title: {
-                    text: title,
-                    fontSize: 14,
-                    fontWeight: "bold",
-                },
+                // title: {
+                //     text: title,
+                //     fontSize: 14,
+                //     fontWeight: "bold",
+                // },
                 padding: {
                     top: 20,
                     right: 20,
-                    bottom: 60,
+                    bottom: 20,
                     left: 20,
                 },
             };

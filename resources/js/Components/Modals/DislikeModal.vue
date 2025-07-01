@@ -6,13 +6,19 @@
         >
             <h2 class="text-xl font-semibold">Geef je feedback</h2>
 
-            <TextInput
+            <!-- <TextInput
                 v-model="form.feedback"
                 label="Feedback"
                 placeholder="Wat wil je delen?"
                 class="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 :class="{ 'border-red-500': form.errors.feedback }"
-            />
+            /> -->
+
+            <textarea
+                class="w-full h-48 resize-none overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                placeholder="Typ hier je tekst..."
+                v-model="form.feedback"
+            ></textarea>
 
             <div
                 v-if="hasErrors"

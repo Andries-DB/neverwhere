@@ -99,7 +99,78 @@
                 </div>
             </div>
         </div>
+
+        <div class="mt-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-medium">Rapporten</h2>
+
+                <PrimaryButton @click="toggleAddReport">
+                    + Voeg nieuw rapport toe
+                </PrimaryButton>
+            </div>
+            <table class="w-full text-sm text-left rtl:text-right">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Naam</th>
+                        <th scope="col" class="px-6 py-3">Link</th>
+
+                        <th scope="col" class="px-6 py-3">
+                            <span class="sr-only">Aanpassen</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                        class="bg-white border-b border-gray-200"
+                        v-for="report in user.reports"
+                    >
+                        <th
+                            scope="row"
+                            class="px-6 py-4 flex items-center font-medium text-gray-900 whitespace-nowrap"
+                        >
+                            {{ report.name }}
+                        </th>
+                        <td class="px-6 py-4 truncate max-w-[300px]">
+                            {{ report.link }}
+                        </td>
+
+                        <td class="px-6 py-4 text-right">
+                            <a
+                                :href="
+                                    route('user.report.read', {
+                                        guid: this.company.guid,
+                                        user_guid: this.user.guid,
+                                        report_guid: report.guid,
+                                    })
+                                "
+                                class="font-medium text-blue-600 hover:underline"
+                                >Pas aan</a
+                            >
+                        </td>
+                    </tr>
+                    <tr
+                        class="bg-white border-b border-gray-200"
+                        v-if="user.reports.length < 1"
+                    >
+                        <th
+                            scope="row"
+                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                            colspan="3"
+                        >
+                            Geen resutaten gevonden
+                        </th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </AuthenticatedLayout>
+
+    <Create
+        :close="toggleAddReport"
+        :show="addReport"
+        :user="user"
+        sort="User"
+    />
 </template>
 
 <script>
@@ -110,6 +181,7 @@ import SecondaryButton from "@/Components/SecondaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import InputError from "@/Components/InputError.vue";
+import Create from "../Reports/Create.vue";
 
 export default {
     name: "",
@@ -121,6 +193,7 @@ export default {
         TextInput,
         InputError,
         InputLabel,
+        Create,
     },
     props: {
         company: Object,
@@ -129,6 +202,7 @@ export default {
     data() {
         return {
             editUser: false,
+            addReport: false,
             form: useForm({
                 name: this.user.name,
                 email: this.user.email,
@@ -194,6 +268,9 @@ export default {
         },
         toggleEdit() {
             this.editUser = !this.editUser;
+        },
+        toggleAddReport() {
+            this.addReport = !this.addReport;
         },
     },
     computed: {},

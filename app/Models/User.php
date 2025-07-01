@@ -69,6 +69,11 @@ class User extends Authenticatable
         return $this->hasMany(Conversation::class);
     }
 
+    public function reports()
+    {
+        return $this->belongsToMany(Report::class, 'user_report');
+    }
+
     public function pinnedGraphs()
     {
         return $this->hasMany(PinnedGraph::class);

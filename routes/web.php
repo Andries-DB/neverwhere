@@ -5,6 +5,7 @@ use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\TwoFactorController;
@@ -19,18 +20,18 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function () {
-    // 2FA Setup routes - alleen toegankelijk als 2FA nog niet is ingesteld
-    Route::get('/two-factor/setup', [TwoFactorController::class, 'setup'])->name('two-factor.setup');
-    Route::post('/two-factor/enable', [TwoFactorController::class, 'enable'])->name('two-factor.enable');
 
-    // 2FA Verification - alleen toegankelijk als 2FA is ingesteld maar verificatie nodig is
+Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function () {
+    // Routes die altijd toegankelijk moeten zijn
     Route::get('/two-factor/verify', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
     Route::post('/two-factor/verify', [TwoFactorController::class, 'confirmVerification'])->name('two-factor.confirm');
 
-    // 2FA Management - alleen toegankelijk na volledige verificatie
-    Route::get('/two-factor/manage', [TwoFactorController::class, 'manage'])->name('two-factor.manage');
+    // Alle andere routes (pas bereikbaar na succesvolle 2FA)
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/two-factor/setup', [TwoFactorController::class, 'setup'])->name('two-factor.setup');
+    Route::post('/two-factor/enable', [TwoFactorController::class, 'enable'])->name('two-factor.enable');
     Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
+    // andere routes...
 });
 
 
@@ -55,7 +56,21 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::get('/companies/{guid}/source/{source_id}', [SourceController::class, 'read'])->name('company.source.read');
     Route::patch('/companies/{guid}/sources/{source_id}', [SourceController::class, 'update'])->name('company.source.update');
     Route::delete('/companies/{guid}/sources/{source_id}', [SourceController::class, 'delete'])->name('company.source.delete');
+
+    Route::get('/companies/{guid}/report/{report_guid}', [ReportController::class, 'read_company'])->name('company.report.read');
+    Route::patch('/companies/{guid}/report/{report_guid}', [ReportController::class, 'update_company'])->name('company.report.update');
+    Route::delete('/companies/{guid}/report/{report_guid}', [ReportController::class, 'delete_company'])->name('company.report.delete');
+
+    Route::get('/companies/{guid}/{user_guid}/{report_guid}', [ReportController::class, 'read_user'])->name('user.report.read');
+    Route::patch('/user/{guid}/report/{report_guid}', [ReportController::class, 'update_user'])->name('user.report.update');
+    Route::delete('/user/{guid}/report/{report_guid}', [ReportController::class, 'delete_user'])->name('user.report.delete');
+
     Route::post('/sources', [SourceController::class, 'store'])->name('source.create');
+    Route::post('/company/reports', [ReportController::class, 'store_company'])->name('company.report.create');
+    Route::post('/user/reports', [ReportController::class, 'store_user'])->name('user.report.create');
+
+
+    Route::get('/reports', [ReportController::class, 'get'])->name('reports.get');
 
     Route::get('/users', [UserController::class, 'index'])->name('user.get');
     Route::post('/users', [UserController::class, 'store'])->name('user.create');
@@ -66,6 +81,8 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
 
     Route::get('/conversation/{guid}', [ConversationController::class, 'read'])->name('conversation.read');
     Route::post('/conversation', [ConversationController::class, 'create'])->name('conversation.create');
+    Route::patch('/conversation/{guid}', [ConversationController::class, 'patch'])->name('conversation.update');
+
     Route::delete('/conversation/{guid}', [ConversationController::class, 'delete'])->name('conversation.delete');
 
     Route::get('/conversation/{guid}/message', [ConversationController::class, 'postUserMessage'])->name('conversation.postUserMessage');

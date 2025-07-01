@@ -21,16 +21,11 @@ class TwoFactorController extends Controller
     }
 
     /**
-     * Toon 2FA setup pagina - alleen als 2FA nog niet is ingesteld
+     * Toon 2FA setup pagina
      */
     public function setup()
     {
         $user = Auth::user();
-
-        // Redirect als 2FA al is ingesteld
-        if ($user->google2fa_enabled) {
-            return redirect()->route('two-factor.manage');
-        }
 
         if (!$user->google2fa_secret) {
             $secret = $this->google2fa->generateSecretKey();
@@ -46,7 +41,8 @@ class TwoFactorController extends Controller
         return Inertia::render('TwoFactor/TwoFactorSetup', [
             'qrCodeUrl' => $qrCodeUrl,
             'secret' => $user->google2fa_secret,
-            'isRequired' => true, // Altijd verplicht
+            'is_enabled' => $user->google2fa_enabled,
+            'last_verified' => $user->two_factor_verified_at?->diffForHumans(),
         ]);
     }
 
@@ -75,21 +71,15 @@ class TwoFactorController extends Controller
     }
 
     /**
-     * Deactiveer 2FA - alleen mogelijk via management pagina
+     * Deactiveer 2FA
      */
     public function disable(Request $request)
     {
-        $user = Auth::user();
-
-        // Controleer of gebruiker toegang heeft tot management
-        if (!$user->google2fa_enabled || $user->needsTwoFactorVerification()) {
-            return redirect()->route('two-factor.verify');
-        }
-
         $request->validate([
             'code' => 'required|string|size:6',
         ]);
 
+        $user = Auth::user();
         $valid = $this->google2fa->verifyKey($user->google2fa_secret, $request->code);
 
         if ($valid) {
@@ -99,53 +89,22 @@ class TwoFactorController extends Controller
                 'two_factor_verified_at' => null,
             ]);
 
-            // Na uitschakelen moet gebruiker opnieuw instellen
-            return redirect()->route('two-factor.setup')->with('success', '2FA is gedeactiveerd. Je moet het opnieuw instellen.');
+            return redirect()->route('two-factor.setup');
         }
 
         return redirect()->back()->withErrors(['code' => 'Ongeldige code. Probeer opnieuw.']);
     }
 
     /**
-     * Toon 2FA verificatie pagina - alleen als verificatie nodig is
+     * Toon 2FA verificatie pagina
      */
     public function verify()
     {
-        $user = Auth::user();
-
-        // Redirect als 2FA niet is ingesteld
-        if (!$user->google2fa_enabled) {
-            return redirect()->route('two-factor.setup');
-        }
-
-        // Redirect als verificatie niet nodig is
-        if (!$user->needsTwoFactorVerification()) {
+        if (!Auth::user()->needsTwoFactorVerification()) {
             return redirect()->route('dashboard');
         }
 
         return Inertia::render('TwoFactor/TwoFactorVerify');
-    }
-
-    /**
-     * Toon 2FA management pagina - alleen na volledige verificatie
-     */
-    public function manage()
-    {
-        $user = Auth::user();
-
-        // Redirect als 2FA niet is ingesteld
-        if (!$user->google2fa_enabled) {
-            return redirect()->route('two-factor.setup');
-        }
-
-        // Redirect als verificatie nodig is
-        if ($user->needsTwoFactorVerification()) {
-            return redirect()->route('two-factor.verify');
-        }
-
-        return Inertia::render('TwoFactor/TwoFactorManage', [
-            'lastVerified' => $user->two_factor_verified_at?->diffForHumans(),
-        ]);
     }
 
     /**

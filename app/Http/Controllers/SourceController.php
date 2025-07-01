@@ -39,7 +39,7 @@ class SourceController extends Controller
         $this->authorizeAdmin();
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:sources,name',
+            'name' => 'required|string|max:255',
             'webhook' => 'nullable'
         ]);
 
@@ -64,17 +64,17 @@ class SourceController extends Controller
         return redirect()->back();
     }
 
-    public function delete($id)
+    public function delete($guid, $source_id)
     {
         $this->authorizeAdmin();
 
-        $source = Source::where('id', $id)->first();
+        $source = Source::where('id', $source_id)->first();
 
         abort_unless($source, 403, "This source does not exist");
 
         $source->delete();
 
-        return redirect()->route('source.get');
+        return redirect()->route('company.read', $guid);
     }
 
     private function authorizeAdmin(): void

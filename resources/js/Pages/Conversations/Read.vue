@@ -386,12 +386,6 @@
                                                 />
                                             </div>
                                         </div>
-                                        <div
-                                            class="pt-3 text-xs ml-2 text-gray-600 border-t border-gray-200"
-                                        >
-                                            {{ message.json.length }}
-                                            records
-                                        </div>
                                     </template>
                                 </div>
 
@@ -409,54 +403,76 @@
                                         >{{ message.sql_query }}</pre
                                     >
                                 </div>
+
                                 <!-- Normale tekst weergave -->
                                 <p v-else class="whitespace-pre-wrap">
                                     {{ message.message }}
                                 </p>
 
                                 <div
-                                    class="flex items-center justify-end gap-2 mt-1 text-[10px]"
+                                    class="flex justify-between items-center mt-2"
                                 >
-                                    <button
-                                        class="p-1 rounded transition-colors"
-                                        :class="{
-                                            'text-green-600 bg-green-50':
-                                                message.thumbs_up === 1,
-                                            'text-gray-400 hover:text-green-700 hover:bg-green-50':
-                                                message.thumbs_up !== 1,
-                                        }"
-                                        @click="onThumbsUp(message)"
-                                        title="Vind ik goed"
-                                        v-if="message.send_by === 'ai'"
-                                    >
-                                        <i class="fas fa-thumbs-up"></i>
-                                    </button>
+                                    <div class="text-xs ml-2 text-gray-600">
+                                        <span
+                                            :style="{
+                                                visibility:
+                                                    message.json &&
+                                                    message.json.length > 0
+                                                        ? 'visible'
+                                                        : 'hidden',
+                                            }"
+                                        >
+                                            {{
+                                                message.json?.length || 0
+                                            }}
+                                            records
+                                        </span>
+                                    </div>
 
-                                    <button
-                                        class="p-1 rounded transition-colors"
-                                        :class="{
-                                            'text-red-600 bg-red-50':
-                                                message.thumbs_down === 1,
-                                            'text-gray-400 hover:text-red-600 hover:bg-gray-50':
-                                                message.thumbs_down !== 1,
-                                        }"
-                                        @click="onThumbsDown(message)"
-                                        title="Vind ik niet goed"
-                                        v-if="message.send_by === 'ai'"
+                                    <div
+                                        class="flex items-center justify-end gap-2 text-[10px]"
                                     >
-                                        <i class="fas fa-thumbs-down"></i>
-                                    </button>
+                                        <button
+                                            class="p-1 rounded transition-colors"
+                                            :class="{
+                                                'text-green-600 bg-green-50':
+                                                    message.thumbs_up === 1,
+                                                'text-gray-400 hover:text-green-700 hover:bg-green-50':
+                                                    message.thumbs_up !== 1,
+                                            }"
+                                            @click="onThumbsUp(message)"
+                                            title="Vind ik goed"
+                                            v-if="message.send_by === 'ai'"
+                                        >
+                                            <i class="fas fa-thumbs-up"></i>
+                                        </button>
 
-                                    <p
-                                        :class="[
-                                            message.user_id ===
-                                            $page.props.auth.user.id
-                                                ? 'text-gray-500'
-                                                : 'text-gray-600',
-                                        ]"
-                                    >
-                                        {{ formatTime(message.created_at) }}
-                                    </p>
+                                        <button
+                                            class="p-1 rounded transition-colors"
+                                            :class="{
+                                                'text-red-600 bg-red-50':
+                                                    message.thumbs_down === 1,
+                                                'text-gray-400 hover:text-red-600 hover:bg-gray-50':
+                                                    message.thumbs_down !== 1,
+                                            }"
+                                            @click="onThumbsDown(message)"
+                                            title="Vind ik niet goed"
+                                            v-if="message.send_by === 'ai'"
+                                        >
+                                            <i class="fas fa-thumbs-down"></i>
+                                        </button>
+
+                                        <p
+                                            :class="[
+                                                message.user_id ===
+                                                $page.props.auth.user.id
+                                                    ? 'text-gray-500'
+                                                    : 'text-gray-600',
+                                            ]"
+                                        >
+                                            {{ formatTime(message.created_at) }}
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <a
@@ -513,6 +529,7 @@
                             <select
                                 v-model="form.source"
                                 class="w-full text-sm border-none rounded-md bg-transparent focus:ring-none focus:ring-blue-500 focus:border-none transition-colors"
+                                @change="saveSourceSelection"
                             >
                                 <option
                                     v-for="(source, index) in conversation.user
@@ -2037,6 +2054,32 @@ export default {
                 );
             }
         },
+        saveSourceSelection() {
+            // Sla de geselecteerde source op per conversatie GUID
+            const storageKey = `selected_source_${this.conversation.guid}`;
+            localStorage.setItem(storageKey, this.form.source.id);
+        },
+
+        loadSourceSelection() {
+            // Laad de opgeslagen source voor deze conversatie
+            const storageKey = `selected_source_${this.conversation.guid}`;
+            const savedSource = localStorage.getItem(storageKey);
+            if (savedSource) {
+                try {
+                    const sourceId = parseInt(savedSource);
+
+                    const sourceExists = this.conversation.user.sources.find(
+                        (source) => source.id === sourceId
+                    );
+
+                    if (sourceExists) {
+                        this.form.source = sourceExists;
+                    }
+                } catch (error) {
+                    localStorage.removeItem(storageKey);
+                }
+            }
+        },
     },
     mounted() {
         this.messages = this.conversation.messages.map((m) => ({
@@ -2063,6 +2106,8 @@ export default {
         }));
 
         this.scrollToBottom();
+
+        this.loadSourceSelection();
     },
     watch: {
         messages() {

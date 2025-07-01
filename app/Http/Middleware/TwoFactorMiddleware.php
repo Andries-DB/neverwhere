@@ -12,21 +12,14 @@ class TwoFactorMiddleware
     {
         $user = Auth::user();
 
-        if ($user) {
-            // Als gebruiker geen 2FA heeft ingesteld, dwing setup af
-            if (!$user->google2fa_enabled) {
-                // Alleen toestaan om naar setup te gaan, niet naar andere pagina's
-                if (!$request->routeIs('two-factor.setup') && !$request->routeIs('two-factor.enable') && !$request->routeIs('logout')) {
-                    return redirect()->route('two-factor.setup');
-                }
-            }
-            // Als 2FA is ingesteld maar verificatie nodig is
-            elseif ($user->needsTwoFactorVerification()) {
-                // Alleen toestaan om naar verify te gaan, niet naar andere pagina's (inclusief setup)
-                if (!$request->routeIs('two-factor.verify') && !$request->routeIs('two-factor.confirm') && !$request->routeIs('logout')) {
-                    return redirect()->route('two-factor.verify');
-                }
-            }
+        // Als 2FA actief is, maar nog niet geverifieerd, en je zit NIET op /verify
+        if (
+            $user &&
+            $user->needsTwoFactorVerification() &&
+            !$request->is('two-factor/verify') &&
+            !$request->is('two-factor/verify/*')
+        ) {
+            return redirect()->route('two-factor.verify');
         }
 
         return $next($request);

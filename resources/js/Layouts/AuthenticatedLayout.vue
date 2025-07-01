@@ -4,13 +4,17 @@ import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink.vue";
 import { Link, useForm, usePage } from "@inertiajs/vue3";
 import { defineProps } from "vue";
-import DropdownLink from "@/Components/DropdownLink.vue";
-import NavLink from "@/Components/NavLink.vue";
 
 const showingNavigationDropdown = ref(false);
 const sidebarCollapsed = ref(false);
 const page = usePage();
 const openDropdown = ref(null);
+const editingConversation = ref(null);
+const editingName = ref("");
+let displayMode = ref("unknown");
+
+let deferredPrompt = ref(null);
+let showPWA = ref(false);
 
 const toggleSidebar = () => {
     sidebarCollapsed.value = !sidebarCollapsed.value;
@@ -41,7 +45,9 @@ const closeDropdown = () => {
     openDropdown.value = null;
 };
 
-const form = useForm({});
+const form = useForm({
+    title: "",
+});
 
 // Sidebar menu items
 const sidebarItems = [
@@ -65,6 +71,14 @@ const sidebarItems = [
         routes: ["user.get", "user.read"],
         icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
         role: "admin",
+    },
+    {
+        name: "Rapporten",
+        route: "reports.get",
+        routes: ["reports.get"],
+        icon: "M6 2a1 1 0 00-1 1v18a1 1 0 001.447.894l5.553-2.776 5.553 2.776A1 1 0 0020 21V3a1 1 0 00-1-1H6zm1 2h10v15.382l-4.553-2.276a1 1 0 00-.894 0L7 19.382V4z",
+
+        role: "user",
     },
     {
         name: "Tweestapsverificatie",
@@ -107,6 +121,89 @@ const deleteConversation = (guid) => {
     openDropdown.value = null;
 };
 
+// Start editing conversation name
+const updateConversation = async (guid) => {
+    const conversation = page.props.conversations?.find(
+        (conv) => conv.guid === guid
+    );
+    if (conversation) {
+        editingConversation.value = guid;
+        editingName.value = conversation.title || "";
+        openDropdown.value = null; // Close dropdown
+
+        // Focus on input field after render
+        await nextTick();
+        const input = document.querySelector(`[ref="edit-input-${guid}"]`);
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }
+};
+
+const saveConversationName = async (guid) => {
+    if (!editingName.value.trim()) {
+        cancelEdit();
+        return;
+    }
+
+    form.title = editingName.value.trim();
+
+    try {
+        form.patch(route("conversation.update", guid), {
+            preserveScroll: true,
+            onSuccess: () => location.reload(),
+            onError: (errors) => console.error("Fout:", errors),
+        });
+    } catch (error) {
+        console.error("Fout bij opslaan conversatienaam:", error);
+        cancelEdit();
+    }
+};
+
+// Cancel editing
+const cancelEdit = () => {
+    editingConversation.value = null;
+    editingName.value = "";
+};
+
+// Handle keyboard shortcuts
+const handleKeydown = (event, guid) => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        saveConversationName(guid);
+    } else if (event.key === "Escape") {
+        event.preventDefault();
+        cancelEdit();
+    }
+};
+
+function getPWADisplayMode() {
+    if (document.referrer.startsWith("android-app://")) return "twa";
+    if (window.matchMedia("(display-mode: browser)").matches) return "browser";
+    if (window.matchMedia("(display-mode: standalone)").matches)
+        return "standalone";
+    if (window.matchMedia("(display-mode: minimal-ui)").matches)
+        return "minimal-ui";
+    if (window.matchMedia("(display-mode: fullscreen)").matches)
+        return "fullscreen";
+    if (window.matchMedia("(display-mode: window-controls-overlay)").matches)
+        return "window-controls-overlay";
+    return "unknown";
+}
+
+const isMobileBrowser = computed(() => {
+    return /Mobi|Android/i.test(navigator.userAgent);
+});
+
+const isPWA = computed(() => {
+    return (
+        isMobileBrowser.value &&
+        displayMode.value !== "browser" &&
+        displayMode.value !== "unknown"
+    );
+});
+
 onMounted(() => {
     const saved = localStorage.getItem("sidebarCollapsed");
     if (saved !== null) {
@@ -117,6 +214,17 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+    displayMode.value = getPWADisplayMode();
+
+    if (!localStorage.getItem("pwaPromptShown")) {
+        showPWA.value = true;
+    }
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        deferredPrompt.value = event;
+    });
+
     document.removeEventListener("click", closeDropdown);
 });
 
@@ -266,7 +374,9 @@ watch(sidebarCollapsed, (newValue) => {
                                         $page.props.conversations !== conv.id,
                                 }"
                             >
+                                <!-- Normal state - Link wrapper -->
                                 <Link
+                                    v-if="editingConversation !== conv.guid"
                                     :href="
                                         route('conversation.read', conv.guid)
                                     "
@@ -284,15 +394,86 @@ watch(sidebarCollapsed, (newValue) => {
                                     }"
                                 >
                                     <span
-                                        class="truncate"
+                                        @dblclick.prevent="
+                                            updateConversation(conv.guid)
+                                        "
+                                        class="truncate cursor-pointer rounded px-1 py-0.5 transition-colors"
                                         :class="{
-                                            'text-center  w-full':
+                                            'text-center w-full':
                                                 sidebarCollapsed,
                                         }"
+                                        :title="
+                                            sidebarCollapsed
+                                                ? 'Dubbelklik om naam te bewerken'
+                                                : ''
+                                        "
                                     >
                                         {{ conv.title || "Nieuwe conversatie" }}
                                     </span>
                                 </Link>
+
+                                <!-- Edit state - Input field -->
+                                <div
+                                    v-else
+                                    class="flex-1 flex items-center px-3 py-2.5 space-x-2"
+                                >
+                                    <input
+                                        :ref="`edit-input-${conv.guid}`"
+                                        v-model="editingName"
+                                        @keydown="
+                                            handleKeydown($event, conv.guid)
+                                        "
+                                        @blur="saveConversationName(conv.guid)"
+                                        @click.stop
+                                        class="flex-1 px-2 py-1 text-sm border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                        placeholder="Conversatie naam..."
+                                        maxlength="100"
+                                    />
+
+                                    <!-- Optional: Save/Cancel buttons -->
+                                    <div class="flex space-x-1">
+                                        <button
+                                            @click.stop="
+                                                saveConversationName(conv.guid)
+                                            "
+                                            class="p-1 text-green-600 hover:bg-green-100 rounded transition-colors"
+                                            title="Opslaan (Enter)"
+                                        >
+                                            <svg
+                                                class="w-3 h-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M5 13l4 4L19 7"
+                                                ></path>
+                                            </svg>
+                                        </button>
+                                        <button
+                                            @click.stop="cancelEdit()"
+                                            class="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                                            title="Annuleren (Escape)"
+                                        >
+                                            <svg
+                                                class="w-3 h-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M6 18L18 6M6 6l12 12"
+                                                ></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <!-- Delete dropdown menu -->
                                 <div
@@ -327,6 +508,14 @@ watch(sidebarCollapsed, (newValue) => {
                                         v-if="openDropdown === conv.id"
                                         class="absolute right-0 top-full mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-50"
                                     >
+                                        <button
+                                            @click="
+                                                updateConversation(conv.guid)
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-slate-50 rounded-md transition-colors duration-150"
+                                        >
+                                            Pas naam aan
+                                        </button>
                                         <button
                                             @click="
                                                 deleteConversation(conv.guid)
@@ -500,18 +689,30 @@ watch(sidebarCollapsed, (newValue) => {
                         >
                             Chats
                         </a> -->
+                        <button
+                            @click="createConversation"
+                            :disabled="form.processing"
+                            :class="{
+                                'bg-slate-100 text-slate-900': form.processing,
+                                'text-slate-600 hover:text-slate-900 hover:bg-slate-50':
+                                    !form.processing,
+                            }"
+                            class="px-4 py-2 rounded-md transition-colors duration-200 flex"
+                        >
+                            Chats
+                        </button>
 
                         <a
-                            :href="route('training.index')"
+                            :href="route('reports.get')"
                             :class="{
                                 'bg-slate-100 text-slate-900':
-                                    route().current('training.index'),
+                                    route().current('reports.get'),
                                 'text-slate-600 hover:text-slate-900 hover:bg-slate-50':
-                                    !route().current('training.index'),
+                                    !route().current('reports.get'),
                             }"
                             class="px-4 py-2 rounded-md transition-colors duration-200"
                         >
-                            Training
+                            Rapporten
                         </a>
                     </div>
                 </div>

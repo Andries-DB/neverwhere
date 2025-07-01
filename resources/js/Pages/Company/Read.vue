@@ -37,6 +37,12 @@
                 >
                     + Voeg nieuwe bron toe
                 </PrimaryButton>
+                <PrimaryButton
+                    @click="toggleAddReport"
+                    v-if="show_sort === 'reports'"
+                >
+                    + Voeg nieuw rapport toe
+                </PrimaryButton>
             </div>
         </div>
 
@@ -63,6 +69,15 @@
                     @click="changeSort('sources')"
                 >
                     Bronnen
+                </button>
+                <button
+                    :class="[
+                        'px-4 py-1 rounded-md text-center text-sm',
+                        show_sort === 'reports' ? 'bg-gray-200' : 'bg-gray-300',
+                    ]"
+                    @click="changeSort('reports')"
+                >
+                    Rapporten
                 </button>
                 <button
                     :class="[
@@ -141,6 +156,62 @@
                     <tr
                         class="bg-white border-b border-gray-200"
                         v-if="this.company.sources.length < 1"
+                    >
+                        <th
+                            scope="row"
+                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                            colspan="3"
+                        >
+                            Geen resutaten gevonden
+                        </th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div v-if="this.show_sort === 'reports'" class="mt-6">
+            <table class="w-full text-sm text-left rtl:text-right">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Naam</th>
+                        <th scope="col" class="px-6 py-3">Link</th>
+
+                        <th scope="col" class="px-6 py-3">
+                            <span class="sr-only">Aanpassen</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                        class="bg-white border-b border-gray-200"
+                        v-for="report in this.company.reports"
+                    >
+                        <th
+                            scope="row"
+                            class="px-6 py-4 flex items-center font-medium text-gray-900 whitespace-nowrap"
+                        >
+                            {{ report.name }}
+                        </th>
+                        <td class="px-6 py-4 truncate max-w-[300px]">
+                            {{ report.link }}
+                        </td>
+
+                        <td class="px-6 py-4 text-right">
+                            <a
+                                :href="
+                                    route('company.report.read', {
+                                        guid: this.company.guid,
+                                        report_guid: report.guid,
+                                    })
+                                "
+                                class="font-medium text-blue-600 hover:underline"
+                                >Pas aan</a
+                            >
+                        </td>
+                    </tr>
+                    <tr
+                        class="bg-white border-b border-gray-200"
+                        v-if="this.company.reports.length < 1"
                     >
                         <th
                             scope="row"
@@ -237,6 +308,12 @@
         :show="addSource"
         :company="this.company"
     />
+
+    <CreateReports
+        :close="toggleAddReport"
+        :show="addReport"
+        :company="this.company"
+    />
 </template>
 
 <script>
@@ -249,6 +326,7 @@ import InputLabel from "@/Components/InputLabel.vue";
 import InputError from "@/Components/InputError.vue";
 import Create from "./Users/Create.vue";
 import CreateSources from "./Sources/Create.vue";
+import CreateReports from "./Reports/Create.vue";
 
 export default {
     name: "",
@@ -262,6 +340,7 @@ export default {
         InputLabel,
         Create,
         CreateSources,
+        CreateReports,
     },
     props: {
         company: Object,
@@ -275,6 +354,7 @@ export default {
             show_sort: "settings",
             editCompany: false,
             addSource: false,
+            addReport: false,
             addUser: false,
             breadcrumbs: [
                 { title: "Dashboard", href: "/dashboard" },
@@ -327,6 +407,9 @@ export default {
         },
         toggleAddSource() {
             this.addSource = !this.addSource;
+        },
+        toggleAddReport() {
+            this.addReport = !this.addReport;
         },
     },
     computed: {},

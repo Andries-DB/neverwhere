@@ -41,7 +41,7 @@ class CompanyController extends Controller
 
         $this->authorizeAdmin();
 
-        $company = Company::where('guid', $guid)->with('users', 'users.sources', 'sources')->firstOrFail();
+        $company = Company::where('guid', $guid)->with('users', 'users.sources', 'sources', 'reports')->firstOrFail();
         // $sources = Source::all();
 
         return Inertia::render('Company/Read', [

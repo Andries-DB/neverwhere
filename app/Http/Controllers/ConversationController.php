@@ -7,6 +7,7 @@ use App\Models\Message;
 use App\Models\PinnedGraph;
 use App\Models\PinnedTable;
 use App\Models\Source;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
@@ -14,8 +15,9 @@ use Illuminate\Support\Str;
 
 class ConversationController extends Controller
 {
-    public function read($guid)
+    public function read($guid, Request $request)
     {
+
         $conversation = Conversation::where('guid', $guid)->with('messages', 'user', 'user.sources')->firstOrFail();
 
         return Inertia::render('Conversations/Read', [
@@ -36,6 +38,16 @@ class ConversationController extends Controller
         $guid = $conversation->guid;
 
         return redirect()->route('conversation.read', $guid);
+    }
+
+    public function patch($guid, Request $request)
+    {
+        $conversation = Conversation::where('guid', $guid)->firstOrFail();
+
+        $conversation->title = $request->title;
+        $conversation->save();
+
+        return redirect()->back();
     }
 
     public function postUserMessage($guid, Request $request)
@@ -84,7 +96,7 @@ class ConversationController extends Controller
             return redirect()->back()->withErrors(['bot' => 'Geen gebruikersbericht gevonden om op te reageren.']);
         }
 
-        $user = $request->user();
+        $user = User::with('companies')->find($request->user()->id);
 
         $response = Http::timeout(60)->post($source->webhook, [
             'message_id' => $conversation->id,
@@ -94,6 +106,11 @@ class ConversationController extends Controller
                 'id' => $user->id,
                 'email' => $user->email,
             ],
+            'company' => [
+                'id' => $user->companies[0]->id,
+                'name' => $user->companies[0]->company
+            ],
+            'query' => ''
         ]);
 
 

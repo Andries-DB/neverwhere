@@ -20,4 +20,9 @@ class Company extends Model
     {
         return $this->hasMany(Source::class);
     }
+
+    public function reports()
+    {
+        return $this->belongsToMany(Report::class, 'company_report');
+    }
 }
