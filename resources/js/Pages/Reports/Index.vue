@@ -57,7 +57,8 @@
                     <div class="w-full h-full">
                         <iframe
                             :src="selectedReport.link"
-                            class="w-full h-full"
+                            width="100%"
+                            height="700"
                             frameborder="0"
                             allowfullscreen
                         ></iframe>

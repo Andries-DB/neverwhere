@@ -797,9 +797,15 @@ watch(sidebarCollapsed, (newValue) => {
                 </div>
             </div>
 
-            <!-- Main Content -->
             <main class="flex-1 overflow-y-auto p-6">
-                <div class="max-w-7xl mx-auto">
+                <div
+                    :class="[
+                        route().current('reports.get')
+                            ? 'max-w-[1600px]'
+                            : 'max-w-7xl',
+                        'mx-auto',
+                    ]"
+                >
                     <slot />
                 </div>
             </main>
