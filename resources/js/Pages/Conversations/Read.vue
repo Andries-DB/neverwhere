@@ -1083,6 +1083,18 @@ export default {
                 }
             }
         },
+        generateChartTitle(categoryField, valueField) {
+            const categoryName = this.getFieldDisplayName(categoryField);
+            const valueName = this.getFieldDisplayName(valueField);
+
+            if (valueField === "__count") {
+                return `Aantal per ${categoryName}`;
+            } else if (categoryField === "__index") {
+                return `${valueName} per Item`;
+            } else {
+                return `${valueName} per ${categoryName}`;
+            }
+        },
 
         // Requests
         async sendMessage() {
