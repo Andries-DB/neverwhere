@@ -72,7 +72,7 @@
                     class="bg-gray-50 rounded border-2 border-dashed border-gray-300 p-8 text-center h-32"
                 >
                     <p class="text-sm text-gray-600">
-                        Selecteer een report om te bekijken
+                        Selecteer een rapport om te bekijken
                     </p>
                 </div>
             </div>

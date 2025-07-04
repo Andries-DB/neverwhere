@@ -801,7 +801,7 @@ watch(sidebarCollapsed, (newValue) => {
                 <div
                     :class="[
                         route().current('reports.get')
-                            ? 'max-w-[1600px]'
+                            ? 'max-w-[full]'
                             : 'max-w-7xl',
                         'mx-auto',
                     ]"

@@ -77,148 +77,7 @@
 
                 <!-- Grafiek weergave met AG Charts -->
                 <div v-if="message.displayAsChart" class="relative">
-                    <template v-if="message.json">
-                        <!-- Chart configuratie paneel -->
-                        <div
-                            class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200"
-                        >
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <!-- Chart type selector -->
-                                <div>
-                                    <label
-                                        class="block text-xs font-medium text-gray-700 mb-1"
-                                    >
-                                        Grafiek Type
-                                    </label>
-                                    <select
-                                        v-model="message.selectedChartType"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option
-                                            v-for="(
-                                                field, key
-                                            ) in availableChartTypes"
-                                            :key="key"
-                                            :value="field.value"
-                                        >
-                                            {{ field.label }}
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label
-                                        class="block text-xs font-medium text-gray-700 mb-1"
-                                    >
-                                        Aggregatie
-                                    </label>
-                                    <select
-                                        v-model="message.selectedAggregation"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option
-                                            v-for="(
-                                                field, key
-                                            ) in aggregationTypes"
-                                            :key="key"
-                                            :value="field.value"
-                                        >
-                                            {{ field.label }}
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <!-- X-axis selector -->
-                                <div>
-                                    <label
-                                        class="block text-xs font-medium text-gray-700 mb-1"
-                                    >
-                                        X-as (Categorie)
-                                    </label>
-                                    <select
-                                        v-model="message.selectedXAxis"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option value="">Kies X-as veld</option>
-                                        <option
-                                            v-for="field in getAllFields(
-                                                message
-                                            )"
-                                            :key="field.key"
-                                            :value="field.key"
-                                        >
-                                            {{ field.display }}
-                                        </option>
-                                        <option value="__index">
-                                            Rij Nummer
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <!-- Y-axis selector -->
-                                <div>
-                                    <label
-                                        class="block text-xs font-medium text-gray-700 mb-1"
-                                    >
-                                        Y-as (Waarde)
-                                    </label>
-                                    <select
-                                        v-model="message.selectedYAxis"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option value="">Kies Y-as veld</option>
-                                        <option
-                                            v-for="field in getAllFields(
-                                                message
-                                            )"
-                                            :key="field.key"
-                                            :value="field.key"
-                                        >
-                                            {{ field.display }}
-                                        </option>
-                                        <option value="__count">
-                                            Aantal (Tel Records)
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Chart preview -->
-                        <div
-                            v-if="
-                                message.selectedXAxis && message.selectedYAxis
-                            "
-                            class="w-full h-96 bg-white rounded-lg border border-gray-200"
-                        >
-                            <ag-charts
-                                class="w-full h-full"
-                                :options="getCustomChartOptions(message)"
-                            />
-                        </div>
-
-                        <!-- Placeholder when no axes selected -->
-                        <div
-                            v-else
-                            class="w-full h-96 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center"
-                        >
-                            <div class="text-center text-gray-500">
-                                <i class="fas fa-chart-bar text-3xl mb-2"></i>
-                                <p class="text-sm">
-                                    Selecteer X-as en Y-as om de grafiek te
-                                    bekijken
-                                </p>
-                            </div>
-                        </div>
-                    </template>
-
-                    <template v-else>
-                        <div
-                            class="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200"
-                        >
-                            Geen data beschikbaar voor grafiek
-                        </div>
-                    </template>
+                    <ChartBuilder :message="message" />
                 </div>
 
                 <!-- Tabel weergave met AG Grid -->
@@ -289,6 +148,7 @@ import {
 } from "ag-grid-enterprise";
 import { AgCharts } from "ag-charts-vue3";
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
+import ChartBuilder from "@/Components/ChartBuilder.vue";
 
 ModuleRegistry.registerModules([
     AllEnterpriseModule,
@@ -298,7 +158,13 @@ LicenseManager.setLicenseKey(import.meta.env.VITE_AG_KEY);
 
 export default {
     name: "",
-    components: { AuthenticatedLayout, Head, AgGridVue, AgCharts },
+    components: {
+        AuthenticatedLayout,
+        Head,
+        AgGridVue,
+        AgCharts,
+        ChartBuilder,
+    },
     props: { message: Object },
     data() {
         return {
@@ -337,19 +203,6 @@ export default {
                     ];
                 },
             },
-            availableChartTypes: [
-                // { value: "column", label: "Kolom" },
-                { value: "bar", label: "Balk" },
-                { value: "line", label: "Lijn" },
-                { value: "area", label: "Vlak" },
-            ],
-            aggregationTypes: [
-                { value: "sum", label: "Som" },
-                { value: "avg", label: "Gemiddelde" },
-                { value: "count", label: "Aantal" },
-                { value: "min", label: "Minimum" },
-                { value: "max", label: "Maximum" },
-            ],
         };
     },
     methods: {

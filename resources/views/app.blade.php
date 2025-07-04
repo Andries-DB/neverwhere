@@ -19,22 +19,22 @@
          <!-- Web Application Manifest -->
         <link rel="manifest" href="/manifest.json">
         <!-- Chrome for Android theme color -->
-        <meta name="theme-color" content="#000000">
+        <meta name="theme-color" content="#ffc02a">
 
         <!-- Add to homescreen for Chrome on Android -->
         <meta name="mobile-web-app-capable" content="yes">
-        <meta name="application-name" content="THE APP">
+        <meta name="application-name" content="Neverwhere">
         <link rel="icon" sizes="512x512" href="{{ asset('favicon.ico') }}">
 
 
         <!-- Add to homescreen for Safari on iOS -->
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
-        <meta name="apple-mobile-web-app-title" content="THE APP">
+        <meta name="apple-mobile-web-app-title" content="Neverwhere">
         <link rel="apple-touch-icon" href="{{ asset('favicon.ico') }}">
 
         <!-- Tile for Win8 -->
-        <meta name="msapplication-TileColor" content="#ffffff">
+        <meta name="msapplication-TileColor" content="#ffc02a">
         <meta name="msapplication-TileImage" content="/images/icons/icon-512x512.png">
 
 

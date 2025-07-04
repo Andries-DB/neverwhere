@@ -154,174 +154,7 @@
                                         </button>
                                     </div>
 
-                                    <template v-if="message.json">
-                                        <!-- Chart configuratie paneel -->
-                                        <div
-                                            class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200"
-                                        >
-                                            <div
-                                                class="grid grid-cols-1 md:grid-cols-4 gap-4"
-                                            >
-                                                <!-- Chart type selector -->
-                                                <div>
-                                                    <label
-                                                        class="block text-xs font-medium text-gray-700 mb-1"
-                                                    >
-                                                        Grafiek Type
-                                                    </label>
-                                                    <select
-                                                        v-model="
-                                                            message.selectedChartType
-                                                        "
-                                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                    >
-                                                        <option
-                                                            v-for="(
-                                                                field, key
-                                                            ) in availableChartTypes"
-                                                            :key="key"
-                                                            :value="field.value"
-                                                        >
-                                                            {{ field.label }}
-                                                        </option>
-                                                    </select>
-                                                </div>
-
-                                                <div>
-                                                    <label
-                                                        class="block text-xs font-medium text-gray-700 mb-1"
-                                                    >
-                                                        Aggregatie
-                                                    </label>
-                                                    <select
-                                                        v-model="
-                                                            message.selectedAggregation
-                                                        "
-                                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                    >
-                                                        <option
-                                                            v-for="(
-                                                                field, key
-                                                            ) in aggregationTypes"
-                                                            :key="key"
-                                                            :value="field.value"
-                                                        >
-                                                            {{ field.label }}
-                                                        </option>
-                                                        <!-- <option value="__index">
-                                                            Rij Nummer
-                                                        </option> -->
-                                                    </select>
-                                                </div>
-
-                                                <!-- X-axis selector -->
-                                                <div>
-                                                    <label
-                                                        class="block text-xs font-medium text-gray-700 mb-1"
-                                                    >
-                                                        X-as (Categorie)
-                                                    </label>
-                                                    <select
-                                                        v-model="
-                                                            message.selectedXAxis
-                                                        "
-                                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                    >
-                                                        <option value="">
-                                                            Kies X-as veld
-                                                        </option>
-                                                        <option
-                                                            v-for="field in getAllFields(
-                                                                message
-                                                            )"
-                                                            :key="field.key"
-                                                            :value="field.key"
-                                                        >
-                                                            {{ field.display }}
-                                                        </option>
-                                                        <option value="__index">
-                                                            Rij Nummer
-                                                        </option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Y-axis selector -->
-                                                <div>
-                                                    <label
-                                                        class="block text-xs font-medium text-gray-700 mb-1"
-                                                    >
-                                                        Y-as (Waarde)
-                                                    </label>
-                                                    <select
-                                                        v-model="
-                                                            message.selectedYAxis
-                                                        "
-                                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                    >
-                                                        <option value="">
-                                                            Kies Y-as veld
-                                                        </option>
-                                                        <option
-                                                            v-for="field in getAllFields(
-                                                                message
-                                                            )"
-                                                            :key="field.key"
-                                                            :value="field.key"
-                                                        >
-                                                            {{ field.display }}
-                                                        </option>
-                                                        <option value="__count">
-                                                            Aantal (Tel Records)
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Chart preview -->
-                                        <div
-                                            v-if="
-                                                message.selectedXAxis &&
-                                                message.selectedYAxis
-                                            "
-                                            class="w-full h-96 bg-white rounded-lg border border-gray-200"
-                                        >
-                                            <ag-charts
-                                                class="w-full h-full"
-                                                :options="
-                                                    getCustomChartOptions(
-                                                        message
-                                                    )
-                                                "
-                                            />
-                                        </div>
-
-                                        <!-- Placeholder when no axes selected -->
-                                        <div
-                                            v-else
-                                            class="w-full h-96 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center"
-                                        >
-                                            <div
-                                                class="text-center text-gray-500"
-                                            >
-                                                <i
-                                                    class="fas fa-chart-bar text-3xl mb-2"
-                                                ></i>
-                                                <p class="text-sm">
-                                                    Selecteer X-as en Y-as om de
-                                                    grafiek te bekijken
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </template>
-
-                                    <template v-else>
-                                        <div
-                                            class="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200"
-                                        >
-                                            Geen data beschikbaar voor grafiek
-                                        </div>
-                                    </template>
+                                    <ChartBuilder :message="message" />
                                 </div>
 
                                 <!-- Tabel weergave met AG Grid -->
@@ -422,9 +255,7 @@
                                                         : 'hidden',
                                             }"
                                         >
-                                            {{
-                                                message.json?.length || 0
-                                            }}
+                                            {{ message.json?.length || 0 }}
                                             records
                                         </span>
                                     </div>
@@ -619,6 +450,7 @@ import {
     IntegratedChartsModule,
 } from "ag-grid-enterprise";
 import DislikeModal from "@/Components/Modals/DislikeModal.vue";
+import ChartBuilder from "@/Components/ChartBuilder.vue";
 
 ModuleRegistry.registerModules([
     AllEnterpriseModule,
@@ -635,6 +467,7 @@ export default {
         AgCharts,
         Snackbar,
         DislikeModal,
+        ChartBuilder,
     },
     props: {
         conversation: Object,
@@ -698,19 +531,7 @@ export default {
                     ];
                 },
             },
-            availableChartTypes: [
-                // { value: "column", label: "Kolom" },
-                { value: "bar", label: "Balk" },
-                { value: "line", label: "Lijn" },
-                { value: "area", label: "Vlak" },
-            ],
-            aggregationTypes: [
-                { value: "sum", label: "Som" },
-                { value: "avg", label: "Gemiddelde" },
-                { value: "count", label: "Aantal" },
-                { value: "min", label: "Minimum" },
-                { value: "max", label: "Maximum" },
-            ],
+
             pinnedCharts: [],
             pinnedTables: [],
             clickedMessageId: null,
@@ -891,504 +712,6 @@ export default {
                 this.clickedMessageId = null;
             }, 300);
         },
-        parseDate(value) {
-            if (!value) return null;
-
-            // Converteer naar string als het dat nog niet is
-            const dateStr = String(value).trim();
-
-            // Leeg of ongeldig
-            if (!dateStr || dateStr === "null" || dateStr === "undefined")
-                return null;
-
-            // Probeer verschillende datum formaten
-            const formats = [
-                /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // 2023-12-01T10:30:00
-                /^\d{4}-\d{2}-\d{2}/, // 2023-12-01
-
-                /^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/, // 01-12-2023 of 1/12/2023
-                /^\d{1,2}[-\/]\d{1,2}[-\/]\d{2}/, // 01-12-23
-
-                /^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/, // 12/01/2023
-
-                /^\d{13}$/, // 1640995200000
-                /^\d{10}$/, // 1640995200
-            ];
-
-            // Controleer of het een geldig datum formaat lijkt
-            const hasDateFormat = formats.some((format) =>
-                format.test(dateStr)
-            );
-
-            if (hasDateFormat) {
-                // Probeer als timestamp (milliseconds)
-                if (/^\d{13}$/.test(dateStr)) {
-                    const timestamp = parseInt(dateStr);
-                    const date = new Date(timestamp);
-                    return isNaN(date.getTime()) ? null : date;
-                }
-
-                // Probeer als timestamp (seconds)
-                if (/^\d{10}$/.test(dateStr)) {
-                    const timestamp = parseInt(dateStr) * 1000;
-                    const date = new Date(timestamp);
-                    return isNaN(date.getTime()) ? null : date;
-                }
-
-                // Probeer normale datum parsing
-                const date = new Date(dateStr);
-
-                // Controleer of datum geldig is en niet in de verre toekomst/verleden
-                if (!isNaN(date.getTime())) {
-                    const year = date.getFullYear();
-                    if (year >= 1900 && year <= 2100) {
-                        return date;
-                    }
-                }
-            }
-
-            return null;
-        },
-        isDateField(fieldName, data) {
-            if (!data || data.length === 0) return false;
-
-            // Check eerste 10 records (of minder als er minder zijn)
-            const sampleSize = Math.min(10, data.length);
-            let dateCount = 0;
-
-            for (let i = 0; i < sampleSize; i++) {
-                const value = data[i][fieldName];
-                if (this.parseDate(value)) {
-                    dateCount++;
-                }
-            }
-
-            // Als meer dan 70% van de samples geldige datums zijn
-            return dateCount / sampleSize > 0.7;
-        },
-        getCustomChartOptions(message) {
-            const chartType = message.selectedChartType || "column";
-            const xAxis = message.selectedXAxis;
-            const yAxis = message.selectedYAxis;
-            const aggregation = message.selectedAggregation || "sum";
-
-            if (!xAxis || !yAxis || !message.json) {
-                return {};
-            }
-
-            // Prepareer data gebaseerd op selecties
-            const chartData = this.prepareCustomChartData(
-                message.json,
-                xAxis,
-                yAxis,
-                aggregation
-            );
-
-            if (!chartData || chartData.length === 0) {
-                return {};
-            }
-
-            // Sorteer en limiteer data
-            const sortedData = this.sortChartData(chartData, xAxis).slice(
-                0,
-                50
-            );
-
-            const title = this.generateCustomChartTitle(
-                xAxis,
-                yAxis,
-                aggregation
-            );
-
-            const baseOptions = {
-                data: sortedData,
-                title: {
-                    text: title,
-                    fontSize: 16,
-                    fontWeight: "bold",
-                },
-                padding: {
-                    top: 20,
-                    right: 20,
-                    bottom: 60,
-                    left: 20,
-                },
-                navigator: {
-                    enabled: true,
-                    mask: {
-                        fill: "rgba(59, 130, 246, 0.1)",
-                        stroke: "#3B82F6",
-                        strokeWidth: 1,
-                    },
-                },
-            };
-
-            const config = this.generateCustomChartConfig(
-                baseOptions,
-                chartType,
-                xAxis,
-                yAxis
-            );
-
-            return config;
-        },
-        sortChartData(chartData, xAxis) {
-            // Bepaal of het datums zijn door te kijken naar het eerste item
-            const isDateData =
-                chartData.length > 0 && chartData[0].category instanceof Date;
-
-            if (isDateData) {
-                // Sorteer datums chronologisch
-                return chartData.sort((a, b) => a.category - b.category);
-            } else {
-                // Sorteer andere waarden op waarde (hoogste eerst)
-                return chartData.sort((a, b) => b.value - a.value);
-            }
-        },
-        prepareCustomChartData(data, xAxis, yAxis, aggregation) {
-            if (!data || data.length === 0) {
-                console.warn("Geen data beschikbaar voor chart");
-                return [];
-            }
-
-            const isXAxisDate = this.isDateField(xAxis, data);
-
-            console.log("Chart data preparatie:", {
-                xAxis,
-                yAxis,
-                aggregation,
-                isXAxisDate,
-                dataLength: data.length,
-            });
-
-            if (yAxis === "__count") {
-                return this.prepareCountData(data, xAxis, isXAxisDate);
-            } else {
-                return this.prepareAggregatedData(
-                    data,
-                    xAxis,
-                    yAxis,
-                    aggregation,
-                    isXAxisDate
-                );
-            }
-        },
-        prepareCountData(data, xAxis, isXAxisDate) {
-            const counts = {};
-
-            data.forEach((item, index) => {
-                let category = this.getCategoryValue(
-                    item,
-                    xAxis,
-                    index,
-                    isXAxisDate
-                );
-
-                if (category !== null) {
-                    const categoryKey =
-                        category instanceof Date
-                            ? category.toISOString()
-                            : String(category);
-                    counts[categoryKey] = (counts[categoryKey] || 0) + 1;
-                }
-            });
-
-            // Converteer naar array en sorteer
-            let entries = Object.entries(counts);
-
-            if (isXAxisDate) {
-                // Sorteer datums chronologisch
-                entries.sort(([a], [b]) => new Date(a) - new Date(b));
-                return entries.slice(0, 20).map(([categoryKey, count]) => ({
-                    category: new Date(categoryKey),
-                    value: count,
-                }));
-            } else {
-                // Sorteer op count (hoogste eerst)
-                entries.sort(([, a], [, b]) => b - a);
-                return entries.slice(0, 20).map(([category, count]) => ({
-                    category: category,
-                    value: count,
-                }));
-            }
-        },
-        prepareAggregatedData(data, xAxis, yAxis, aggregation, isXAxisDate) {
-            const groups = {};
-
-            data.forEach((item, index) => {
-                let category = this.getCategoryValue(
-                    item,
-                    xAxis,
-                    index,
-                    isXAxisDate
-                );
-
-                if (category !== null) {
-                    const categoryKey =
-                        category instanceof Date
-                            ? category.toISOString()
-                            : String(category);
-                    const value = this.parseNumericValue(item[yAxis]);
-
-                    if (value !== null) {
-                        if (!groups[categoryKey]) {
-                            groups[categoryKey] = [];
-                        }
-                        groups[categoryKey].push(value);
-                    }
-                }
-            });
-
-            // Converteer naar geaggregeerde data
-            let aggregatedData = Object.entries(groups)
-                .map(([categoryKey, values]) => {
-                    const aggregatedValue = this.aggregateValues(
-                        values,
-                        aggregation
-                    );
-                    return {
-                        category: isXAxisDate
-                            ? new Date(categoryKey)
-                            : categoryKey,
-                        value: aggregatedValue,
-                    };
-                })
-                .filter(
-                    (item) =>
-                        item.value !== null &&
-                        !isNaN(item.value) &&
-                        isFinite(item.value)
-                );
-
-            return aggregatedData.slice(0, 20);
-        },
-        getCategoryValue(item, xAxis, index, isXAxisDate) {
-            if (xAxis === "__index") {
-                return `Item ${index + 1}`;
-            }
-
-            const rawValue = item[xAxis];
-
-            // Controleer op lege waarden
-            if (
-                rawValue === null ||
-                rawValue === undefined ||
-                rawValue === ""
-            ) {
-                return "Onbekend";
-            }
-
-            if (isXAxisDate) {
-                const dateValue = this.parseDate(rawValue);
-                if (dateValue) {
-                    return dateValue;
-                } else {
-                    console.warn("Kon datum niet parsen:", rawValue);
-                    return null; // Skip invalid dates
-                }
-            } else {
-                return String(rawValue);
-            }
-        },
-        parseNumericValue(value) {
-            if (value === null || value === undefined || value === "") {
-                return null;
-            }
-
-            // Probeer als getal te parsen
-            const numValue = parseFloat(value);
-
-            // Controleer of het een geldig getal is
-            if (isNaN(numValue) || !isFinite(numValue)) {
-                return null;
-            }
-
-            return numValue;
-        },
-        aggregateValues(values, aggregation) {
-            const validValues = values.filter(
-                (v) => v !== null && !isNaN(v) && isFinite(v)
-            );
-
-            if (validValues.length === 0) return 0;
-
-            switch (aggregation) {
-                case "sum":
-                    return validValues.reduce((sum, val) => sum + val, 0);
-                case "avg":
-                    return (
-                        validValues.reduce((sum, val) => sum + val, 0) /
-                        validValues.length
-                    );
-                case "count":
-                    return validValues.length;
-                case "min":
-                    return Math.min(...validValues);
-                case "max":
-                    return Math.max(...validValues);
-                default:
-                    return validValues.reduce((sum, val) => sum + val, 0);
-            }
-        },
-        generateCustomChartTitle(xAxis, yAxis, aggregation) {
-            const xName = this.getFieldDisplayName(xAxis);
-            const yName = this.getFieldDisplayName(yAxis);
-
-            if (yAxis === "__count") {
-                return `Aantal per ${xName}`;
-            }
-
-            const aggLabel =
-                {
-                    sum: "Totaal",
-                    avg: "Gemiddelde",
-                    count: "Aantal",
-                    min: "Minimum",
-                    max: "Maximum",
-                }[aggregation] || "Totaal";
-
-            return `${aggLabel} ${yName} per ${xName}`;
-        },
-        generateCustomChartConfig(baseOptions, chartType, xAxis, yAxis) {
-            const xAxisTitle = this.getFieldDisplayName(xAxis);
-            const yAxisTitle = this.getFieldDisplayName(yAxis);
-
-            // Check of x-as datum bevat
-            const isXAxisDate =
-                baseOptions.data.length > 0 &&
-                baseOptions.data[0].category instanceof Date;
-
-            const maxLabelChars = 15;
-
-            const xAxisConfig = {
-                type: isXAxisDate ? "time" : "category",
-                position: "bottom",
-                title: { text: xAxisTitle },
-                label: {
-                    rotation:
-                        !isXAxisDate && baseOptions.data.length > 10 ? -45 : 0,
-                    fontSize: 9,
-                    format: isXAxisDate ? "%d/%m/%Y" : undefined,
-                    formatter: (params) => {
-                        let val = params.value;
-                        if (
-                            typeof val === "string" &&
-                            val.length > maxLabelChars
-                        ) {
-                            return val.slice(0, maxLabelChars) + "…";
-                        }
-                        return val;
-                    },
-                },
-            };
-
-            const yAxisConfig = {
-                type: "number",
-                position: "left",
-                title: { text: yAxisTitle },
-                label: {
-                    fontSize: 11,
-                },
-            };
-
-            const commonAxes = [xAxisConfig, yAxisConfig];
-
-            const tooltipRenderer = ({ datum }) => {
-                const xValue = isXAxisDate
-                    ? datum.category.toLocaleDateString("nl-NL")
-                    : datum.category;
-
-                const yValue =
-                    typeof datum.value === "number"
-                        ? datum.value.toLocaleString("nl-NL")
-                        : datum.value;
-
-                return {
-                    content: `${xAxisTitle}: ${xValue}<br/>${yAxisTitle}: ${yValue}`,
-                };
-            };
-
-            // Basis serie configuratie
-            const serieConfig = {
-                xKey: "category",
-                yKey: "value",
-                tooltip: { renderer: tooltipRenderer },
-            };
-
-            switch (chartType) {
-                case "bar":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "bar",
-                                fill: "#3B82F6",
-                            },
-                        ],
-                    };
-
-                case "line":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "line",
-                                stroke: "#3B82F6",
-                                strokeWidth: 2,
-                                marker: {
-                                    enabled: true,
-                                    fill: "#3B82F6",
-                                    size: 6,
-                                },
-                            },
-                        ],
-                    };
-
-                case "area":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "area",
-                                fill: "rgba(59, 130, 246, 0.3)",
-                                stroke: "#3B82F6",
-                                strokeWidth: 2,
-                            },
-                        ],
-                    };
-
-                default: // column
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "bar",
-                                fill: "#3B82F6",
-                            },
-                        ],
-                    };
-            }
-        },
-        generateChartTitle(categoryField, valueField) {
-            const categoryName = this.getFieldDisplayName(categoryField);
-            const valueName = this.getFieldDisplayName(valueField);
-
-            if (valueField === "__count") {
-                return `Aantal per ${categoryName}`;
-            } else if (categoryField === "__index") {
-                return `${valueName} per Item`;
-            } else {
-                return `${valueName} per ${categoryName}`;
-            }
-        },
 
         // Switch methods
         setDisplayMode(message, mode) {
@@ -1438,6 +761,7 @@ export default {
                 display: this.getFieldDisplayName(key),
             }));
         },
+
         // Helpers
         autoResize() {
             const textarea = this.$refs.messageTextarea;
@@ -1733,6 +1057,31 @@ export default {
             return this.pinnedTables.some(
                 (table) => table.messageId === message.id
             );
+        },
+        saveSourceSelection() {
+            // Sla de geselecteerde source op per conversatie GUID
+            const storageKey = `selected_source_${this.conversation.guid}`;
+            localStorage.setItem(storageKey, this.form.source.id);
+        },
+        loadSourceSelection() {
+            // Laad de opgeslagen source voor deze conversatie
+            const storageKey = `selected_source_${this.conversation.guid}`;
+            const savedSource = localStorage.getItem(storageKey);
+            if (savedSource) {
+                try {
+                    const sourceId = parseInt(savedSource);
+
+                    const sourceExists = this.conversation.user.sources.find(
+                        (source) => source.id === sourceId
+                    );
+
+                    if (sourceExists) {
+                        this.form.source = sourceExists;
+                    }
+                } catch (error) {
+                    localStorage.removeItem(storageKey);
+                }
+            }
         },
 
         // Requests
@@ -2052,32 +1401,6 @@ export default {
                     "Er is een fout opgetreden bij het loskoppelen van de tabel",
                     "error"
                 );
-            }
-        },
-        saveSourceSelection() {
-            // Sla de geselecteerde source op per conversatie GUID
-            const storageKey = `selected_source_${this.conversation.guid}`;
-            localStorage.setItem(storageKey, this.form.source.id);
-        },
-
-        loadSourceSelection() {
-            // Laad de opgeslagen source voor deze conversatie
-            const storageKey = `selected_source_${this.conversation.guid}`;
-            const savedSource = localStorage.getItem(storageKey);
-            if (savedSource) {
-                try {
-                    const sourceId = parseInt(savedSource);
-
-                    const sourceExists = this.conversation.user.sources.find(
-                        (source) => source.id === sourceId
-                    );
-
-                    if (sourceExists) {
-                        this.form.source = sourceExists;
-                    }
-                } catch (error) {
-                    localStorage.removeItem(storageKey);
-                }
             }
         },
     },
