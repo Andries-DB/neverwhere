@@ -32,6 +32,7 @@ class UserController extends Controller
         // dd($request->all());
         $request->validate([
             'name' => 'required|string|max:255',
+            'firstname'  => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => ['required', PasswordRule::defaults()],
         ]);
@@ -40,6 +41,7 @@ class UserController extends Controller
 
         $user = User::create([
             'name' => $request->name,
+            'firstname' => $request->firstname,
             'guid' => (string) Str::uuid(),
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -91,6 +93,7 @@ class UserController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'firstname'  => 'required|string|max:255',
             'email' => [
                 'required',
                 'string',
@@ -107,6 +110,7 @@ class UserController extends Controller
 
         $user->update([
             'name' => $request->name,
+            'firstname' => $request->firstname,
             'email' => $request->email,
         ]);
 
@@ -121,6 +125,7 @@ class UserController extends Controller
         $this->authorizeAdmin();
 
         $request->validate([
+            'firstname' => $request->firstname,
             'name' => 'required|string|max:255',
             'email' => [
                 'required',
@@ -135,6 +140,7 @@ class UserController extends Controller
 
         $user->update([
             'name' => $request->name,
+            'firstname' => $request->firstname,
             'email' => $request->email,
         ]);
 

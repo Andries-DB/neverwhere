@@ -18,6 +18,7 @@ class Message extends Model
         'thumbs_up',
         'thumbs_down',
         'feedback',
+        'source_id',
     ];
 
     protected $casts = [
@@ -44,5 +45,10 @@ class Message extends Model
     public function pinnedGraphs()
     {
         return $this->hasMany(PinnedGraph::class);
+    }
+
+    public function source()
+    {
+        return $this->belongsTo(Source::class);
     }
 }

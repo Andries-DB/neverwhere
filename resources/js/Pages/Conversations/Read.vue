@@ -432,6 +432,7 @@
         :show="dislikeModal"
         :close="toggleDislikeModal"
         :message="dislikedMessage"
+        :sort="dislikedSort"
     />
 </template>
 
@@ -537,11 +538,14 @@ export default {
             clickedMessageId: null,
             dislikeModal: false,
             dislikedMessage: null,
+            dislikedSort: "",
         };
     },
     methods: {
-        toggleDislikeModal(message) {
+        toggleDislikeModal(message, sort = "dislike") {
+            console.log(sort);
             this.dislikedMessage = message;
+            this.dislikedSort = sort;
             this.dislikeModal = !this.dislikeModal;
         },
         // Table functions
@@ -725,21 +729,13 @@ export default {
                 (!message.selectedXAxis || !message.selectedYAxis)
             ) {
                 const fields = this.getAllFields(message);
-                const numericFields = this.getAllFields(message);
 
-                // Probeer slimme defaults te kiezen
                 if (!message.selectedXAxis && fields.length > 0) {
-                    // Zoek een geschikt categorisch veld
-                    const categoricalField = fields.find(
-                        (f) => !numericFields.some((nf) => nf.key === f.key)
-                    );
-                    message.selectedXAxis = categoricalField
-                        ? categoricalField.key
-                        : fields[0].key;
+                    message.selectedXAxis = fields[0].key;
                 }
 
-                if (!message.selectedYAxis && numericFields.length > 0) {
-                    message.selectedYAxis = numericFields[0].key;
+                if (!message.selectedYAxis && fields.length > 0) {
+                    message.selectedYAxis = fields[1].key;
                 } else if (!message.selectedYAxis) {
                     message.selectedYAxis = "__count";
                 }
@@ -1277,34 +1273,12 @@ export default {
             }
         },
         async onThumbsUp(message) {
+            this.toggleDislikeModal(message, "like");
+
             try {
-                const response = await fetch(
-                    route("conversation.likeMessage"),
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Accept: "application/json",
-                            "X-CSRF-TOKEN": document
-                                .querySelector('meta[name="csrf-token"]')
-                                .getAttribute("content"),
-                        },
-                        body: JSON.stringify({
-                            messageId: message.id,
-                        }),
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error("Failed to pin chart");
-                }
-
-                // Zet het bericht lokaal op liked
                 const index = this.messages.findIndex(
                     (m) => m.id === message.id
                 );
-
-                console.log("Message liked successfully", this.messages[index]);
 
                 if (index !== -1) {
                     this.messages[index].thumbs_up = 1;
@@ -1318,6 +1292,49 @@ export default {
                     "error"
                 );
             }
+
+            // try {
+            //     const response = await fetch(
+            //         route("conversation.likeMessage"),
+            //         {
+            //             method: "POST",
+            //             headers: {
+            //                 "Content-Type": "application/json",
+            //                 Accept: "application/json",
+            //                 "X-CSRF-TOKEN": document
+            //                     .querySelector('meta[name="csrf-token"]')
+            //                     .getAttribute("content"),
+            //             },
+            //             body: JSON.stringify({
+            //                 messageId: message.id,
+            //                 conversationId: message.conversation_id,
+            //             }),
+            //         }
+            //     );
+
+            //     if (!response.ok) {
+            //         throw new Error("Failed to pin chart");
+            //     }
+
+            //     // Zet het bericht lokaal op liked
+            //     const index = this.messages.findIndex(
+            //         (m) => m.id === message.id
+            //     );
+
+            //     console.log("Message liked successfully", this.messages[index]);
+
+            //     if (index !== -1) {
+            //         this.messages[index].thumbs_up = 1;
+            //         this.messages[index].thumbs_down = 0;
+            //     }
+
+            //     console.log("Message liked successfully", this.messages[index]);
+            // } catch (error) {
+            //     this.$refs.snackbar.show(
+            //         "Er is een fout opgetreden bij het liken van het bericht",
+            //         "error"
+            //     );
+            // }
         },
         async onThumbsDown(message) {
             this.toggleDislikeModal(message);

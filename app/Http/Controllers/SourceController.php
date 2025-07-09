@@ -40,13 +40,15 @@ class SourceController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'webhook' => 'nullable'
+            'webhook' => 'nullable',
+            'model' => 'nullable',
         ]);
 
         Source::create([
             'name' => $request->name,
             'hex_color' => $request->color,
             'webhook' => $request->webhook,
+            'model' => $request->model,
             'company_id' => $request->company
         ]);
 
@@ -80,5 +82,36 @@ class SourceController extends Controller
     private function authorizeAdmin(): void
     {
         abort_unless(auth()->user()->role === 'admin', 403, 'You do not have permission to view this page');
+    }
+
+    public function getSourceInfo(Request $request, Source $source)
+    {
+        // Valideer de access key
+        $request->validate([
+            'access_key' => 'required|string'
+        ]);
+
+        // Controleer of de access key correct is
+        if (!$this->validateAccessKey($request->access_key, $source)) {
+            return response()->json([
+                'error' => 'Invalid access key'
+            ], 403);
+        }
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'name' => $source->name,
+                'model' => $source->model,
+                'company' => $source->company->company ?? null,
+            ]
+        ]);
+    }
+
+    private function validateAccessKey(string $providedKey, Source $source): bool
+    {
+        // Optie 1: Vaste string voor alle sources
+        $validKey = config('app.source_access_key', 'your-secret-key-here');
+
+        return hash_equals($validKey, $providedKey);
     }
 }

@@ -6,7 +6,7 @@
             <!-- Nieuwe conversatie knop -->
             <div class="flex justify-between items-center">
                 <h1 class="text-black font-bold text-3xl sm:text-4xl">
-                    Dashboard
+                    Pinboard {{ $page.props.auth.user.firstname }}
                 </h1>
 
                 <button
@@ -34,19 +34,17 @@
                     <div
                         v-for="graph in pinned_graphs"
                         :key="graph.id"
-                        class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                        :class="[
+                            'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow',
+                            graph.width === 'full' ? 'col-span-2' : '',
+                        ]"
                     >
                         <!-- Header -->
                         <div class="px-4 py-2 border-b border-gray-100">
                             <div class="flex justify-between items-center">
                                 <div class="flex-1 mr-3">
                                     <!-- Editable Title -->
-                                    <div
-                                        v-if="editingTitleId !== graph.id"
-                                        @click="startEditingTitle(graph)"
-                                        class="group cursor-pointer"
-                                        :title="'Klik om titel te bewerken'"
-                                    >
+                                    <div v-if="editingTitleId !== graph.id">
                                         <h3
                                             class="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center"
                                         >
@@ -54,19 +52,6 @@
                                                 graph.title ||
                                                 getGraphTitle(graph)
                                             }}
-                                            <svg
-                                                class="w-4 h-4 ml-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                                />
-                                            </svg>
                                         </h3>
                                     </div>
 
@@ -126,19 +111,144 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button
-                                    @click="unpinGraph(graph.id)"
-                                    class="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                                    title="Losmaken"
-                                >
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
+                                <div class="relative">
+                                    <button
+                                        @click="toggleDropdown(graph.id)"
+                                        class="text-gray-400 hover:text-gray-600 transition-colors"
+                                        title="Acties"
                                     >
-                                        <path d="M10 2L3 9h4v7h6V9h4l-7-7z" />
-                                    </svg>
-                                </button>
+                                        <svg
+                                            class="w-5 h-5"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path
+                                                d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"
+                                            />
+                                        </svg>
+                                    </button>
+
+                                    <div
+                                        v-if="this.openDropdown === graph.id"
+                                        class="absolute right-0 top-full mt-1 w-40 bg-white rounded-md shadow-lg border border-slate-200 z-50"
+                                    >
+                                        <!-- Titel bewerken optie -->
+                                        <button
+                                            @click="
+                                                startEditingTitle(graph);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
+                                        >
+                                            <svg
+                                                class="w-4 h-4 mr-2 text-gray-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                                />
+                                            </svg>
+                                            Titel bewerken
+                                        </button>
+
+                                        <button
+                                            @click="
+                                                toggleGraphWidth(graph);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
+                                        >
+                                            <svg
+                                                class="w-4 h-4 mr-2 text-gray-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"
+                                                />
+                                            </svg>
+                                            {{
+                                                graph.width === "full"
+                                                    ? "Verklein"
+                                                    : "Vergroot"
+                                            }}
+                                        </button>
+
+                                        <button
+                                            @click="
+                                                toggleGraphRefresh(graph);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-all duration-150 flex items-center gap-2"
+                                        >
+                                            <svg
+                                                class="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-transform duration-200"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M4 4v6h6M20 20v-6h-6M4 20l5-5M20 4l-5 5"
+                                                />
+                                            </svg>
+                                            <span>Refresh</span>
+                                        </button>
+
+                                        <button
+                                            @click="
+                                                duplicateGraph(graph);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
+                                        >
+                                            <i
+                                                class="far fa-clone mr-2 w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-transform duration-200"
+                                            ></i>
+                                            Dupliceer
+                                        </button>
+
+                                        <!-- Divider -->
+                                        <div
+                                            class="border-t border-slate-200 my-1"
+                                        ></div>
+
+                                        <!-- Losmaken optie -->
+                                        <button
+                                            @click="
+                                                unpinGraph(graph.id);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150 flex items-center"
+                                        >
+                                            <svg
+                                                class="w-4 h-4 mr-2 text-red-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                />
+                                            </svg>
+                                            Losmaken
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -202,28 +312,225 @@
             </section>
 
             <section v-if="pinned_tables?.length" class="space-y-4">
-                <div class="grid grid-cols-1 xl:grid-cols-1 gap-6">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <div
                         v-for="table in pinned_tables"
                         :key="table.id"
-                        class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                        :class="[
+                            'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow',
+                            table.width === 'full' ? 'col-span-2' : '',
+                        ]"
                     >
-                        <!-- Header -->
                         <div class="px-4 py-2 border-b border-gray-100">
                             <div class="flex justify-between items-start">
-                                <button
-                                    @click="unpinTable(table.id)"
-                                    class="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                                    title="Losmaken"
-                                >
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
+                                <div class="flex-1 mr-3">
+                                    <!-- Editable Title -->
+                                    <div v-if="editingTitleId !== table.id">
+                                        <h3
+                                            class="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center"
+                                        >
+                                            {{ table.title }}
+                                        </h3>
+                                    </div>
+
+                                    <!-- Edit Mode -->
+                                    <div
+                                        v-else
+                                        class="flex items-center space-x-2"
                                     >
-                                        <path d="M10 2L3 9h4v7h6V9h4l-7-7z" />
-                                    </svg>
-                                </button>
+                                        <input
+                                            ref="titleInput"
+                                            v-model="editingTitle"
+                                            @keydown.enter="
+                                                saveTableTitle(table.id)
+                                            "
+                                            @keydown.escape="cancelEditingTitle"
+                                            @blur="saveTableTitle(table.id)"
+                                            class="flex-1 text-lg font-medium text-gray-900 bg-transparent border-blue-500 focus:outline-none focus:border-blue-600 transition-colors"
+                                            :placeholder="table.title"
+                                        />
+                                        <div class="flex space-x-1">
+                                            <button
+                                                @click="
+                                                    saveTableTitle(table.id)
+                                                "
+                                                class="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+                                                title="Opslaan"
+                                            >
+                                                <svg
+                                                    class="w-4 h-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M5 13l4 4L19 7"
+                                                    />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                @click="cancelEditingTitle"
+                                                class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                                                title="Annuleren"
+                                            >
+                                                <svg
+                                                    class="w-4 h-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <button
+                                        @click="toggleDropdown(table.id)"
+                                        class="text-gray-400 hover:text-gray-600 transition-colors"
+                                        title="Acties"
+                                    >
+                                        <svg
+                                            class="w-5 h-5"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path
+                                                d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"
+                                            />
+                                        </svg>
+                                    </button>
+
+                                    <div
+                                        v-if="this.openDropdown === table.id"
+                                        class="absolute right-0 top-full mt-1 w-40 bg-white rounded-md shadow-lg border border-slate-200 z-50"
+                                    >
+                                        <!-- Titel bewerken optie -->
+                                        <button
+                                            @click="
+                                                startEditingTitle(table);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
+                                        >
+                                            <svg
+                                                class="w-4 h-4 mr-2 text-gray-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                                />
+                                            </svg>
+                                            Titel bewerken
+                                        </button>
+
+                                        <button
+                                            @click="
+                                                toggleTableWidth(table);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
+                                        >
+                                            <svg
+                                                class="w-4 h-4 mr-2 text-gray-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"
+                                                />
+                                            </svg>
+                                            {{
+                                                table.width === "full"
+                                                    ? "Verklein"
+                                                    : "Vergroot"
+                                            }}
+                                        </button>
+
+                                        <button
+                                            @click="
+                                                toggleTableRefresh(graph);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-all duration-150 flex items-center gap-2"
+                                        >
+                                            <svg
+                                                class="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-transform duration-200"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M4 4v6h6M20 20v-6h-6M4 20l5-5M20 4l-5 5"
+                                                />
+                                            </svg>
+                                            <span>Refresh</span>
+                                        </button>
+
+                                        <button
+                                            @click="
+                                                duplicateTable(table);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
+                                        >
+                                            <i
+                                                class="far fa-clone mr-2 w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-transform duration-200"
+                                            ></i>
+                                            Dupliceer
+                                        </button>
+
+                                        <!-- Divider -->
+                                        <div
+                                            class="border-t border-slate-200 my-1"
+                                        ></div>
+
+                                        <!-- Losmaken optie -->
+                                        <button
+                                            @click="
+                                                unpinTable(table.id);
+                                                this.openDropdown = null;
+                                            "
+                                            class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150 flex items-center"
+                                        >
+                                            <svg
+                                                class="w-4 h-4 mr-2 text-red-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                />
+                                            </svg>
+                                            Losmaken
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -262,11 +569,18 @@
             </section>
         </main>
     </AuthenticatedLayout>
+
+    <RefreshGraph
+        :show="showRefreshModal"
+        :close="toggleGraphRefresh"
+        :graph="selectedGraphRefresh"
+        :sort="selectedGraphRefresh"
+    />
 </template>
 
 <script>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, useForm } from "@inertiajs/vue3";
+import { Head, useForm, router } from "@inertiajs/vue3";
 import { format, isToday, parseISO } from "date-fns";
 import { AgCharts } from "ag-charts-vue3";
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
@@ -279,6 +593,8 @@ import {
     LicenseManager,
     IntegratedChartsModule,
 } from "ag-grid-enterprise";
+import { ref } from "vue";
+import RefreshGraph from "@/Components/Modals/RefreshGraph.vue";
 
 ModuleRegistry.registerModules([
     AllEnterpriseModule,
@@ -292,6 +608,7 @@ export default {
         Head,
         AgCharts,
         AgGridVue,
+        RefreshGraph,
     },
     props: {
         pinned_graphs: Array,
@@ -299,6 +616,10 @@ export default {
     },
     data() {
         return {
+            openDropdown: null, // Verplaats het hier
+            selectedGraphRefresh: null,
+            selectedSortRefresh: "",
+            showRefreshModal: false,
             form: useForm({}),
             breadcrumbs: [{ title: "Dashboard", href: "/dashboard" }],
             availableChartTypes: [
@@ -356,6 +677,9 @@ export default {
         };
     },
     methods: {
+        toggleDropdown(id) {
+            this.openDropdown = this.openDropdown === id ? null : id;
+        },
         createConversation() {
             this.form.post(route("conversation.create"), {
                 onSuccess: () => {
@@ -365,68 +689,7 @@ export default {
             });
         },
 
-        // Nieuwe methodes voor titel bewerking
-        startEditingTitle(graph) {
-            this.editingTitleId = graph.id;
-            this.editingTitle = graph.title || this.getGraphTitle(graph);
-
-            // Focus de input na een korte delay zodat het element bestaat
-            this.$nextTick(() => {
-                if (this.$refs.titleInput) {
-                    this.$refs.titleInput.focus();
-                    this.$refs.titleInput.select();
-                }
-            });
-        },
-        cancelEditingTitle() {
-            this.editingTitleId = null;
-            this.editingTitle = "";
-        },
-        async saveTitle(graphId) {
-            if (this.savingTitleId) return; // Voorkom dubbele saves
-
-            const graph = this.pinned_graphs.find((g) => g.id === graphId);
-            if (!graph) return;
-
-            // Als de titel niet is veranderd, gewoon annuleren
-            const originalTitle = graph.title || this.getGraphTitle(graph);
-            if (this.editingTitle.trim() === originalTitle) {
-                this.cancelEditingTitle();
-                return;
-            }
-
-            this.savingTitleId = graphId;
-
-            try {
-                // Maak een nieuwe form instance voor de title update
-                const titleForm = useForm({
-                    title: this.editingTitle.trim(),
-                });
-
-                await new Promise((resolve, reject) => {
-                    titleForm.patch(
-                        route("conversation.updateChartTitle", graphId),
-                        {
-                            onSuccess: () => {
-                                // Update de lokale data
-                                graph.title = this.editingTitle.trim();
-                                this.cancelEditingTitle();
-                                resolve();
-                            },
-                            onError: (errors) => {
-                                console.error("Error updating title:", errors);
-                                reject(errors);
-                            },
-                        }
-                    );
-                });
-            } catch (error) {
-                console.error("Failed to save title:", error);
-            } finally {
-                this.savingTitleId = null;
-            }
-        },
-
+        // Graph functions
         formatDate(dateString) {
             const date = parseISO(dateString + "Z");
 
@@ -436,8 +699,6 @@ export default {
                 return format(date, "dd MMM");
             }
         },
-
-        // VERBETERDE DATE PARSING (zoals in de tweede code)
         parseDate(value) {
             if (!value) return null;
 
@@ -492,8 +753,6 @@ export default {
 
             return null;
         },
-
-        // VERBETERDE DATE FIELD DETECTION (zoals in de tweede code)
         isDateField(fieldName, data) {
             if (!data || data.length === 0) return false;
 
@@ -511,7 +770,6 @@ export default {
             // Als meer dan 70% van de samples geldige datums zijn
             return dateCount / sampleSize > 0.7;
         },
-
         isNumericField(fieldName, data) {
             if (!data || data.length === 0) return false;
 
@@ -528,7 +786,6 @@ export default {
                 return !isNaN(num) && isFinite(num);
             });
         },
-
         getGraphTitle(graph) {
             // Generate a meaningful title based on the graph configuration
             const yLabel = graph._y.charAt(0).toUpperCase() + graph._y.slice(1);
@@ -537,13 +794,11 @@ export default {
 
             return `${yLabel} per ${xLabel}${aggLabel}`;
         },
-
         getGraphSubtitle(graph) {
             const chartType = this.formatChartType(graph.sort_chart);
             const recordCount = graph.json ? graph.json.length : 0;
             return `${chartType} • ${recordCount} records`;
         },
-
         formatChartType(chartType) {
             const types = {
                 bar: "Staafdiagram",
@@ -554,7 +809,6 @@ export default {
             };
             return types[chartType] || chartType;
         },
-
         getPinnedChartOptions(graph) {
             const chartType = graph.sort_chart || "column";
             const xAxis = graph._x;
@@ -611,7 +865,6 @@ export default {
             console.log("Final chart options:", finalConfig);
             return finalConfig;
         },
-
         prepareChartData(data, xAxis, yAxis, aggregation) {
             if (!data || data.length === 0) {
                 console.warn("Geen data beschikbaar voor chart");
@@ -632,7 +885,6 @@ export default {
                 );
             }
         },
-
         prepareCountData(data, xAxis, isXAxisDate) {
             const counts = {};
 
@@ -672,7 +924,6 @@ export default {
                 }));
             }
         },
-
         prepareAggregatedData(data, xAxis, yAxis, aggregation, isXAxisDate) {
             const groups = {};
 
@@ -724,7 +975,6 @@ export default {
 
             return aggregatedData.slice(0, 20);
         },
-
         getCategoryValue(item, xAxis, index, isXAxisDate) {
             if (xAxis === "__index") {
                 return `Item ${index + 1}`;
@@ -753,7 +1003,6 @@ export default {
                 return String(rawValue);
             }
         },
-
         parseNumericValue(value) {
             if (value === null || value === undefined || value === "") {
                 return null;
@@ -769,7 +1018,6 @@ export default {
 
             return numValue;
         },
-
         sortChartData(chartData, xAxis) {
             // Bepaal of het datums zijn door te kijken naar het eerste item
             const isDateData =
@@ -783,7 +1031,6 @@ export default {
                 return chartData.sort((a, b) => b.value - a.value);
             }
         },
-
         aggregateValues(values, aggregation) {
             const validValues = values.filter(
                 (v) => v !== null && !isNaN(v) && isFinite(v)
@@ -809,7 +1056,6 @@ export default {
                     return validValues.reduce((sum, val) => sum + val, 0);
             }
         },
-
         generateChartTitle(xAxis, yAxis, aggregation) {
             const xName = this.getFieldDisplayName(xAxis);
             const yName = this.getFieldDisplayName(yAxis);
@@ -829,7 +1075,6 @@ export default {
 
             return `${aggLabel} ${yName} per ${xName}`;
         },
-
         getFieldDisplayName(fieldName) {
             if (fieldName === "__index") return "Rij Nummer";
             if (fieldName === "__count") return "Aantal";
@@ -839,7 +1084,6 @@ export default {
                 .replace(/_/g, " ")
                 .replace(/\b\w/g, (l) => l.toUpperCase());
         },
-
         generateChartConfig(baseOptions, chartType, xAxis, yAxis) {
             const xAxisTitle = this.getFieldDisplayName(xAxis);
             const yAxisTitle = this.getFieldDisplayName(yAxis);
@@ -968,7 +1212,6 @@ export default {
                     };
             }
         },
-
         unpinGraph(graphId) {
             // Handle unpinning logic - you'll need to implement this based on your backend
             this.form.delete(route("conversation.unpinChart", graphId), {
@@ -985,21 +1228,99 @@ export default {
                 },
             });
         },
-
-        unpinTable(tableId) {
-            this.form.delete(route("conversation.unpinTable", tableId), {
+        duplicateGraph(graph) {
+            this.form.post(route("conversation.duplicateChart", graph.id), {
                 onSuccess: () => {
-                    const index = this.pinned_tables.findIndex(
-                        (t) => t.id === tableId
-                    );
-                    if (index !== -1) {
-                        this.pinned_tables.splice(index, 1);
-                    }
+                    location.reload();
                 },
                 onError: (errors) => {
                     console.log("Error unpinning graph:", errors);
                 },
             });
+        },
+        startEditingTitle(graph) {
+            this.editingTitleId = graph.id;
+            this.editingTitle = graph.title || this.getGraphTitle(graph);
+
+            // Focus de input na een korte delay zodat het element bestaat
+            this.$nextTick(() => {
+                if (this.$refs.titleInput) {
+                    this.$refs.titleInput.focus();
+                    this.$refs.titleInput.select();
+                }
+            });
+        },
+        cancelEditingTitle() {
+            this.editingTitleId = null;
+            this.editingTitle = "";
+        },
+        async saveTitle(graphId) {
+            if (this.savingTitleId) return; // Voorkom dubbele saves
+
+            const graph = this.pinned_graphs.find((g) => g.id === graphId);
+            if (!graph) return;
+
+            // Als de titel niet is veranderd, gewoon annuleren
+            const originalTitle = graph.title || this.getGraphTitle(graph);
+            if (this.editingTitle.trim() === originalTitle) {
+                this.cancelEditingTitle();
+                return;
+            }
+
+            this.savingTitleId = graphId;
+
+            try {
+                // Maak een nieuwe form instance voor de title update
+                const titleForm = useForm({
+                    title: this.editingTitle.trim(),
+                });
+
+                await new Promise((resolve, reject) => {
+                    titleForm.patch(
+                        route("conversation.updateChartTitle", graphId),
+                        {
+                            onSuccess: () => {
+                                // Update de lokale data
+                                graph.title = this.editingTitle.trim();
+                                this.cancelEditingTitle();
+                                resolve();
+                            },
+                            onError: (errors) => {
+                                console.error("Error updating title:", errors);
+                                reject(errors);
+                            },
+                        }
+                    );
+                });
+            } catch (error) {
+                console.error("Failed to save title:", error);
+            } finally {
+                this.savingTitleId = null;
+            }
+        },
+        toggleGraphRefresh(graph) {
+            this.selectedGraphRefresh = graph;
+            this.showRefreshModal = !this.showRefreshModal;
+        },
+        async toggleGraphWidth(graph) {
+            const newWidth = graph.width === "full" ? "half" : "full";
+
+            try {
+                await fetch(route("conversation.updateChartWidth", graph.id), {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document
+                            .querySelector('meta[name="csrf-token"]')
+                            .getAttribute("content"),
+                    },
+                    body: JSON.stringify({ width: newWidth }),
+                });
+
+                graph.width = newWidth;
+            } catch (error) {
+                console.error("Fout bij bijwerken breedte:", error);
+            }
         },
 
         // Table functions
@@ -1020,7 +1341,6 @@ export default {
             const parsed = this.parseTableMessage(message.message);
             return parsed.rows.length > 0;
         },
-
         getTableRowData(message) {
             if (
                 message.json &&
@@ -1041,7 +1361,6 @@ export default {
                 return obj;
             });
         },
-
         getTableColumnDefs(message) {
             if (
                 message.json &&
@@ -1125,6 +1444,103 @@ export default {
                     return params.value;
                 },
             }));
+        },
+        unpinTable(tableId) {
+            this.form.delete(route("conversation.unpinTable", tableId), {
+                onSuccess: () => {
+                    const index = this.pinned_tables.findIndex(
+                        (t) => t.id === tableId
+                    );
+                    if (index !== -1) {
+                        this.pinned_tables.splice(index, 1);
+                    }
+                },
+                onError: (errors) => {
+                    console.log("Error unpinning graph:", errors);
+                },
+            });
+        },
+        async toggleTableWidth(table) {
+            const newWidth = table.width === "full" ? "half" : "full";
+
+            try {
+                await fetch(route("conversation.updateTableWidth", table.id), {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document
+                            .querySelector('meta[name="csrf-token"]')
+                            .getAttribute("content"),
+                    },
+                    body: JSON.stringify({ width: newWidth }),
+                });
+
+                table.width = newWidth;
+            } catch (error) {
+                console.error("Fout bij bijwerken breedte:", error);
+            }
+        },
+        toggleTableRefresh(table) {
+            this.selectedGraphRefresh = table;
+            this.selectedSortRefresh = "table";
+            this.showRefreshModal = !this.showRefreshModal;
+        },
+        duplicateTable(table) {
+            this.form.post(route("conversation.duplicateTable", table.id), {
+                onSuccess: () => {
+                    location.reload();
+                },
+                onError: (errors) => {
+                    console.log("Error unpinning table:", errors);
+                },
+            });
+        },
+        getTableTitle(table) {
+            return table.title;
+        },
+        async saveTableTitle(tableId) {
+            if (this.savingTitleId) return; // Voorkom dubbele saves
+
+            const table = this.pinned_tables.find((g) => g.id === tableId);
+            if (!table) return;
+
+            // Als de titel niet is veranderd, gewoon annuleren
+            const originalTitle = table.title;
+            if (this.editingTitle.trim() === originalTitle) {
+                this.cancelEditingTitle();
+                return;
+            }
+
+            this.savingTitleId = tableId;
+
+            try {
+                // Maak een nieuwe form instance voor de title update
+                const titleForm = useForm({
+                    title: this.editingTitle.trim(),
+                });
+
+                await new Promise((resolve, reject) => {
+                    titleForm.patch(
+                        route("conversation.updateTableTitle", tableId),
+                        {
+                            onSuccess: () => {
+                                // Update de lokale data
+                                table.title = this.editingTitle.trim();
+                                this.cancelEditingTitle();
+                                resolve();
+                            },
+                            onError: (errors) => {
+                                console.error("Error updating title:", errors);
+                                reject(errors);
+                            },
+                        }
+                    );
+                });
+            } catch (error) {
+                console.error("Failed to save title:", error);
+            } finally {
+                this.savingTitleId = null;
+            }
         },
     },
     mounted() {

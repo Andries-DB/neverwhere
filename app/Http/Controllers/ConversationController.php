@@ -17,7 +17,6 @@ class ConversationController extends Controller
 {
     public function read($guid, Request $request)
     {
-
         $conversation = Conversation::where('guid', $guid)->with('messages', 'user', 'user.sources')->firstOrFail();
 
         return Inertia::render('Conversations/Read', [
@@ -52,6 +51,7 @@ class ConversationController extends Controller
 
     public function postUserMessage($guid, Request $request)
     {
+        // dd($request->all());
         $messageText = $request->input('message');
         $conversation = Conversation::where('guid', $guid)->firstOrFail();
 
@@ -65,6 +65,7 @@ class ConversationController extends Controller
             'user_id' => $request->user()->id,
             'message' => $messageText,
             'send_by' => 'user',
+            'source_id' => $request->input('source')
         ]);
 
         return [
@@ -99,8 +100,9 @@ class ConversationController extends Controller
         $user = User::with('companies')->find($request->user()->id);
 
         $response = Http::timeout(60)->post($source->webhook, [
-            'message_id' => $conversation->id,
-            'type' => 'respond',
+            'chat_id' => $conversation->id,
+            'message_id' => $lastUserMessage->id,
+            'type' => 'respond', // Or summarize/refresh/thumb up/thumb down/suggestion
             'input' => $lastUserMessage->message,
             'user' => [
                 'id' => $user->id,
@@ -110,7 +112,12 @@ class ConversationController extends Controller
                 'id' => $user->companies[0]->id,
                 'name' => $user->companies[0]->company
             ],
-            'query' => ''
+            'source' => [
+                'id' => $source->id,
+                'name' => $source->name,
+            ],
+            'query' => '',
+            'thumb' => '',
         ]);
 
 
@@ -125,14 +132,14 @@ class ConversationController extends Controller
             'message' => $json['output'] ?? '',
             'sql_query' => $json['query'] ?? '',
             'respond_type' => $json['type'] ?? 'text',
+            'source_id' => $source->id,
             'send_by' => 'ai',
             ...(isset($json['data'])
                 ? ['json' => is_string($json['data']) ? json_decode($json['data'], true) : $json['data']]
                 : []
-            )
+            ),
+
         ]);
-
-
 
         return [
             'bot_message' => array_merge(
@@ -163,6 +170,7 @@ class ConversationController extends Controller
             '_x' => $request->xAxis,
             '_y' => $request->yAxis,
             '_agg' => $request->aggregation,
+            'width' => 'half',
             ...(isset($request->data) ? ['json' => $request->data] : []),
         ]);
 
@@ -185,10 +193,12 @@ class ConversationController extends Controller
 
     public function pinTable(Request $request)
     {
-        // dd($request->all());
+        $message = Message::find($request->messageId);
         PinnedTable::create([
             'user_id' => auth()->id(),
             'message_id' => $request->messageId,
+            'title' => $message->message,
+            'width' => 'full',
             ...(isset($request->data) ? ['json' => $request->data] : []),
         ]);
 
@@ -254,43 +264,250 @@ class ConversationController extends Controller
         return redirect()->back();
     }
 
+    public function updateTableTitle($id, Request $request)
+    {
+        $pinned_table = PinnedTable::find($id);
+
+        abort_unless($pinned_table, 403, "This pinned table does not exist");
+
+        $pinned_table->title = $request->title;
+        $pinned_table->save();
+
+        return redirect()->back();
+    }
+
+    public function updateChartWidth($id, Request $request)
+    {
+        $pinned_graph = PinnedGraph::find($id);
+
+        abort_unless($pinned_graph, 403, "This pinned graph does not exist");
+
+        $pinned_graph->width = $request->input('width');
+        $pinned_graph->save();
+
+        return;
+    }
+
+    public function updateTableWidth($id, Request $request)
+    {
+        $pinned_table = PinnedTable::find($id);
+
+        abort_unless($pinned_table, 403, "This pinned table does not exist");
+
+        $pinned_table->width = $request->input('width');
+        $pinned_table->save();
+
+        return;
+    }
+
+    public function updateChartJson($id, Request $request)
+    {
+        $pinnedGraph = PinnedGraph::with(['message.source', 'message.conversation'])->find($id);
+
+        abort_if(!$pinnedGraph, 403, 'This pinned graph does not exist');
+
+        $user = auth()->user()->loadMissing('companies');
+
+        $message = $pinnedGraph->message;
+        $company = $user->companies->first();
+
+        $response = Http::timeout(60)->post($message->source->webhook, [
+            'chat_id' => $message->conversation->id,
+            'message_id' => $message->id,
+            'type' => 'refresh',
+            'input' => $request->input('feedback'),
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+            ],
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->company,
+            ],
+            'source' => [
+                'id' => $message->source->id,
+                'name' => $message->source->name,
+            ],
+            'query' => $message->sql_query,
+        ]);
+
+        if ($response->failed()) {
+            return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
+        }
+
+        $json = $response->json();
+
+        // TODO: If i get the JSON back, update it with the current json.
+        dd($json);
+
+        return;
+    }
+
+    public function updateTableJson($id, Request $request)
+    {
+        $pinnedTable = PinnedTable::with(['message.source', 'message.conversation'])->find($id);
+
+        abort_if(!$pinnedTable, 403, 'This pinned graph does not exist');
+
+        $user = auth()->user()->loadMissing('companies');
+
+        $message = $pinnedTable->message;
+        $company = $user->companies->first();
+
+        $response = Http::timeout(60)->post($message->source->webhook, [
+            'chat_id' => $message->conversation->id,
+            'message_id' => $message->id,
+            'type' => 'refresh',
+            'input' => $request->input('feedback'),
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+            ],
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->company,
+            ],
+            'source' => [
+                'id' => $message->source->id,
+                'name' => $message->source->name,
+            ],
+            'query' => $message->sql_query,
+        ]);
+
+
+        if ($response->failed()) {
+            return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
+        }
+
+        $json = $response->json();
+
+        // TODO: If i get the JSON back, update it with the current json.
+
+        return;
+    }
+
+    public function duplicateGraph($id, Request $request)
+    {
+        $pinnedGraph = PinnedGraph::find($id);
+
+        abort_if(!$pinnedGraph, 403, 'This pinned graph does not exist');
+
+        $newGraph = $pinnedGraph->replicate();
+        $newGraph->created_at = now();
+        $newGraph->updated_at = now();
+        $newGraph->save();
+
+        return;
+    }
+
+    public function duplicateTable($id, Request $request)
+    {
+        $pinned_table = PinnedTable::find($id);
+
+        abort_if(!$pinned_table, 403, 'This pinned table does not exist');
+
+        $newGraph = $pinned_table->replicate();
+        $newGraph->created_at = now();
+        $newGraph->updated_at = now();
+        $newGraph->save();
+
+        return;
+    }
+
+
     public function likeMessage(Request $request)
     {
-        $message_id = $request->input('messageId');
-
-        $message = Message::find($message_id);
+        $message = Message::with('conversation', 'source')->find($request->input('message_id'));
 
         if (!$message) {
             return response()->json(['error' => 'Message not found'], 404);
         }
 
-        // Put thumbs up on true, thumbs down on false
-        $message->thumbs_up = true;
-        $message->thumbs_down = false;
-        $message->feedback = null;
-        $message->save();
+        $message->update([
+            'thumbs_up' => true,
+            'thumbs_down' => false,
+            'feedback' => $request->input('feedback', null),
+        ]);
 
-        return [
-            'success' => true,
-            'message' => 'Chart pinned successfully.',
-        ];
+        $user = auth()->user()->load('companies');
+
+        if ($user->companies->isEmpty()) {
+            return response()->json(['error' => 'User has no associated company'], 400);
+        }
+
+        $response = Http::timeout(60)->post($message->source->webhook, [
+            'chat_id' => $message->conversation->id,
+            'message_id' => $message->id,
+            'type' => 'thumb_up',
+            'input' => $request->input('feedback', null),
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+            ],
+            'company' => [
+                'id' => $user->companies[0]->id,
+                'name' => $user->companies[0]->company
+            ],
+            'source' => [
+                'id' => $message->source->id,
+                'name' => $message->source->name,
+            ],
+            'query' => $message->sql_query,
+
+        ]);
+
+        if ($response->failed()) {
+            return response()->json(['error' => 'Er is een fout opgetreden bij disliken van het bericht.'], 500);
+        }
+
+        return;
     }
 
     public function dislikeMessage(Request $request)
     {
-        $message_id = $request->input('message_id');
-
-        $message = Message::find($message_id);
+        $message = Message::with('conversation', 'source')->find($request->input('message_id'));
 
         if (!$message) {
             return response()->json(['error' => 'Message not found'], 404);
         }
 
         // Put thumbs up on true, thumbs down on false
-        $message->thumbs_up = false;
-        $message->thumbs_down = true;
-        $message->feedback = $request->input('feedback', null);
-        $message->save();
+        $message->update([
+            'thumbs_up' => false,
+            'thumbs_down' => true,
+            'feedback' => $request->input('feedback', null),
+        ]);
+
+        $user = auth()->user()->load('companies');
+
+        if ($user->companies->isEmpty()) {
+            return response()->json(['error' => 'User has no associated company'], 400);
+        }
+
+        $response = Http::timeout(60)->post($message->source->webhook, [
+            'chat_id' => $message->conversation->id,
+            'message_id' => $message->id,
+            'type' => 'thumb_down',
+            'input' => $request->input('feedback', null),
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+            ],
+            'company' => [
+                'id' => $user->companies[0]->id,
+                'name' => $user->companies[0]->company
+            ],
+            'source' => [
+                'id' => $message->source->id,
+                'name' => $message->source->name,
+            ],
+            'query' => $message->sql_query,
+
+        ]);
+
+        if ($response->failed()) {
+            return response()->json(['error' => 'Er is een fout opgetreden bij het liken van het bericht.'], 500);
+        }
 
         return;
     }

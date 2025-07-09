@@ -12,6 +12,8 @@ const openDropdown = ref(null);
 const editingConversation = ref(null);
 const editingName = ref("");
 let displayMode = ref("unknown");
+const dropdownOpen = ref(false);
+const dropdownRef = ref(null);
 
 let deferredPrompt = ref(null);
 let showPWA = ref(false);
@@ -41,8 +43,18 @@ const toggleDropdown = (convId) => {
     openDropdown.value = openDropdown.value === convId ? null : convId;
 };
 
+const toggleSettingsDropdown = () => {
+    if (!props.sidebarCollapsed) {
+        dropdownOpen.value = !dropdownOpen.value;
+    }
+};
+
 const closeDropdown = () => {
     openDropdown.value = null;
+};
+
+const closeSettingsDropdown = () => {
+    dropdownOpen.value = false;
 };
 
 const form = useForm({
@@ -51,13 +63,13 @@ const form = useForm({
 
 // Sidebar menu items
 const sidebarItems = [
-    {
-        name: "Dashboard",
-        route: "dashboard",
-        routes: ["dashboard"],
-        icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-        role: "user",
-    },
+    // {
+    //     name: "Dashboard",
+    //     route: "dashboard",
+    //     routes: ["dashboard"],
+    //     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+    //     role: "user",
+    // },
     {
         name: "Bedrijven",
         route: "company.get",
@@ -73,21 +85,29 @@ const sidebarItems = [
         role: "admin",
     },
     {
-        name: "Rapporten",
-        route: "reports.get",
-        routes: ["reports.get"],
-        icon: "M6 2a1 1 0 00-1 1v18a1 1 0 001.447.894l5.553-2.776 5.553 2.776A1 1 0 0020 21V3a1 1 0 00-1-1H6zm1 2h10v15.382l-4.553-2.276a1 1 0 00-.894 0L7 19.382V4z",
+        name: "Logs",
+        route: "logs.get",
+        routes: ["logs.get"],
+        icon: "M15 12h4.5M19.5 12l-2-2m2 2l-2 2M16 6a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 18a6 6 0 0 1 12 0v1H4v-1z",
 
-        role: "user",
+        role: "admin",
     },
-    {
-        name: "Tweestapsverificatie",
-        route: "two-factor.setup",
-        routes: ["two-factor.setup", "two-factor.manage"],
-        icon: "M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z M16.5 10V7a4.5 4.5 0 10-9 0v3m-1.5 0a1.5 1.5 0 00-1.5 1.5v7A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5v-7a1.5 1.5 0 00-1.5-1.5h-13z",
+    // {
+    //     name: "Rapporten",
+    //     route: "reports.get",
+    //     routes: ["reports.get"],
+    //     icon: "M6 2a1 1 0 00-1 1v18a1 1 0 001.447.894l5.553-2.776 5.553 2.776A1 1 0 0020 21V3a1 1 0 00-1-1H6zm1 2h10v15.382l-4.553-2.276a1 1 0 00-.894 0L7 19.382V4z",
 
-        role: "user",
-    },
+    //     role: "user",
+    // },
+    // {
+    //     name: "Tweestapsverificatie",
+    //     route: "two-factor.setup",
+    //     routes: ["two-factor.setup", "two-factor.manage"],
+    //     icon: "M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z M16.5 10V7a4.5 4.5 0 10-9 0v3m-1.5 0a1.5 1.5 0 00-1.5 1.5v7A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5v-7a1.5 1.5 0 00-1.5-1.5h-13z",
+
+    //     role: "user",
+    // },
 ];
 
 const isActive = (routes) => {
@@ -178,6 +198,12 @@ const handleKeydown = (event, guid) => {
     }
 };
 
+const handleClickOutside = (e) => {
+    if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
+        closeDropdown();
+    }
+};
+
 function getPWADisplayMode() {
     if (document.referrer.startsWith("android-app://")) return "twa";
     if (window.matchMedia("(display-mode: browser)").matches) return "browser";
@@ -205,6 +231,8 @@ const isPWA = computed(() => {
 });
 
 onMounted(() => {
+    document.addEventListener("click", handleClickOutside);
+
     const saved = localStorage.getItem("sidebarCollapsed");
     if (saved !== null) {
         sidebarCollapsed.value = JSON.parse(saved);
@@ -224,6 +252,7 @@ onUnmounted(() => {
     });
 
     document.removeEventListener("click", closeDropdown);
+    document.removeEventListener("click", handleClickOutside);
 });
 
 // Watch for changes and save to localStorage
@@ -538,7 +567,7 @@ watch(sidebarCollapsed, (newValue) => {
             <!-- Sidebar Footer -->
             <div class="flex flex-col">
                 <!-- Mooie Logout knop -->
-                <div class="p-4">
+                <!-- <div class="p-4">
                     <button
                         @click="$inertia.post(route('logout'))"
                         class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-gray-100 transition-all duration-150 rounded-md group"
@@ -568,11 +597,11 @@ watch(sidebarCollapsed, (newValue) => {
                             ></div>
                         </div>
                     </button>
-                </div>
-
-                <div class="p-4 border-t border-slate-200">
-                    <div
-                        class="flex items-center w-full px-3 py-2 text-left rounded-md hover:bg-slate-100 transition-colors duration-200 group"
+                </div> -->
+                <div class="relative">
+                    <button
+                        @click="toggleSettingsDropdown"
+                        class="flex items-center justify-center w-full px-3 py-2 text-start rounded-md hover:bg-slate-100 transition-colors duration-200 group focus:outline-none focus:ring-none focus:ring-none focus:ring-offset-none"
                     >
                         <div
                             class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-medium"
@@ -590,7 +619,10 @@ watch(sidebarCollapsed, (newValue) => {
                                 class="text-sm font-medium text-slate-900 truncate"
                             >
                                 {{
-                                    $page.props.auth?.user?.name || "User Name"
+                                    $page.props.auth?.user?.firstname &&
+                                    $page.props.auth?.user?.name
+                                        ? `${$page.props.auth.user.firstname} ${$page.props.auth.user.name}`
+                                        : "User Name"
                                 }}
                             </div>
                             <div class="text-xs text-slate-500 truncate">
@@ -600,6 +632,73 @@ watch(sidebarCollapsed, (newValue) => {
                                 }}
                             </div>
                         </div>
+                        <div
+                            v-if="!sidebarCollapsed"
+                            class="ml-2 flex-shrink-0"
+                        >
+                            <svg
+                                class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                                :class="{ 'rotate-180': dropdownOpen }"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div
+                        v-if="dropdownOpen && !sidebarCollapsed"
+                        class="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50"
+                    >
+                        <Link
+                            :href="route('two-factor.setup')"
+                            class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 transition-colors duration-200"
+                        >
+                            <svg
+                                class="w-4 h-4 mr-3 text-slate-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z M16.5 10V7a4.5 4.5 0 10-9 0v3m-1.5 0a1.5 1.5 0 00-1.5 1.5v7A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5v-7a1.5 1.5 0 00-1.5-1.5h-13z"
+                                />
+                            </svg>
+                            Tweestapsverificatie
+                        </Link>
+
+                        <div class="border-t border-slate-200 my-1"></div>
+
+                        <button
+                            @click="$inertia.post(route('logout'))"
+                            class="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors duration-200"
+                        >
+                            <svg
+                                class="w-4 h-4 mr-3 text-red-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                />
+                            </svg>
+                            Uitloggen
+                        </button>
                     </div>
                 </div>
             </div>
@@ -672,33 +771,8 @@ watch(sidebarCollapsed, (newValue) => {
                             }"
                             class="px-4 py-2 rounded-md transition-colors duration-200"
                         >
-                            Dashboard
+                            Pinboard
                         </a>
-
-                        <!-- <a
-                            :href="route('dashboard')"
-                            :class="{
-                                'bg-slate-100 text-slate-900 font-semibold':
-                                    route().current('dashboard'),
-                                'text-slate-600 hover:text-slate-900 hover:bg-slate-50':
-                                    !route().current('dashboard'),
-                            }"
-                            class="px-4 py-2 rounded-md transition-colors duration-200"
-                        >
-                            Chats
-                        </a> -->
-                        <button
-                            @click="createConversation"
-                            :disabled="form.processing"
-                            :class="{
-                                'bg-slate-100 text-slate-900': form.processing,
-                                'text-slate-600 hover:text-slate-900 hover:bg-slate-50':
-                                    !form.processing,
-                            }"
-                            class="px-4 py-2 rounded-md transition-colors duration-200 flex"
-                        >
-                            Chats
-                        </button>
 
                         <a
                             :href="route('reports.get')"

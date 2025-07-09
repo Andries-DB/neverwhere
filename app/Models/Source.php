@@ -10,7 +10,8 @@ class Source extends Model
         'hex_color',
         'name',
         'webhook',
-        'company_id'
+        'company_id',
+        'model'
     ];
 
     public function users()
@@ -20,6 +21,11 @@ class Source extends Model
 
     public function company()
     {
-        return $this->belongsTo(Company::class)->withTimestamps();
+        return $this->belongsTo(Company::class);
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
     }
 }

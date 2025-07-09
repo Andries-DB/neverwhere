@@ -1,5 +1,5 @@
 <template>
-    <Head :title="user.name" />
+    <Head :title="user.firstname + ' ' + user.name" />
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
         <template #title>Sources</template>
 
@@ -24,7 +24,9 @@
                         <span>{{ source.name }}</span>
                     </div>
                 </div>
-                <h1 class="text-black font-bold text-4xl">{{ user.name }}</h1>
+                <h1 class="text-black font-bold text-4xl">
+                    {{ user.firstname }} {{ user.name }}
+                </h1>
             </div>
 
             <div class="flex gap-2">
@@ -43,6 +45,18 @@
         <div>
             <div class="py-6 rounded-md">
                 <div class="w-full">
+                    <InputLabel for="firstname" value="Voornaam*" />
+                    <TextInput
+                        id="firstname"
+                        type="text"
+                        class="mt-1 block w-full"
+                        v-model="form.firstname"
+                        :disabled="!editUser"
+                        placeholder="Voornaam"
+                    />
+                    <InputError class="mt-2" :message="form.errors.firstname" />
+                </div>
+                <div class="w-full mt-2">
                     <InputLabel for="name" value="Naam*" />
                     <TextInput
                         id="name"
@@ -101,6 +115,7 @@ export default {
             editUser: false,
             form: useForm({
                 name: this.user.name,
+                firstname: this.user.firstname,
                 email: this.user.email,
                 source_ids: this.user.sources.map((source) => source.id),
             }),

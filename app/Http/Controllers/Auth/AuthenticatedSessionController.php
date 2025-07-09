@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Log;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Str;
+
 
 class AuthenticatedSessionController extends Controller
 {
@@ -34,6 +37,14 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user();
+
+        Log::create([
+            'guid' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'sort' => 'login',
+            'message' => trim("{$user->firstname} {$user->name}") . ' is ingelogd',
+        ]);
+
         if ($user && $user->needsTwoFactorVerification()) {
             return redirect()->route('two-factor.verify');
         }

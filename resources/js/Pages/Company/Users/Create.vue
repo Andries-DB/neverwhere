@@ -7,6 +7,13 @@
             class="flex flex-col gap-4 w-full justify-between mt-10"
         >
             <TextInput
+                v-model="this.form.firstname"
+                label="Voornaam"
+                placeholder="Voornaam"
+                :class="{ 'border-red-500': this.form.errors.firstname }"
+            />
+
+            <TextInput
                 v-model="this.form.name"
                 label="Naam"
                 placeholder="Naam"
@@ -88,6 +95,7 @@ export default {
         return {
             errors: {},
             form: useForm({
+                firstname: "",
                 name: "",
                 email: "",
                 password: "",

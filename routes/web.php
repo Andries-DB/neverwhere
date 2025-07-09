@@ -3,6 +3,7 @@
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Logscontroller;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -20,23 +21,17 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-
 Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function () {
     // Routes die altijd toegankelijk moeten zijn
     Route::get('/two-factor/verify', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
     Route::post('/two-factor/verify', [TwoFactorController::class, 'confirmVerification'])->name('two-factor.confirm');
 
     // Alle andere routes (pas bereikbaar na succesvolle 2FA)
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/two-factor/setup', [TwoFactorController::class, 'setup'])->name('two-factor.setup');
     Route::post('/two-factor/enable', [TwoFactorController::class, 'enable'])->name('two-factor.enable');
     Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
-    // andere routes...
-});
 
-
-Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'show'])->name('dashboard');
+    Route::get('/pinboard', [DashboardController::class, 'show'])->name('dashboard');
 
     // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -92,16 +87,29 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::delete('/conversation/pin/{id}', [ConversationController::class, 'unpinChart'])->name('conversation.unpinChart');
     Route::delete('/conversation/message/pin/{id}', [ConversationController::class, 'unpinChartByMessage'])->name('conversation.unpinChartByMessage');
     Route::patch('/conversation/chart/{id}', [ConversationController::class, 'updateChartTitle'])->name('conversation.updateChartTitle');
+    Route::patch('/conversation/table/{id}', [ConversationController::class, 'updateTableTitle'])->name('conversation.updateTableTitle');
     Route::post('/conversation/pin/table', [ConversationController::class, 'pinTable'])->name('conversation.pinTable');
     Route::delete('/conversation/message/pin/{id}', [ConversationController::class, 'unpinTableByMessage'])->name('conversation.unpinTable');
     Route::delete('/conversation/table/pin/{id}', [ConversationController::class, 'unpinTable'])->name('conversation.unpinTable');
+    Route::patch('/conversation/chart/{id}/width', [ConversationController::class, 'updateChartWidth'])->name('conversation.updateChartWidth');
+    Route::patch('/conversation/table/{id}/width', [ConversationController::class, 'updateTableWidth'])->name('conversation.updateTableWidth');
+    Route::patch('/conversation/chart/{id}/refresh', [ConversationController::class, 'updateChartJson'])->name('conversation.updateChartJson');
+    Route::patch('/conversation/table/{id}/refresh', [ConversationController::class, 'updateTableJson'])->name('conversation.updateTableJson');
+    Route::post('/conversation/chart/{id}/duplicate', [ConversationController::class, 'duplicateGraph'])->name('conversation.duplicateChart');
+    Route::post('/conversation/table/{id}/duplicate', [ConversationController::class, 'duplicateTable'])->name('conversation.duplicateTable');
+
 
     Route::post('/conversation/likemessage', [ConversationController::class, 'likeMessage'])->name('conversation.likeMessage');
     Route::post('/conversation/dislikemessage', [ConversationController::class, 'dislikeMessage'])->name('conversation.dislikeMessage');
 
     Route::get('/message/{guid}', [MessageController::class, 'read'])->name('message.read');
 
-    Route::get('training', [TrainingController::class, 'index'])->name('training.index');
+    Route::get('/training', [TrainingController::class, 'index'])->name('training.index');
+
+    Route::get('/logs', [Logscontroller::class, 'index'])->name('logs.get');
 });
+
+
+
 
 require __DIR__ . '/auth.php';

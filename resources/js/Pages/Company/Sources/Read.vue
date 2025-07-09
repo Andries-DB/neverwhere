@@ -48,6 +48,17 @@
                     />
                     <InputError class="mt-2" :message="form.errors.webhook" />
                 </div>
+
+                <div class="w-full mt-2">
+                    <InputLabel for="model" value="Model*" />
+                    <textarea
+                        class="w-full h-48 resize-none overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                        placeholder="Typ hier je tekst..."
+                        v-model="form.model"
+                        :disabled="!editSource"
+                    ></textarea>
+                    <InputError class="mt-2" :message="form.errors.model" />
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>
@@ -83,6 +94,7 @@ export default {
                 name: this.source.name,
                 hex_color: this.source.hex_color,
                 webhook: this.source.webhook,
+                model: this.source.model,
             }),
             editSource: false,
             breadcrumbs: [

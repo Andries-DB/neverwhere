@@ -10,6 +10,8 @@ class PinnedTable extends Model
         'user_id',
         'message_id',
         'json',
+        'title',
+        'width',
     ];
 
     protected $casts = [

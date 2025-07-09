@@ -211,7 +211,9 @@
                             >
                                 {{ user.id }}
                             </th>
-                            <td class="px-6 py-4">{{ user.name }}</td>
+                            <td class="px-6 py-4">
+                                {{ user.firstname }} {{ user.name }}
+                            </td>
                             <td class="px-6 py-4">{{ user.email }}</td>
                             <td class="px-6 py-4">
                                 <a
@@ -333,6 +335,7 @@ export default {
                     (user) =>
                         user.name.toLowerCase().includes(query) ||
                         user.email.toLowerCase().includes(query) ||
+                        user.firstname.toLowerCase().includes(query) ||
                         (user.companies.length > 0 &&
                             user.companies[0].company
                                 .toLowerCase()

@@ -18,6 +18,7 @@ class PinnedGraph extends Model
         '_y',
         '_agg',
         'json',
+        'width',
     ];
 
     protected $casts = [

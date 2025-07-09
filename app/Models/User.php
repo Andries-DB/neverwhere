@@ -19,6 +19,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'firstname',
         'email',
         'password',
         'guid',
@@ -72,6 +73,11 @@ class User extends Authenticatable
     public function reports()
     {
         return $this->belongsToMany(Report::class, 'user_report');
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(Log::class);
     }
 
     public function pinnedGraphs()

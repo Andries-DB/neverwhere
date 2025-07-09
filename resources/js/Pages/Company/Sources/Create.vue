@@ -20,6 +20,12 @@
                 :class="{ 'border-red-500': form.errors.webhook }"
             />
 
+            <textarea
+                class="w-full h-48 resize-none overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                placeholder="Typ hier je tekst..."
+                v-model="form.model"
+            ></textarea>
+
             <div class="flex justify-between items-start gap-3">
                 <div class="flex flex-col flex-wrap gap-2">
                     <InputError v-for="error in errors" :message="error" />
@@ -57,6 +63,7 @@ export default {
                 name: "",
                 color: "",
                 webhook: "",
+                model: "",
                 company: this.company.id,
             }),
         };
