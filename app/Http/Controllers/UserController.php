@@ -125,7 +125,7 @@ class UserController extends Controller
         $this->authorizeAdmin();
 
         $request->validate([
-            'firstname' => $request->firstname,
+            'firstname' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'email' => [
                 'required',
