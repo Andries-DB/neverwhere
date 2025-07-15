@@ -15,15 +15,6 @@
 
             <div class="relative overflow-x-auto sm:rounded-lg">
                 <table class="w-full text-sm text-left rtl:text-right">
-                    <caption
-                        class="p-5 text-lg font-semibold text-left rtl:text-right bg-white"
-                    >
-                        Logsoverizcht
-                        <p class="mt-1 text-sm font-normal text-gray-500">
-                            Bekijk een overzicht van alle logs binnen het
-                            platform. Ontdek wie wanneer inlogt
-                        </p>
-                    </caption>
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3">Datum</th>

@@ -80,6 +80,16 @@ class User extends Authenticatable
         return $this->hasMany(Log::class);
     }
 
+    public function dashboards()
+    {
+        return $this->hasMany(Dashboard::class)->orderBy('default', 'desc');
+    }
+
+    public function requests()
+    {
+        return $this->hasMany(Request::class);
+    }
+
     public function pinnedGraphs()
     {
         return $this->hasMany(PinnedGraph::class);

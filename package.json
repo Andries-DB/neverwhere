@@ -27,6 +27,7 @@
         "ag-grid-vue3": "^33.3.2",
         "date-fns": "^4.1.0",
         "qrcode": "^1.5.4",
+        "sortablejs": "^1.15.6",
         "tailwind-scrollbar-hide": "^4.0.0"
     }
 }

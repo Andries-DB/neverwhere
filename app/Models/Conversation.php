@@ -11,6 +11,7 @@ class Conversation extends Model
         'title',
         'status',
         'guid',
+        'visible'
     ];
 
     protected $casts = [

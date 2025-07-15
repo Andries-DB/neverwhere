@@ -36,6 +36,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'conversations' => fn() => $request->user()
                 ? $request->user()->conversations()
+                ->where('visible', 1)
                 ->orderByDesc('created_at')
                 ->get(['id', 'guid', 'title', 'status'])
                 : [],

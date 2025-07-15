@@ -19,6 +19,8 @@ class PinnedGraph extends Model
         '_agg',
         'json',
         'width',
+        'display_order',
+        'dashboard_id'
     ];
 
     protected $casts = [
@@ -33,5 +35,10 @@ class PinnedGraph extends Model
     public function message()
     {
         return $this->belongsTo(Message::class);
+    }
+
+    public function dashboard()
+    {
+        return $this->belongsTo(Dashboard::class);
     }
 }

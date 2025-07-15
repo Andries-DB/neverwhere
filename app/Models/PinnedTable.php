@@ -12,6 +12,8 @@ class PinnedTable extends Model
         'json',
         'title',
         'width',
+        'display_order',
+        'dashboard_id'
     ];
 
     protected $casts = [
@@ -26,5 +28,10 @@ class PinnedTable extends Model
     public function message()
     {
         return $this->belongsTo(Message::class);
+    }
+
+    public function dashboard()
+    {
+        return $this->belongsTo(Dashboard::class);
     }
 }

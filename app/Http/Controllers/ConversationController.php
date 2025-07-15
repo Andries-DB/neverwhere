@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\Dashboard;
 use App\Models\Message;
 use App\Models\PinnedGraph;
 use App\Models\PinnedTable;
@@ -17,12 +18,15 @@ class ConversationController extends Controller
 {
     public function read($guid, Request $request)
     {
-        $conversation = Conversation::where('guid', $guid)->with('messages', 'user', 'user.sources')->firstOrFail();
+        $conversation = Conversation::where('guid', $guid)->with('messages', 'user', 'user.sources')->where('visible', 1)->first();
+
+        abort_unless($conversation, 403, 'This conversation does not exist');
 
         return Inertia::render('Conversations/Read', [
             'conversation' => $conversation,
             'pinned_charts' => PinnedGraph::with('message')->where('user_id', auth()->user()->id)->get(),
             'pinned_tables' => PinnedTable::with('message')->where('user_id', auth()->user()->id)->get(),
+            'dashboards' => Dashboard::where('user_id',  auth()->user()->id)->orderBy('default', 'desc')->get(),
         ]);
     }
 
@@ -75,7 +79,8 @@ class ConversationController extends Controller
                 ['displayAsChart' => false],
                 ['thumbs_up' => 0],
                 ['thumbs_down' => 0]
-            )
+            ),
+            'csrf_token' => csrf_token(),
         ];
     }
 
@@ -146,6 +151,7 @@ class ConversationController extends Controller
                 $botMessage->toArray(),
                 ['displayAsTable' => false, 'displayAsChart' => false]
             ),
+            'csrf_token' => csrf_token(),
         ];
     }
 
@@ -155,29 +161,31 @@ class ConversationController extends Controller
 
         abort_unless($conversation, 403, "This source does not exist");
 
-        $conversation->delete();
+        $conversation->visible = 0;
+        $conversation->save();
 
         return redirect()->route('dashboard');
     }
 
     public function pinChart(Request $request)
     {
+        $dashboard = Dashboard::where('id', $request->dashboard_id)->first();
+
         PinnedGraph::create([
             'user_id' => auth()->id(),
-            'message_id' => $request->messageId,
+            'message_id' => $request->message['id'],
             'title' => $request->title ?? null,
-            'sort_chart' => $request->type,
-            '_x' => $request->xAxis,
-            '_y' => $request->yAxis,
-            '_agg' => $request->aggregation,
-            'width' => 'half',
-            ...(isset($request->data) ? ['json' => $request->data] : []),
+            'sort_chart' => $request->message['selectedChartType'],
+            '_x' => $request->message['selectedXAxis'],
+            '_y' => $request->message['selectedYAxis'],
+            '_agg' => $request->message['selectedAggregation'],
+            'width' => $request->width,
+            ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
+            'display_order' => (PinnedGraph::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
+            'dashboard_id' => $dashboard->id,
         ]);
 
-        return [
-            'success' => true,
-            'message' => 'Chart pinned successfully.',
-        ];
+        return;
     }
 
     public function unpinChart($id, Request $request)
@@ -193,19 +201,20 @@ class ConversationController extends Controller
 
     public function pinTable(Request $request)
     {
-        $message = Message::find($request->messageId);
+        $dashboard = Dashboard::where('id', $request->dashboard_id)->first();
+
         PinnedTable::create([
             'user_id' => auth()->id(),
-            'message_id' => $request->messageId,
-            'title' => $message->message,
-            'width' => 'full',
-            ...(isset($request->data) ? ['json' => $request->data] : []),
+            'message_id' => $request->message['id'],
+            'title' => $request->title ?? null,
+            'width' => $request->width,
+            ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
+            'display_order' => (PinnedTable::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
+            'dashboard_id' => $dashboard->id,
+
         ]);
 
-        return [
-            'success' => true,
-            'message' => 'Chart pinned successfully.',
-        ];
+        return;
     }
 
     public function unpinTable($id, Request $request)
@@ -232,6 +241,8 @@ class ConversationController extends Controller
         return [
             'success' => true,
             'message' => 'Chart unpinned successfully.',
+            'csrf_token' => csrf_token(),
+
         ];
     }
 
@@ -249,6 +260,8 @@ class ConversationController extends Controller
         return [
             'success' => true,
             'message' => 'Chart unpinned successfully.',
+            'csrf_token' => csrf_token(),
+
         ];
     }
 
@@ -338,7 +351,7 @@ class ConversationController extends Controller
         $json = $response->json();
 
         // TODO: If i get the JSON back, update it with the current json.
-        dd($json);
+        dd($response);
 
         return;
     }
@@ -382,7 +395,7 @@ class ConversationController extends Controller
         $json = $response->json();
 
         // TODO: If i get the JSON back, update it with the current json.
-
+        dd($json);
         return;
     }
 
@@ -413,7 +426,6 @@ class ConversationController extends Controller
 
         return;
     }
-
 
     public function likeMessage(Request $request)
     {
@@ -510,5 +522,49 @@ class ConversationController extends Controller
         }
 
         return;
+    }
+
+    public function summarize(Request $request)
+    {
+        $message = Message::with('conversation', 'source')->find($request->input('message_id'));
+
+        if (!$message) {
+            return response()->json(['error' => 'Message not found'], 404);
+        }
+
+        $user = auth()->user()->load('companies');
+
+        $response = Http::timeout(60)->post($message->source->webhook, [
+            'chat_id' => $message->conversation->id,
+            'message_id' => $message->id,
+            'type' => 'summarize',
+            'input' => '',
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+            ],
+            'company' => [
+                'id' => $user->companies[0]->id,
+                'name' => $user->companies[0]->company
+            ],
+            'source' => [
+                'id' => $message->source->id,
+                'name' => $message->source->name,
+            ],
+            'query' => $message->sql_query,
+        ]);
+
+        if ($response->failed()) {
+            return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
+        }
+
+        $json = $response->json();
+
+        // TODO: If i get the JSON back, update it with the current json.
+
+        return [
+            'summary' => 'Iets in me zegt dat deze samenvatting standaard gegenereerd wordt en Dr Itchy hier niets mee te maken heeft.',
+            'csrf_token' => csrf_token(),
+        ];
     }
 }

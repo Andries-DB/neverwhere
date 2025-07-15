@@ -3,42 +3,257 @@
 
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
         <main class="space-y-6 sm:space-y-8 px-4 sm:px-0">
-            <!-- Nieuwe conversatie knop -->
-            <div class="flex justify-between items-center">
-                <h1 class="text-black font-bold text-3xl sm:text-4xl">
-                    Pinboard {{ $page.props.auth.user.firstname }}
-                </h1>
+            <div class="flex justify-between items-center w-full">
+                <!-- Dashboard Dropdown -->
+                <div class="relative" v-click-outside="closeDashboardDropdown">
+                    <button
+                        @click="toggleDashboardDropdown"
+                        class="inline-flex items-center justify-between min-w-[200px] px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                        <span class="truncate">{{
+                            selectedDashboard
+                                ? selectedDashboard.name
+                                : "Selecteer dashboard"
+                        }}</span>
+                        <div class="ml-2 flex flex-col">
+                            <svg
+                                class="h-3 w-3 -mb-1"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                            <svg
+                                class="h-3 w-3"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                        </div>
+                    </button>
 
-                <button
-                    @click="createConversation()"
-                    class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white text-sm font-medium hover:bg-blue-700 transition"
-                >
-                    + Nieuwe conversatie
-                </button>
+                    <!-- Dashboard Menu -->
+                    <div
+                        v-if="isDashboardOpen"
+                        class="absolute z-50 mt-1 w-full min-w-[200px] rounded-lg bg-white shadow-lg"
+                    >
+                        <div class="py-1 max-h-60 overflow-auto">
+                            <div
+                                v-for="dashboard in all_dashboards"
+                                :key="dashboard.guid"
+                                @click="selectDashboard(dashboard)"
+                                class="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
+                                :class="{
+                                    'bg-gray-100 text-gray-900':
+                                        selectedDashboard &&
+                                        selectedDashboard.guid ===
+                                            dashboard.guid,
+                                }"
+                            >
+                                <span class="truncate">{{
+                                    dashboard.name
+                                }}</span>
+                                <svg
+                                    v-if="
+                                        selectedDashboard &&
+                                        selectedDashboard.guid ===
+                                            dashboard.guid
+                                    "
+                                    class="h-4 w-4 text-gray-900"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+
+                            <!-- Empty state -->
+                            <div
+                                v-if="
+                                    !all_dashboards ||
+                                    all_dashboards.length === 0
+                                "
+                                class="px-3 py-2 text-sm text-gray-500"
+                            >
+                                Geen dashboards beschikbaar
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Dropdown -->
+                <div class="relative" v-click-outside="closeSettingsDropdown">
+                    <button
+                        @click="toggleSettingsDropdown"
+                        class="inline-flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <circle cx="10" cy="3" r="1.5" />
+                            <circle cx="10" cy="10" r="1.5" />
+                            <circle cx="10" cy="17" r="1.5" />
+                        </svg>
+                    </button>
+
+                    <!-- Settings Menu -->
+                    <div
+                        v-if="isSettingsDropdownOpen"
+                        class="absolute z-50 right-0 mt-1 w-48 rounded-lg bg-white shadow-lg"
+                    >
+                        <div class="py-1">
+                            <!-- <button
+                                @click="createConversation"
+                                class="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                <svg
+                                    class="h-4 w-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                    />
+                                </svg>
+                                Voeg conversatie toe
+                            </button> -->
+                            <button
+                                @click="toggleAddDashboard()"
+                                class="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                <svg
+                                    class="h-4 w-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                    />
+                                </svg>
+                                Maak nieuw dashboard
+                            </button>
+
+                            <button
+                                @click="makeDefault(dashboard)"
+                                class="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                v-if="!dashboard.default"
+                            >
+                                <svg
+                                    class="h-4 w-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                                    />
+                                </svg>
+                                Maak default
+                            </button>
+
+                            <hr class="my-1 border-gray-200" />
+
+                            <button
+                                @click="deleteDashboard(dashboard)"
+                                class="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                                <svg
+                                    class="h-4 w-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                </svg>
+                                Verwijder
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Welkomstbericht -->
             <section
                 class="text-center text-gray-600 max-w-md mx-auto px-4 sm:px-0"
-                v-if="!pinned_graphs?.length"
+                v-if="!pinned_graphs?.length && !pinned_tables.length"
             >
                 <p>
                     Start een nieuwe conversatie door op de knop hierboven te
-                    klikken.<br />
-                    Je gepinde informatie verschijnt hier.
+                    klikken. Je gepinde informatie verschijnt hier.
                 </p>
             </section>
 
             <section v-if="pinned_graphs?.length" class="space-y-4">
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div
+                    ref="graphsContainer"
+                    class="grid grid-cols-1 xl:grid-cols-2 gap-6"
+                >
                     <div
                         v-for="graph in pinned_graphs"
                         :key="graph.id"
+                        :data-id="graph.id"
                         :class="[
-                            'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow',
+                            'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-move',
                             graph.width === 'full' ? 'col-span-2' : '',
+                            'sortable-graph',
                         ]"
                     >
+                        <!-- Drag Handle -->
+                        <div
+                            class="drag-handle px-4 py-2 border-b border-gray-100 bg-gray-50 rounded-t-lg"
+                        >
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center space-x-2">
+                                    <svg
+                                        class="w-4 h-4 text-gray-400"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M4 8h16M4 16h16"
+                                        ></path>
+                                    </svg>
+                                    <span class="text-xs text-gray-500"
+                                        >Sleep om te verplaatsen</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
                         <!-- Header -->
                         <div class="px-4 py-2 border-b border-gray-100">
                             <div class="flex justify-between items-center">
@@ -255,17 +470,6 @@
                         <!-- Chart -->
                         <div>
                             <div
-                                v-if="!getPinnedChartOptions(graph).data"
-                                class="text-red-500 text-sm mb-2"
-                            >
-                                Debug: Geen chart data beschikbaar<br />
-                                X-as: {{ graph._x }}<br />
-                                Y-as: {{ graph._y }}<br />
-                                Chart type: {{ graph.sort_chart }}<br />
-                                Data records: {{ graph.json?.length || 0 }}
-                            </div>
-
-                            <div
                                 class="w-full h-96 bg-white rounded border border-gray-100"
                             >
                                 <ag-charts
@@ -312,15 +516,43 @@
             </section>
 
             <section v-if="pinned_tables?.length" class="space-y-4">
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div
+                    class="grid grid-cols-1 xl:grid-cols-2 gap-6"
+                    ref="tablesContainer"
+                >
                     <div
                         v-for="table in pinned_tables"
                         :key="table.id"
                         :class="[
                             'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow',
                             table.width === 'full' ? 'col-span-2' : '',
+                            'sortable-graph',
                         ]"
                     >
+                        <div
+                            class="drag-handle px-4 py-2 border-b border-gray-100 bg-gray-50 rounded-t-lg"
+                        >
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center space-x-2">
+                                    <svg
+                                        class="w-4 h-4 text-gray-400"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M4 8h16M4 16h16"
+                                        ></path>
+                                    </svg>
+                                    <span class="text-xs text-gray-500"
+                                        >Sleep om te verplaatsen</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
                         <div class="px-4 py-2 border-b border-gray-100">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1 mr-3">
@@ -576,6 +808,8 @@
         :graph="selectedGraphRefresh"
         :sort="selectedGraphRefresh"
     />
+
+    <AddDashboard :show="addDashboard" :close="toggleAddDashboard" />
 </template>
 
 <script>
@@ -595,6 +829,8 @@ import {
 } from "ag-grid-enterprise";
 import { ref } from "vue";
 import RefreshGraph from "@/Components/Modals/RefreshGraph.vue";
+import Sortable from "sortablejs";
+import AddDashboard from "@/Components/Modals/AddDashboard.vue";
 
 ModuleRegistry.registerModules([
     AllEnterpriseModule,
@@ -609,14 +845,21 @@ export default {
         AgCharts,
         AgGridVue,
         RefreshGraph,
+        AddDashboard,
     },
     props: {
+        dashboard: Object,
         pinned_graphs: Array,
         pinned_tables: Array,
+        all_dashboards: Array,
     },
     data() {
         return {
-            openDropdown: null, // Verplaats het hier
+            addDashboard: false,
+            isDashboardOpen: false,
+            selectedDashboard: null,
+            isSettingsDropdownOpen: false,
+            openDropdown: null,
             selectedGraphRefresh: null,
             selectedSortRefresh: "",
             showRefreshModal: false,
@@ -674,11 +917,32 @@ export default {
                     ];
                 },
             },
+            graphsSortable: null,
         };
     },
     methods: {
+        // Update CSRF token na response
+        updateCsrfToken(response) {
+            const newToken = response.headers.get("X-CSRF-TOKEN");
+            if (newToken) {
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    .setAttribute("content", newToken);
+            }
+        },
+        getCsrfToken() {
+            return document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute("content");
+        },
+
+        // Simple functions
         toggleDropdown(id) {
             this.openDropdown = this.openDropdown === id ? null : id;
+        },
+        toggleAddDashboard() {
+            console.log("hi");
+            this.addDashboard = !this.addDashboard;
         },
         createConversation() {
             this.form.post(route("conversation.create"), {
@@ -687,6 +951,32 @@ export default {
                 },
                 onError: (errors) => {},
             });
+        },
+        async reorderItems(evt, items, updateFn) {
+            const { newIndex, oldIndex } = evt;
+            const movedItem = items.splice(oldIndex, 1)[0];
+            items.splice(newIndex, 0, movedItem);
+
+            try {
+                await updateFn(
+                    items.map((item, index) => ({
+                        id: item.id,
+                        display_order: index + 1,
+                    }))
+                );
+            } catch (error) {
+                console.error("Error updating order:", error);
+                const revertedItem = items.splice(newIndex, 1)[0];
+                items.splice(oldIndex, 0, revertedItem);
+            }
+        },
+
+        toggleSettingsDropdown() {
+            this.isSettingsDropdownOpen = !this.isSettingsDropdownOpen;
+            this.isDashboardDropdownOpen = false;
+        },
+        closeSettingsDropdown() {
+            this.isSettingsDropdownOpen = false;
         },
 
         // Graph functions
@@ -1310,9 +1600,7 @@ export default {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document
-                            .querySelector('meta[name="csrf-token"]')
-                            .getAttribute("content"),
+                        "X-CSRF-TOKEN": this.getCsrfToken(),
                     },
                     body: JSON.stringify({ width: newWidth }),
                 });
@@ -1321,6 +1609,41 @@ export default {
             } catch (error) {
                 console.error("Fout bij bijwerken breedte:", error);
             }
+        },
+        async updateGraphOrder(reorderedGraphs) {
+            const response = await fetch(route("dashboard.updateGraphOrder"), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": this.getCsrfToken(),
+                },
+                body: JSON.stringify({ graphs: reorderedGraphs }),
+            });
+            if (!response.ok) {
+                throw new Error("Failed to update graph order");
+            }
+
+            this.updateCsrfToken(response);
+            // // Update local display_order values
+            reorderedGraphs.forEach(({ id, display_order }) => {
+                const graph = this.pinned_graphs.find((g) => g.id === id);
+                if (graph) {
+                    graph.display_order = display_order;
+                }
+            });
+        },
+        async makeDefault(dashboard) {
+            this.$inertia.post(route("dashboard.makeDefault"), {
+                dashboard: dashboard,
+            });
+        },
+        deleteDashboard(dashboard) {
+            this.$inertia.delete(route("dashboard.delete"), {
+                preserveState: false,
+                data: {
+                    dashboard: dashboard,
+                },
+            });
         },
 
         // Table functions
@@ -1542,9 +1865,161 @@ export default {
                 this.savingTitleId = null;
             }
         },
+        async updateTableOrder(reorderedTables) {
+            const response = await fetch(route("dashboard.updateTableOrder"), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": this.getCsrfToken(),
+                },
+                body: JSON.stringify({ tables: reorderedTables }),
+            });
+            if (!response.ok) {
+                throw new Error("Failed to update graph order");
+            }
+
+            this.updateCsrfToken(response);
+            reorderedTables.forEach(({ id, display_order }) => {
+                const table = this.pinned_tables.find((g) => g.id === id);
+                if (table) {
+                    table.display_order = display_order;
+                }
+            });
+        },
+
+        // SortableJS
+        destroySortables() {
+            if (this.graphsSortable) {
+                this.graphsSortable.destroy();
+                this.graphsSortable = null;
+            }
+            if (this.tablesSortable) {
+                this.tablesSortable.destroy();
+                this.tablesSortable = null;
+            }
+        },
+        initializeDragAndDrop() {
+            this.$nextTick(() => {
+                this.initializeGraphsSortable();
+                this.initializeTablesSortable();
+            });
+        },
+        initializeGraphsSortable() {
+            const graphsContainer = this.$refs.graphsContainer;
+            if (graphsContainer && this.pinned_graphs.length > 0) {
+                this.graphsSortable = Sortable.create(graphsContainer, {
+                    animation: 150,
+                    ghostClass: "sortable-ghost",
+                    chosenClass: "sortable-chosen",
+                    dragClass: "sortable-drag",
+                    handle: ".drag-handle",
+                    onEnd: (evt) => {
+                        this.onGraphReorder(evt);
+                    },
+                });
+            }
+        },
+        initializeTablesSortable() {
+            const tablesContainer = this.$refs.tablesContainer;
+            if (tablesContainer && this.pinned_tables.length > 0) {
+                this.tablesSortable = Sortable.create(tablesContainer, {
+                    animation: 150,
+                    ghostClass: "sortable-ghost",
+                    chosenClass: "sortable-chosen",
+                    dragClass: "sortable-drag",
+                    handle: ".drag-handle",
+                    onEnd: (evt) => {
+                        this.onTableReorder(evt);
+                    },
+                });
+            }
+        },
+        async onGraphReorder(evt) {
+            this.reorderItems(evt, this.pinned_graphs, this.updateGraphOrder);
+        },
+        async onTableReorder(evt) {
+            this.reorderItems(evt, this.pinned_tables, this.updateTableOrder);
+        },
+        toggleDashboardDropdown() {
+            this.isDashboardOpen = !this.isDashboardOpen;
+        },
+        closeDashboardDropdown() {
+            this.isDashboardOpen = false;
+        },
+        selectDashboard(dashboard) {
+            this.selectedDashboard = dashboard;
+            this.isDashboardOpen = false;
+
+            this.$inertia.visit(route("dashboard", dashboard.guid));
+        },
+    },
+    beforeUnmount() {
+        this.destroySortables();
     },
     mounted() {
         this.localPinnedGraphs = [...this.pinned_graphs];
+
+        this.initializeDragAndDrop();
+
+        // Set initial selected dashboard
+        if (this.dashboard) {
+            this.selectedDashboard = this.dashboard;
+        } else if (this.all_dashboards && this.all_dashboards.length > 0) {
+            this.selectedDashboard = this.all_dashboards[0];
+        }
+    },
+
+    watch: {
+        pinned_graphs: {
+            handler() {
+                this.destroySortables();
+                this.initializeDragAndDrop();
+            },
+            deep: true,
+        },
+        pinned_tables: {
+            handler() {
+                this.destroySortables();
+                this.initializeDragAndDrop();
+            },
+            deep: true,
+        },
+        current_dashboard: {
+            handler(newVal) {
+                if (newVal) {
+                    this.selectedDashboard = newVal;
+                }
+            },
+            immediate: true,
+        },
     },
 };
 </script>
+
+<style scoped>
+.sortable-ghost {
+    opacity: 0.5;
+    background: #f3f4f6;
+}
+
+.sortable-chosen {
+    cursor: grabbing;
+}
+
+.sortable-drag {
+    transform: rotate(5deg);
+}
+
+.drag-handle {
+    cursor: grab;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.sortable-graph,
+.sortable-table {
+    transition: transform 0.2s ease;
+}
+</style>

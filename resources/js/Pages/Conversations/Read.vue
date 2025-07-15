@@ -120,6 +120,42 @@
                                     class="relative"
                                 >
                                     <div class="mb-3 flex justify-end">
+                                        <!-- Dr. Itchy Summary Button -->
+                                        <button
+                                            :class="[
+                                                'absolute -top-10 right-14 z-10 transition-all duration-200 ease-in-out',
+                                                'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
+                                                'bg-yellow-400 text-yellow-800 border-yellow-500 hover:bg-yellow-500',
+                                                loadingSummary &&
+                                                loadingSummary.id === message.id
+                                                    ? 'animate-pulse'
+                                                    : '',
+                                            ]"
+                                            @click="
+                                                generateSummary(
+                                                    message,
+                                                    'chart'
+                                                )
+                                            "
+                                            title="Dr. Itchy Samenvatting"
+                                            :disabled="
+                                                loadingSummary &&
+                                                loadingSummary.id === message.id
+                                            "
+                                        >
+                                            <i
+                                                :class="[
+                                                    'text-base',
+                                                    loadingSummary &&
+                                                    loadingSummary.id ===
+                                                        message.id
+                                                        ? 'fas fa-spinner fa-spin'
+                                                        : 'fas fa-user-md',
+                                                ]"
+                                            ></i>
+                                        </button>
+
+                                        <!-- Pin button-->
                                         <button
                                             v-if="!isChartPinned(message)"
                                             :class="[
@@ -132,7 +168,9 @@
                                                     ? 'animate-pop'
                                                     : '',
                                             ]"
-                                            @click="togglePinChart(message)"
+                                            @click="
+                                                togglePinModal(message, 'chart')
+                                            "
                                             :title="
                                                 isChartPinned(message)
                                                     ? 'Loskoppelen van Dashboard'
@@ -161,6 +199,41 @@
                                 <div v-else-if="message.displayAsTable">
                                     <div class="mb-3 flex justify-end relative">
                                         <button
+                                            :class="[
+                                                'absolute -top-10 right-14 z-10 transition-all duration-200 ease-in-out',
+                                                'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
+                                                'bg-yellow-400 text-yellow-800 border-yellow-500 hover:bg-yellow-500',
+                                                loadingSummary &&
+                                                loadingSummary.id === message.id
+                                                    ? 'animate-pulse'
+                                                    : '',
+                                            ]"
+                                            @click="
+                                                generateSummary(
+                                                    message,
+                                                    'table'
+                                                )
+                                            "
+                                            title="Dr. Itchy Samenvatting"
+                                            :disabled="
+                                                loadingSummary &&
+                                                loadingSummary.id === message.id
+                                            "
+                                        >
+                                            <i
+                                                :class="[
+                                                    'text-base',
+                                                    loadingSummary &&
+                                                    loadingSummary.id ===
+                                                        message.id
+                                                        ? 'fas fa-spinner fa-spin'
+                                                        : 'fas fa-user-md',
+                                                ]"
+                                            ></i>
+                                        </button>
+
+                                        <!-- Pin button-->
+                                        <button
                                             v-if="!isTablePinned(message)"
                                             :class="[
                                                 'absolute -top-10 right-3 z-10 transition-all duration-200 ease-in-out',
@@ -172,7 +245,9 @@
                                                     ? 'animate-pop'
                                                     : '',
                                             ]"
-                                            @click="togglePinTable(message)"
+                                            @click="
+                                                togglePinModal(message, 'table')
+                                            "
                                             :title="
                                                 isTablePinned(message)
                                                     ? 'Loskoppelen van Dashboard'
@@ -189,37 +264,8 @@
                                             ></i>
                                         </button>
                                     </div>
-                                    <template v-if="message.json">
-                                        <!-- AG Grid component met chart ondersteuning -->
-                                        <div
-                                            class="w-full bg-white rounded-lg border border-gray-200 overflow-hidden"
-                                        >
-                                            <!-- AG Grid -->
-                                            <div class="h-96">
-                                                <ag-grid-vue
-                                                    ref="agGrid"
-                                                    class="ag-theme-alpine w-full h-full"
-                                                    :rowData="
-                                                        getTableRowData(message)
-                                                    "
-                                                    :columnDefs="
-                                                        getTableColumnDefs(
-                                                            message
-                                                        )
-                                                    "
-                                                    :defaultColDef="
-                                                        defaultColDef
-                                                    "
-                                                    :gridOptions="gridOptions"
-                                                    rowSelection="multiple"
-                                                    @grid-ready="onGridReady"
-                                                    @range-selection-changed="
-                                                        onRangeSelectionChanged
-                                                    "
-                                                />
-                                            </div>
-                                        </div>
-                                    </template>
+
+                                    <TableBuilder :message="message" />
                                 </div>
 
                                 <div
@@ -238,9 +284,11 @@
                                 </div>
 
                                 <!-- Normale tekst weergave -->
-                                <p v-else class="whitespace-pre-wrap">
-                                    {{ message.message }}
-                                </p>
+                                <div
+                                    v-else
+                                    v-html="formatMessage(message)"
+                                    class="whitespace-pre-wrap"
+                                ></div>
 
                                 <div
                                     class="flex justify-between items-center mt-2"
@@ -425,6 +473,104 @@
         </div>
 
         <Snackbar ref="snackbar" />
+
+        <div
+            v-if="showSummaryModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            @click.self="closeSummaryModal"
+        >
+            <div
+                class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
+            >
+                <!-- Header -->
+                <div
+                    class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 flex items-center justify-between"
+                >
+                    <div class="flex items-center space-x-3">
+                        <div
+                            class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
+                        >
+                            <i class="fas fa-user-md text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold">
+                                Dr. Itchy zegt:
+                            </h3>
+                            <p class="text-sm opacity-90">
+                                AI-gegenereerde samenvatting
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        @click="closeSummaryModal"
+                        class="text-white hover:text-gray-200 transition-colors"
+                    >
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 overflow-y-auto max-h-[60vh]">
+                    <div
+                        v-if="summaryLoading"
+                        class="flex items-center justify-center py-8"
+                    >
+                        <div
+                            class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
+                        ></div>
+                        <span class="ml-3 text-gray-600"
+                            >Dr. Itchy analyseert de data...</span
+                        >
+                    </div>
+
+                    <div
+                        v-else-if="summaryContent"
+                        class="prose prose-sm max-w-none"
+                    >
+                        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                            <p class="text-sm text-gray-600 mb-2">
+                                <i class="fas fa-chart-bar mr-2"></i>
+                                Analyse van
+                                {{
+                                    summaryType === "chart"
+                                        ? "grafiek"
+                                        : "tabel"
+                                }}
+                            </p>
+                        </div>
+
+                        <div
+                            class="text-gray-800 leading-relaxed whitespace-pre-wrap"
+                        >
+                            {{ summaryContent }}
+                        </div>
+                    </div>
+
+                    <div v-else-if="summaryError" class="text-center py-8">
+                        <i
+                            class="fas fa-exclamation-triangle text-red-500 text-3xl mb-3"
+                        ></i>
+                        <p class="text-red-600 mb-4">
+                            Er ging iets mis bij het genereren van de
+                            samenvatting
+                        </p>
+                        <p class="text-sm text-gray-600">{{ summaryError }}</p>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                    <button
+                        v-if="summaryContent"
+                        @click="copySummary"
+                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
+                    >
+                        <i class="fas fa-copy"></i>
+                        <span>Kopiëren</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </AuthenticatedLayout>
 
     <Create :close="toggleAddCompany" :show="addCompany" />
@@ -434,50 +580,51 @@
         :message="dislikedMessage"
         :sort="dislikedSort"
     />
+    <PinItem
+        :show="pinModal"
+        :close="togglePinModal"
+        :message="pinnedMessage"
+        :sort="pinnedSort"
+        :dashboards="dashboards"
+        @item-pinned="handleItemPinned"
+    />
 </template>
 
 <script>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, useForm } from "@inertiajs/vue3";
-import { AgCharts } from "ag-charts-vue3";
-import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
 import Snackbar from "@/Components/Snackbar.vue";
-import { AgGridVue } from "ag-grid-vue3";
-import "ag-grid-enterprise"; // Dit activeert alle enterprise features
-import { ModuleRegistry } from "ag-grid-community";
-import {
-    AllEnterpriseModule,
-    LicenseManager,
-    IntegratedChartsModule,
-} from "ag-grid-enterprise";
 import DislikeModal from "@/Components/Modals/DislikeModal.vue";
 import ChartBuilder from "@/Components/ChartBuilder.vue";
-
-ModuleRegistry.registerModules([
-    AllEnterpriseModule,
-    IntegratedChartsModule.with(AgChartsEnterpriseModule),
-]);
-LicenseManager.setLicenseKey(import.meta.env.VITE_AG_KEY);
+import PinItem from "@/Components/Modals/PinItem.vue";
+import TableBuilder from "@/Components/TableBuilder.vue";
 
 export default {
     name: "",
     components: {
         AuthenticatedLayout,
         Head,
-        AgGridVue,
-        AgCharts,
         Snackbar,
         DislikeModal,
         ChartBuilder,
+        PinItem,
+        TableBuilder,
     },
     props: {
         conversation: Object,
         pinned_charts: Array,
         pinned_tables: Array,
+        dashboards: Array,
     },
     data() {
         return {
             loading: false,
+            showSummaryModal: false,
+            summaryContent: null,
+            summaryError: null,
+            summaryLoading: false,
+            summaryType: null,
+            loadingSummary: null,
             form: useForm({
                 message: "",
                 conversation: this.conversation,
@@ -486,67 +633,91 @@ export default {
             error: "",
             no_message: false,
             messages: [],
-            breadcrumbs: [
-                { title: "Dashboard", href: "/dashboard" },
-                { title: "Conversaties", href: "#" },
-                {
-                    title: this.conversation.title ?? "Nieuw gesprek",
-                    href: "/conversations/" + this.conversation.guid,
-                },
-            ],
-            defaultColDef: {
-                sortable: true,
-                filter: true,
-                resizable: true,
-                flex: 1,
-                minWidth: 100,
-                enableValue: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                chartDataType: "category", // of 'series', 'time', 'excluded'
-                autoHeight: true,
-
-                wrapText: true,
-            },
-            gridOptions: {
-                rowHeight: 45,
-                headerHeight: 45,
-                animateRows: true,
-                pagination: false,
-                paginationPageSize: 1000,
-                enableCharts: true,
-                enableRangeSelection: true,
-                suppressRowClickSelection: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                enableValue: true,
-                chartThemes: ["ag-default", "ag-material", "ag-pastel"],
-                getContextMenuItems: (params) => {
-                    return [
-                        "copy",
-                        "copyWithHeaders",
-                        "separator",
-                        "chartRange",
-                        "separator",
-                        "export",
-                    ];
-                },
-            },
-
             pinnedCharts: [],
             pinnedTables: [],
             clickedMessageId: null,
             dislikeModal: false,
             dislikedMessage: null,
             dislikedSort: "",
+            pinnedInformation: [],
+            pinnedMessage: null,
+            pinnedSort: "",
+            pinModal: false,
         };
     },
     methods: {
         toggleDislikeModal(message, sort = "dislike") {
-            console.log(sort);
             this.dislikedMessage = message;
             this.dislikedSort = sort;
             this.dislikeModal = !this.dislikeModal;
+        },
+
+        async generateSummary(message, type) {
+            this.loadingSummary = { id: message.id, type };
+            this.summaryType = type;
+            this.showSummaryModal = true;
+            this.summaryLoading = true;
+            this.summaryContent = null;
+            this.summaryError = null;
+
+            try {
+                // Prepare data for the API call
+                const data = {
+                    type: type,
+                    message_id: message.id,
+                    data: message.json,
+                    // Add any additional context needed
+                    context: {
+                        xAxis: message.selectedXAxis,
+                        yAxis: message.selectedYAxis,
+                        chartType: message.chartType,
+                    },
+                };
+
+                // Replace with your actual API endpoint
+                const response = await fetch("/dr-itchy/summary", {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json", // <-- voeg deze toe
+                        "X-CSRF-TOKEN": this.getCsrfToken(),
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                this.updateCsrfToken(response);
+
+                const result = await response.json();
+                this.summaryContent = result.summary;
+            } catch (error) {
+                console.error("Error generating summary:", error);
+                this.summaryError = error.message;
+            } finally {
+                this.summaryLoading = false;
+                this.loadingSummary = null;
+            }
+        },
+
+        closeSummaryModal() {
+            this.showSummaryModal = false;
+            this.summaryContent = null;
+            this.summaryError = null;
+            this.summaryLoading = false;
+            this.summaryType = null;
+        },
+
+        async copySummary() {
+            try {
+                await navigator.clipboard.writeText(this.summaryContent);
+                // You might want to show a toast notification here
+                console.log("Summary copied to clipboard");
+            } catch (error) {
+                console.error("Failed to copy summary:", error);
+            }
         },
         // Table functions
         hasTableData(message) {
@@ -565,123 +736,6 @@ export default {
             // Fallback naar de oude parseTableMessage methode
             const parsed = this.parseTableMessage(message.message);
             return parsed.rows.length > 0;
-        },
-        getTableRowData(message) {
-            if (
-                message.json &&
-                Array.isArray(message.json) &&
-                message.json.length > 0
-            ) {
-                return message.json;
-            }
-
-            // Fallback naar oude methode
-            const parsed = this.parseTableMessage(message.message);
-
-            return parsed.rows.map((row) => {
-                const obj = {};
-                parsed.headers.forEach((header, index) => {
-                    obj[header] = row[index] || "";
-                });
-                return obj;
-            });
-        },
-        getTableColumnDefs(message) {
-            if (
-                message.json &&
-                Array.isArray(message.json) &&
-                message.json.length > 0
-            ) {
-                const firstItem = message.json[0];
-                return Object.keys(firstItem).map((key) => {
-                    const isNumeric = this.isNumericField(key, message.json);
-                    const isDate = this.isDateField(key, message.json);
-
-                    return {
-                        field: key,
-                        headerName: this.getFieldDisplayName(key),
-                        sortable: true,
-                        filter: isNumeric
-                            ? "agNumberColumnFilter"
-                            : "agTextColumnFilter",
-                        resizable: true,
-                        enableRowGroup: !isNumeric, // Numerieke velden niet grouperen
-                        enablePivot: true,
-                        enableValue: isNumeric, // Alleen numerieke velden als waarden
-
-                        // Chart configuratie
-                        chartDataType: isNumeric
-                            ? "series"
-                            : isDate
-                            ? "time"
-                            : "category",
-
-                        // Type-specifieke configuratie
-                        ...(isNumeric && {
-                            type: "numericColumn",
-                            cellClass: "number-cell",
-                            aggFunc: "sum",
-                        }),
-
-                        ...(isDate && {
-                            type: "dateColumn",
-                            cellClass: "date-cell",
-                        }),
-
-                        menuTabs: [
-                            "filterMenuTab",
-                            "generalMenuTab",
-                            "columnsMenuTab",
-                        ],
-                        cellRenderer: (params) => {
-                            if (
-                                typeof params.value === "string" &&
-                                params.value.includes("http")
-                            ) {
-                                return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
-                            }
-                            return params.value;
-                        },
-                    };
-                });
-            }
-
-            // Fallback naar oude methode...
-            const parsed = this.parseTableMessage(message.message);
-            return parsed.headers.map((header) => ({
-                field: header,
-                headerName: header,
-                sortable: true,
-                filter: true,
-                resizable: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                enableValue: true,
-                chartDataType: "category",
-                menuTabs: ["filterMenuTab", "generalMenuTab", "columnsMenuTab"],
-                cellRenderer: (params) => {
-                    if (
-                        typeof params.value === "string" &&
-                        params.value.includes("http")
-                    ) {
-                        return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
-                    }
-                    return params.value;
-                },
-            }));
-        },
-        togglePinTable(message) {
-            this.clickedMessageId = message.id;
-
-            if (this.isTablePinned(message)) {
-                this.unpinTable(message);
-            } else {
-                this.pinTable(message);
-            }
-
-            setTimeout(() => {
-                this.clickedMessageId = null;
-            }, 300); // reset na animatie
         },
 
         // Chart functions
@@ -703,41 +757,49 @@ export default {
 
             return keys.length >= 1;
         },
-        togglePinChart(message) {
-            this.clickedMessageId = message.id;
+        togglePinModal(message, sort) {
+            this.pinnedMessage = message;
+            this.pinnedSort = sort;
 
-            if (this.isChartPinned(message)) {
-                this.unpinChart(message);
-            } else {
-                this.pinChart(message);
-            }
-
-            setTimeout(() => {
-                this.clickedMessageId = null;
-            }, 300);
+            this.pinModal = !this.pinModal;
         },
+        handleItemPinned({ message_id, sort }) {
+            if (sort === "chart") {
+                this.pinnedCharts.push({ messageId: message_id });
 
-        // Switch methods
+                this.$refs.snackbar.show(
+                    "Grafiek is vastgezet op het dashboard!",
+                    "success"
+                );
+            } else {
+                this.pinnedTables.push({ messageId: message_id });
+
+                this.$refs.snackbar.show(
+                    "Tabel is vastgezet op het dashboard!",
+                    "success"
+                );
+            }
+        },
         setDisplayMode(message, mode) {
             message.displayAsTable = mode === "table";
             message.displayAsChart = mode === "chart";
             message.displayAsQuery = mode === "sql_query";
 
-            // Stel default axes in als ze nog niet zijn ingesteld
+            // Set default axes if switching to chart mode and not already set
             if (
                 mode === "chart" &&
                 (!message.selectedXAxis || !message.selectedYAxis)
             ) {
                 const fields = this.getAllFields(message);
-
-                if (!message.selectedXAxis && fields.length > 0) {
+                if (fields.length > 0) {
                     message.selectedXAxis = fields[0].key;
-                }
-
-                if (!message.selectedYAxis && fields.length > 0) {
-                    message.selectedYAxis = fields[1].key;
-                } else if (!message.selectedYAxis) {
-                    message.selectedYAxis = "__count";
+                    // Try to find a numeric field for Y-axis, otherwise default to count
+                    const numericField = fields.find((f) =>
+                        this.isNumericField(f.key, message.json)
+                    );
+                    message.selectedYAxis = numericField
+                        ? numericField.key
+                        : "__count";
                 }
             }
         },
@@ -765,66 +827,6 @@ export default {
                 textarea.style.height = "auto"; // Reset
                 textarea.style.height = textarea.scrollHeight + "px"; // Groei
             }
-        },
-        isDateField(fieldName, data) {
-            if (!data || data.length === 0) return false;
-
-            // Check eerste paar records om te zien of het veld datum-achtige waarden bevat
-            const sampleValues = data
-                .slice(0, 5)
-                .map((item) => item[fieldName])
-                .filter((val) => val != null);
-
-            if (sampleValues.length === 0) return false;
-
-            return sampleValues.some((value) => {
-                if (!value) return false;
-
-                // Check verschillende datum formaten
-                const str = value.toString();
-
-                // ISO datum format (YYYY-MM-DD of YYYY-MM-DDTHH:mm:ss)
-                if (/^\d{4}-\d{2}-\d{2}/.test(str)) return true;
-
-                // DD/MM/YYYY of MM/DD/YYYY
-                if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) return true;
-
-                // DD-MM-YYYY of MM-DD-YYYY
-                if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) return true;
-
-                // Probeer Date parsing
-                const parsed = new Date(str);
-                return !isNaN(parsed.getTime()) && parsed.getFullYear() > 1900;
-            });
-        },
-        parseDate(value) {
-            if (!value) return null;
-
-            const str = value.toString();
-
-            // Probeer verschillende formaten
-            let date = new Date(str);
-
-            // Als standaard parsing faalt, probeer DD/MM/YYYY
-            if (
-                isNaN(date.getTime()) &&
-                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)
-            ) {
-                const parts = str.split("/");
-                // Assumeer DD/MM/YYYY (Europees formaat)
-                date = new Date(parts[2], parts[1] - 1, parts[0]);
-            }
-
-            // Als nog steeds niet geldig, probeer DD-MM-YYYY
-            if (isNaN(date.getTime()) && /^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) {
-                const parts = str.split("-");
-                if (parts[2].length === 4) {
-                    // DD-MM-YYYY
-                    date = new Date(parts[2], parts[1] - 1, parts[0]);
-                }
-            }
-
-            return isNaN(date.getTime()) ? null : date;
         },
         getFieldDisplayName(fieldName) {
             // Verbeterde field name mapping
@@ -1092,6 +1094,22 @@ export default {
             }
         },
 
+        // CSRF Token functions
+        getCsrfToken() {
+            return document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute("content");
+        },
+
+        updateCsrfToken(response) {
+            const newToken = response.headers.get("X-CSRF-TOKEN");
+            if (newToken) {
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    .setAttribute("content", newToken);
+            }
+        },
+
         // Requests
         async sendMessage() {
             if (!this.form.message.trim()) return;
@@ -1114,12 +1132,17 @@ export default {
                         this.conversation.guid
                     )}?${params.toString()}`,
                     {
-                        headers: { Accept: "application/json" },
+                        headers: {
+                            Accept: "application/json",
+                            "X-CSRF-TOKEN": this.getCsrfToken(),
+                        },
                     }
                 );
 
                 if (!userresponse.ok)
                     throw new Error("Network response was not ok");
+
+                this.updateCsrfToken(userresponse);
 
                 const { message = [] } = await userresponse.json();
                 if (message && message.created_at) {
@@ -1150,12 +1173,17 @@ export default {
                             this.conversation.guid
                         )}?${params.toString()}`,
                         {
-                            headers: { Accept: "application/json" },
+                            headers: {
+                                Accept: "application/json",
+                                "X-CSRF-TOKEN": this.getCsrfToken(),
+                            },
                         }
                     );
 
                     if (!botresponse.ok)
                         throw new Error("Network response was not ok");
+
+                    this.updateCsrfToken(botresponse);
 
                     const { bot_message = [] } = await botresponse.json();
 
@@ -1189,89 +1217,6 @@ export default {
                     "There was an error fetching the information. Please try again.";
             }
         },
-        async pinChart(message) {
-            const title = this.generateChartTitle(
-                message.selectedXAxis,
-                message.selectedYAxis
-            );
-
-            try {
-                const response = await fetch(route("conversation.pinChart"), {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                        "X-CSRF-TOKEN": document
-                            .querySelector('meta[name="csrf-token"]')
-                            .getAttribute("content"),
-                    },
-                    body: JSON.stringify({
-                        title: title,
-                        type: message.selectedChartType || "bar",
-                        xAxis: message.selectedXAxis,
-                        yAxis: message.selectedYAxis,
-                        aggregation: message.selectedAggregation || "sum",
-                        data: message.json,
-                        messageId: message.id,
-                        createdAt: new Date().toISOString(),
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error("Failed to pin chart");
-                }
-
-                this.pinnedCharts.push({
-                    messageId: message.id,
-                });
-
-                // Toon success feedback
-                this.$refs.snackbar.show(
-                    "Grafiek is vastgezet op het dashboard!",
-                    "success"
-                );
-            } catch (error) {
-                this.$refs.snackbar.show(
-                    "Er is een fout opgetreden bij het vastzetten van de grafiek",
-                    "error"
-                );
-            }
-        },
-        async unpinChart(message) {
-            try {
-                const response = await fetch(
-                    route("conversation.unpinChartByMessage", message.id),
-                    {
-                        method: "DELETE",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Accept: "application/json",
-                            "X-CSRF-TOKEN": document
-                                .querySelector('meta[name="csrf-token"]')
-                                .getAttribute("content"),
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error("Failed to pin chart");
-                }
-
-                this.pinnedCharts = this.pinnedCharts.filter(
-                    (chart) => chart.messageId !== message.id
-                );
-
-                this.$refs.snackbar.show(
-                    "Grafiek is losgekoppeld van het dashboard!",
-                    "success"
-                );
-            } catch (error) {
-                this.$refs.snackbar.show(
-                    "Er is een fout opgetreden bij het loskoppelen van de grafiek",
-                    "error"
-                );
-            }
-        },
         async onThumbsUp(message) {
             this.toggleDislikeModal(message, "like");
 
@@ -1284,57 +1229,12 @@ export default {
                     this.messages[index].thumbs_up = 1;
                     this.messages[index].thumbs_down = 0;
                 }
-
-                console.log("Message liked successfully", this.messages[index]);
             } catch (error) {
                 this.$refs.snackbar.show(
                     "Er is een fout opgetreden bij het liken van het bericht",
                     "error"
                 );
             }
-
-            // try {
-            //     const response = await fetch(
-            //         route("conversation.likeMessage"),
-            //         {
-            //             method: "POST",
-            //             headers: {
-            //                 "Content-Type": "application/json",
-            //                 Accept: "application/json",
-            //                 "X-CSRF-TOKEN": document
-            //                     .querySelector('meta[name="csrf-token"]')
-            //                     .getAttribute("content"),
-            //             },
-            //             body: JSON.stringify({
-            //                 messageId: message.id,
-            //                 conversationId: message.conversation_id,
-            //             }),
-            //         }
-            //     );
-
-            //     if (!response.ok) {
-            //         throw new Error("Failed to pin chart");
-            //     }
-
-            //     // Zet het bericht lokaal op liked
-            //     const index = this.messages.findIndex(
-            //         (m) => m.id === message.id
-            //     );
-
-            //     console.log("Message liked successfully", this.messages[index]);
-
-            //     if (index !== -1) {
-            //         this.messages[index].thumbs_up = 1;
-            //         this.messages[index].thumbs_down = 0;
-            //     }
-
-            //     console.log("Message liked successfully", this.messages[index]);
-            // } catch (error) {
-            //     this.$refs.snackbar.show(
-            //         "Er is een fout opgetreden bij het liken van het bericht",
-            //         "error"
-            //     );
-            // }
         },
         async onThumbsDown(message) {
             this.toggleDislikeModal(message);
@@ -1360,79 +1260,20 @@ export default {
                 );
             }
         },
-        async pinTable(message) {
-            try {
-                const response = await fetch(route("conversation.pinTable"), {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                        "X-CSRF-TOKEN": document
-                            .querySelector('meta[name="csrf-token"]')
-                            .getAttribute("content"),
-                    },
-                    body: JSON.stringify({
-                        data: message.json,
-                        messageId: message.id,
-                    }),
-                });
+        formatMessage(message) {
+            if (!message?.message) return "";
 
-                if (!response.ok) {
-                    throw new Error("Failed to pin chart");
+            const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+
+            return message.message.replace(
+                markdownLinkRegex,
+                (match, linkText, url) => {
+                    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${linkText}</a>`;
                 }
-
-                this.pinnedTables.push({
-                    messageId: message.id,
-                });
-
-                // Toon success feedback
-                this.$refs.snackbar.show(
-                    "Tabel is vastgezet op het dashboard!",
-                    "success"
-                );
-            } catch (error) {
-                this.$refs.snackbar.show(
-                    "Er is een fout opgetreden bij het vastzetten van de tabel",
-                    "error"
-                );
-            }
-        },
-        async unpinTable(message) {
-            try {
-                const response = await fetch(
-                    route("conversation.unpinTable", message.id),
-                    {
-                        method: "DELETE",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Accept: "application/json",
-                            "X-CSRF-TOKEN": document
-                                .querySelector('meta[name="csrf-token"]')
-                                .getAttribute("content"),
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error("Failed to pin chart");
-                }
-
-                this.pinnedTables = this.pinnedTables.filter(
-                    (table) => table.messageId !== message.id
-                );
-
-                this.$refs.snackbar.show(
-                    "Tabel is losgekoppeld van het dashboard!",
-                    "success"
-                );
-            } catch (error) {
-                this.$refs.snackbar.show(
-                    "Er is een fout opgetreden bij het loskoppelen van de tabel",
-                    "error"
-                );
-            }
+            );
         },
     },
+    commputed: {},
     mounted() {
         this.messages = this.conversation.messages.map((m) => ({
             ...m,

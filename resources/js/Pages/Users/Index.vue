@@ -205,12 +205,12 @@
                             v-for="user in filteredUsers"
                             :key="user.id"
                         >
-                            <th
+                            <td
                                 scope="row"
                                 class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                             >
                                 {{ user.id }}
-                            </th>
+                            </td>
                             <td class="px-6 py-4">
                                 {{ user.firstname }} {{ user.name }}
                             </td>

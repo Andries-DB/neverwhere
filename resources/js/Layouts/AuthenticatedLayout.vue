@@ -92,6 +92,14 @@ const sidebarItems = [
 
         role: "admin",
     },
+    {
+        name: "Feedback",
+        route: "reports.get.admin",
+        routes: ["reports.get.admin"],
+        icon: "M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+
+        role: "admin",
+    },
     // {
     //     name: "Rapporten",
     //     route: "reports.get",
@@ -285,9 +293,8 @@ watch(sidebarCollapsed, (newValue) => {
                     ]"
                     :href="route('dashboard')"
                 >
-                    <ApplicationLogo
-                        class="h-8 w-8 text-blue-600 flex-shrink-0"
-                    />
+                    <img src="/nw_logo.png" alt="Logo" class="w-8" />
+
                     <span
                         v-if="!sidebarCollapsed"
                         class="ml-3 text-lg font-semibold text-slate-900 truncate"
@@ -676,6 +683,26 @@ watch(sidebarCollapsed, (newValue) => {
                                 />
                             </svg>
                             Tweestapsverificatie
+                        </Link>
+
+                        <Link
+                            :href="route('requests.get')"
+                            class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 transition-colors duration-200"
+                        >
+                            <svg
+                                class="w-4 h-4 mr-3 text-slate-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                            </svg>
+                            Feedback
                         </Link>
 
                         <div class="border-t border-slate-200 my-1"></div>

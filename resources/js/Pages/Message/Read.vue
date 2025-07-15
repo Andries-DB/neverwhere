@@ -82,35 +82,21 @@
 
                 <!-- Tabel weergave met AG Grid -->
                 <div v-else-if="message.displayAsTable">
-                    <template v-if="message.json">
-                        <!-- AG Grid component met chart ondersteuning -->
-                        <div
-                            class="w-full bg-white rounded-lg border border-gray-200 overflow-hidden"
+                    <TableBuilder :message="message" />
+
+                    <div class="text-xs ml-2 text-gray-600 mt-2">
+                        <span
+                            :style="{
+                                visibility:
+                                    message.json && message.json.length > 0
+                                        ? 'visible'
+                                        : 'hidden',
+                            }"
                         >
-                            <!-- AG Grid -->
-                            <div class="h-[75vh]">
-                                <ag-grid-vue
-                                    ref="agGrid"
-                                    class="ag-theme-alpine w-full h-full"
-                                    :rowData="getTableRowData(message)"
-                                    :columnDefs="getTableColumnDefs(message)"
-                                    :defaultColDef="defaultColDef"
-                                    :gridOptions="gridOptions"
-                                    rowSelection="multiple"
-                                    @grid-ready="onGridReady"
-                                    @range-selection-changed="
-                                        onRangeSelectionChanged
-                                    "
-                                />
-                            </div>
-                            <div
-                                class="pt-3 text-xs ml-2 text-gray-600 border-t border-gray-200"
-                            >
-                                {{ message.json.length }}
-                                records
-                            </div>
-                        </div>
-                    </template>
+                            {{ message.json?.length || 0 }}
+                            records
+                        </span>
+                    </div>
                 </div>
 
                 <div
@@ -127,9 +113,11 @@
                     }}</pre>
                 </div>
                 <!-- Normale tekst weergave -->
-                <p v-else class="whitespace-pre-wrap">
-                    {{ message.message }}
-                </p>
+                <div
+                    v-else
+                    v-html="formatMessage(message)"
+                    class="whitespace-pre-wrap"
+                ></div>
             </div>
         </div>
     </AuthenticatedLayout>
@@ -138,72 +126,22 @@
 <script>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
-import { AgGridVue } from "ag-grid-vue3";
-import "ag-grid-enterprise"; // Dit activeert alle enterprise features
-import { ModuleRegistry } from "ag-grid-community";
-import {
-    AllEnterpriseModule,
-    LicenseManager,
-    IntegratedChartsModule,
-} from "ag-grid-enterprise";
-import { AgCharts } from "ag-charts-vue3";
-import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
-import ChartBuilder from "@/Components/ChartBuilder.vue";
 
-ModuleRegistry.registerModules([
-    AllEnterpriseModule,
-    IntegratedChartsModule.with(AgChartsEnterpriseModule),
-]);
-LicenseManager.setLicenseKey(import.meta.env.VITE_AG_KEY);
+import ChartBuilder from "@/Components/ChartBuilder.vue";
+import TableBuilder from "@/Components/TableBuilder.vue";
 
 export default {
     name: "",
     components: {
         AuthenticatedLayout,
         Head,
-        AgGridVue,
-        AgCharts,
+
         ChartBuilder,
+        TableBuilder,
     },
     props: { message: Object },
     data() {
-        return {
-            defaultColDef: {
-                sortable: true,
-                filter: true,
-                resizable: true,
-                flex: 1,
-                minWidth: 100,
-                enableValue: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                chartDataType: "category",
-            },
-            gridOptions: {
-                rowHeight: 45,
-                headerHeight: 45,
-                animateRows: true,
-                pagination: false,
-                paginationPageSize: 1000,
-                enableCharts: true,
-                enableRangeSelection: true,
-                suppressRowClickSelection: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                enableValue: true,
-                chartThemes: ["ag-default", "ag-material", "ag-pastel"],
-                getContextMenuItems: (params) => {
-                    return [
-                        "copy",
-                        "copyWithHeaders",
-                        "separator",
-                        "chartRange",
-                        "separator",
-                        "export",
-                    ];
-                },
-            },
-        };
+        return {};
     },
     methods: {
         // Table methods
@@ -749,6 +687,18 @@ export default {
             } else {
                 return String(rawValue);
             }
+        },
+        formatMessage(message) {
+            if (!message?.message) return "";
+
+            const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+
+            return message.message.replace(
+                markdownLinkRegex,
+                (match, linkText, url) => {
+                    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${linkText}</a>`;
+                }
+            );
         },
         parseNumericValue(value) {
             if (value === null || value === undefined || value === "") {

@@ -7,6 +7,7 @@ use App\Http\Controllers\Logscontroller;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RequestController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\TwoFactorController;
@@ -22,16 +23,21 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function () {
-    // Routes die altijd toegankelijk moeten zijn
     Route::get('/two-factor/verify', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
     Route::post('/two-factor/verify', [TwoFactorController::class, 'confirmVerification'])->name('two-factor.confirm');
 
-    // Alle andere routes (pas bereikbaar na succesvolle 2FA)
     Route::get('/two-factor/setup', [TwoFactorController::class, 'setup'])->name('two-factor.setup');
     Route::post('/two-factor/enable', [TwoFactorController::class, 'enable'])->name('two-factor.enable');
     Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
 
-    Route::get('/pinboard', [DashboardController::class, 'show'])->name('dashboard');
+    Route::get('/pinboard/{guid?}', [DashboardController::class, 'show'])->name('dashboard');
+
+    Route::post('/pinboard/charts/reorder', [DashboardController::class, 'updateGraphOrder'])->name('dashboard.updateGraphOrder');
+    Route::post('/pinboard/tables/reorder', [DashboardController::class, 'updateTableOrder'])->name('dashboard.updateTableOrder');
+    Route::post('/pinboard/default', [DashboardController::class, 'makeDefault'])->name('dashboard.makeDefault');
+    Route::delete('/pinboard/delete', [DashboardController::class, 'delete'])->name('dashboard.delete');
+    Route::post('/pinboard/create', [DashboardController::class, 'create'])->name('dashboard.create');
+
 
     // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -64,15 +70,18 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::post('/company/reports', [ReportController::class, 'store_company'])->name('company.report.create');
     Route::post('/user/reports', [ReportController::class, 'store_user'])->name('user.report.create');
 
-
     Route::get('/reports', [ReportController::class, 'get'])->name('reports.get');
+
+    Route::get('/feedback', [RequestController::class, 'get'])->name('requests.get');
+    Route::post('/feedback', [RequestController::class, 'post'])->name('requests.post');
+    Route::get('/feedback/admin', [RequestController::class, 'get_admin'])->name('reports.get.admin');
+    Route::delete('/feedback/admin/{id}', [RequestController::class, 'delete'])->name('reports.delete.admin');
 
     Route::get('/users', [UserController::class, 'index'])->name('user.get');
     Route::post('/users', [UserController::class, 'store'])->name('user.create');
     Route::get('/users/{guid}', [UserController::class, 'read'])->name('user.read');
     Route::patch('/users/{guid}', [UserController::class, 'update_only_user'])->name('user.update');
     Route::delete('/users/{guid}', [UserController::class, 'delete_only_user'])->name('user.delete');
-
 
     Route::get('/conversation/{guid}', [ConversationController::class, 'read'])->name('conversation.read');
     Route::post('/conversation', [ConversationController::class, 'create'])->name('conversation.create');
@@ -107,6 +116,8 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::get('/training', [TrainingController::class, 'index'])->name('training.index');
 
     Route::get('/logs', [Logscontroller::class, 'index'])->name('logs.get');
+
+    Route::post('/dr-itchy/summary', [ConversationController::class, 'summarize'])->name('conversation.message.summarize');
 });
 
 
