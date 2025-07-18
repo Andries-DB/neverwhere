@@ -85,6 +85,11 @@ class User extends Authenticatable
         return $this->hasMany(Dashboard::class)->orderBy('default', 'desc');
     }
 
+    public function userGroups()
+    {
+        return $this->belongsToMany(UserGroup::class, 'user_group_user');
+    }
+
     public function requests()
     {
         return $this->hasMany(Request::class);

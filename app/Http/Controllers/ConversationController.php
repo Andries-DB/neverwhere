@@ -107,7 +107,7 @@ class ConversationController extends Controller
         $response = Http::timeout(60)->post($source->webhook, [
             'chat_id' => $conversation->id,
             'message_id' => $lastUserMessage->id,
-            'type' => 'respond', // Or summarize/refresh/thumb up/thumb down/suggestion
+            'type' => 'respond',
             'input' => $lastUserMessage->message,
             'user' => [
                 'id' => $user->id,
@@ -143,6 +143,7 @@ class ConversationController extends Controller
                 ? ['json' => is_string($json['data']) ? json_decode($json['data'], true) : $json['data']]
                 : []
             ),
+            'question_message' => $lastUserMessage->id,
 
         ]);
 
@@ -351,16 +352,21 @@ class ConversationController extends Controller
         $json = $response->json();
 
         // TODO: If i get the JSON back, update it with the current json.
-        dd($response);
+        $pinnedGraph->update([
+            ...(isset($json['data'])
+                ? ['json' => is_string($json['data']) ? json_decode($json['data'], true) : $json['data']]
+                : []
+            ),
+        ]);
 
         return;
     }
 
     public function updateTableJson($id, Request $request)
     {
-        $pinnedTable = PinnedTable::with(['message.source', 'message.conversation'])->find($id);
 
-        abort_if(!$pinnedTable, 403, 'This pinned graph does not exist');
+        $pinnedTable = PinnedTable::with(['message.source', 'message.conversation'])->find($id);
+        abort_if(!$pinnedTable, 403, 'This pinned tables does not exist');
 
         $user = auth()->user()->loadMissing('companies');
 
@@ -394,8 +400,13 @@ class ConversationController extends Controller
 
         $json = $response->json();
 
-        // TODO: If i get the JSON back, update it with the current json.
-        dd($json);
+        $pinnedTable->update([
+            ...(isset($json['data'])
+                ? ['json' => is_string($json['data']) ? json_decode($json['data'], true) : $json['data']]
+                : []
+            ),
+        ]);
+
         return;
     }
 
@@ -449,7 +460,7 @@ class ConversationController extends Controller
 
         $response = Http::timeout(60)->post($message->source->webhook, [
             'chat_id' => $message->conversation->id,
-            'message_id' => $message->id,
+            'message_id' => $message->question_message,
             'type' => 'thumb_up',
             'input' => $request->input('feedback', null),
             'user' => [
@@ -498,7 +509,7 @@ class ConversationController extends Controller
 
         $response = Http::timeout(60)->post($message->source->webhook, [
             'chat_id' => $message->conversation->id,
-            'message_id' => $message->id,
+            'message_id' => $message->question_message,
             'type' => 'thumb_down',
             'input' => $request->input('feedback', null),
             'user' => [
@@ -536,7 +547,7 @@ class ConversationController extends Controller
 
         $response = Http::timeout(60)->post($message->source->webhook, [
             'chat_id' => $message->conversation->id,
-            'message_id' => $message->id,
+            'message_id' => $message->question_message,
             'type' => 'summarize',
             'input' => '',
             'user' => [
@@ -559,11 +570,10 @@ class ConversationController extends Controller
         }
 
         $json = $response->json();
-
-        // TODO: If i get the JSON back, update it with the current json.
+        $output = $json['output'] ?? 'Geen samenvatting beschikbaar. Dr. Itchy heeft even pauze.';
 
         return [
-            'summary' => 'Iets in me zegt dat deze samenvatting standaard gegenereerd wordt en Dr Itchy hier niets mee te maken heeft.',
+            'summary' => $output,
             'csrf_token' => csrf_token(),
         ];
     }

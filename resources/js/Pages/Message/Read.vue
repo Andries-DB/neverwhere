@@ -82,7 +82,7 @@
 
                 <!-- Tabel weergave met AG Grid -->
                 <div v-else-if="message.displayAsTable">
-                    <TableBuilder :message="message" />
+                    <TableBuilder :message="message" height="full" />
 
                     <div class="text-xs ml-2 text-gray-600 mt-2">
                         <span
@@ -139,7 +139,9 @@ export default {
         ChartBuilder,
         TableBuilder,
     },
-    props: { message: Object },
+    props: {
+        message: Object,
+    },
     data() {
         return {};
     },

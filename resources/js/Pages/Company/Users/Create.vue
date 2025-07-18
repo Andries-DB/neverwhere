@@ -37,8 +37,45 @@
 
             <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-slate-700"
-                    >Koppel bronnen</label
+                    >Gebruikersgroepen</label
                 >
+                <div class="flex flex-wrap gap-2">
+                    <div
+                        v-for="userGroup in company.usergroups"
+                        :key="userGroup.id"
+                        @click="selectUserGroup(userGroup)"
+                        class="cursor-pointer px-3 py-1 rounded-md text-sm font-medium border transition-all duration-200 flex items-center gap-1 hover:bg-gray-50"
+                        :class="[
+                            selectedUserGroups.some(
+                                (g) => g.id === userGroup.id
+                            )
+                                ? 'bg-blue-100 border-blue-300 text-blue-700'
+                                : 'bg-white border-gray-300 text-gray-700',
+                        ]"
+                    >
+                        <span>{{ userGroup.name }}</span>
+                        <span class="text-xs opacity-75"
+                            >({{ userGroup.sources.length }} bronnen)</span
+                        >
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                    Selecteer een gebruikersgroep om automatisch de bijbehorende
+                    bronnen te koppelen.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-slate-700">
+                    Koppel bronnen
+                    <span
+                        v-if="selectedUserGroups.length"
+                        class="text-xs text-blue-600 font-normal"
+                    >
+                        (Geladen van:
+                        {{ selectedUserGroups.map((g) => g.name).join(", ") }})
+                    </span>
+                </label>
                 <div class="flex flex-wrap gap-2">
                     <div
                         v-for="source in sources"
@@ -94,12 +131,15 @@ export default {
     data() {
         return {
             errors: {},
+            selectedUserGroups: [],
+
             form: useForm({
                 firstname: "",
                 name: "",
                 email: "",
                 password: "",
-                sources: [], // <-- nieuwe property
+                sources: [],
+                user_group_ids: [],
             }),
         };
     },
@@ -129,6 +169,29 @@ export default {
         },
         isSelected(id) {
             return this.form.sources.includes(id);
+        },
+        selectUserGroup(userGroup) {
+            const index = this.selectedUserGroups.findIndex(
+                (g) => g.id === userGroup.id
+            );
+
+            if (index > -1) {
+                this.selectedUserGroups.splice(index, 1); // deselect
+            } else {
+                this.selectedUserGroups.push(userGroup); // select
+            }
+
+            this.form.user_group_ids = this.selectedUserGroups.map((g) => g.id);
+
+            // Bronnen automatisch toevoegen (zonder duplicaten)
+            const allSources = this.selectedUserGroups.flatMap((g) =>
+                g.sources.map((s) => s.id)
+            );
+
+            // Unieke samenvoegen met manuele selectie
+            this.form.sources = [
+                ...new Set([...this.form.sources, ...allSources]),
+            ];
         },
     },
     computed: {},

@@ -229,40 +229,30 @@
                             'sortable-graph',
                         ]"
                     >
-                        <!-- Drag Handle -->
                         <div
-                            class="drag-handle px-4 py-2 border-b border-gray-100 bg-gray-50 rounded-t-lg"
+                            class="drag-handle px-4 py-2 border-b border-gray-100"
                         >
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center space-x-2">
-                                    <svg
-                                        class="w-4 h-4 text-gray-400"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M4 8h16M4 16h16"
-                                        ></path>
-                                    </svg>
-                                    <span class="text-xs text-gray-500"
-                                        >Sleep om te verplaatsen</span
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Header -->
-                        <div class="px-4 py-2 border-b border-gray-100">
                             <div class="flex justify-between items-center">
                                 <div class="flex-1 mr-3">
                                     <!-- Editable Title -->
                                     <div v-if="editingTitleId !== graph.id">
                                         <h3
-                                            class="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center"
+                                            class="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center gap-3"
                                         >
+                                            <svg
+                                                class="w-4 h-4 text-gray-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                                title="Sleep om te verplaatsen"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M4 8h16M4 16h16"
+                                                ></path>
+                                            </svg>
                                             {{
                                                 graph.title ||
                                                 getGraphTitle(graph)
@@ -530,37 +520,29 @@
                         ]"
                     >
                         <div
-                            class="drag-handle px-4 py-2 border-b border-gray-100 bg-gray-50 rounded-t-lg"
+                            class="px-4 py-2 border-b border-gray-100 drag-handle"
                         >
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center space-x-2">
-                                    <svg
-                                        class="w-4 h-4 text-gray-400"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M4 8h16M4 16h16"
-                                        ></path>
-                                    </svg>
-                                    <span class="text-xs text-gray-500"
-                                        >Sleep om te verplaatsen</span
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                        <div class="px-4 py-2 border-b border-gray-100">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1 mr-3">
                                     <!-- Editable Title -->
                                     <div v-if="editingTitleId !== table.id">
                                         <h3
-                                            class="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center"
+                                            class="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center gap-2"
                                         >
+                                            <svg
+                                                class="w-4 h-4 text-gray-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                                title="Sleep om te verplaatsen"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M4 8h16M4 16h16"
+                                                ></path>
+                                            </svg>
                                             {{ table.title }}
                                         </h3>
                                     </div>
@@ -699,7 +681,7 @@
 
                                         <button
                                             @click="
-                                                toggleTableRefresh(graph);
+                                                toggleTableRefresh(table);
                                                 this.openDropdown = null;
                                             "
                                             class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-all duration-150 flex items-center gap-2"
@@ -770,17 +752,24 @@
 
                         <div class="w-full h-96 bg-white">
                             <ag-grid-vue
-                                ref="agGrid"
+                                :ref="`agGrid_${table.id}`"
                                 class="ag-theme-alpine w-full h-full"
                                 :rowData="getTableRowData(table)"
                                 :columnDefs="getTableColumnDefs(table)"
                                 :defaultColDef="defaultColDef"
                                 :gridOptions="gridOptions"
                                 rowSelection="multiple"
-                                @grid-ready="onGridReady"
+                                @grid-ready="
+                                    (params) => onGridReady(params, table.id)
+                                "
                                 @range-selection-changed="
                                     onRangeSelectionChanged
                                 "
+                                :key="`grid_${table.id}_${
+                                    savedGridStates[table.id]
+                                        ? 'with_state'
+                                        : 'default'
+                                }`"
                             />
                         </div>
 
@@ -806,7 +795,7 @@
         :show="showRefreshModal"
         :close="toggleGraphRefresh"
         :graph="selectedGraphRefresh"
-        :sort="selectedGraphRefresh"
+        :sort="selectedSortRefresh"
     />
 
     <AddDashboard :show="addDashboard" :close="toggleAddDashboard" />
@@ -1590,6 +1579,7 @@ export default {
         },
         toggleGraphRefresh(graph) {
             this.selectedGraphRefresh = graph;
+            this.selectedSortRefresh = "graph";
             this.showRefreshModal = !this.showRefreshModal;
         },
         async toggleGraphWidth(graph) {
@@ -1951,6 +1941,38 @@ export default {
             this.isDashboardOpen = false;
 
             this.$inertia.visit(route("dashboard", dashboard.guid));
+        },
+        getLocalStorageKey(tableId) {
+            return `grid_state_table_${tableId}`;
+        },
+
+        // Laad grid state voor een specifieke tabel
+        loadGridState(tableId) {
+            if (!tableId) {
+                return {
+                    columnState: null,
+                    filterModel: null,
+                };
+            }
+            try {
+                const storedState = localStorage.getItem(
+                    this.getLocalStorageKey(tableId)
+                );
+                if (storedState) {
+                    return JSON.parse(storedState);
+                } else {
+                    return {
+                        columnState: null,
+                        filterModel: null,
+                    };
+                }
+            } catch (e) {
+                console.error(
+                    `Error loading grid state for table ${tableId}:`,
+                    e
+                );
+                return { columnState: null, filterModel: null };
+            }
         },
     },
     beforeUnmount() {

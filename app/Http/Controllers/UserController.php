@@ -57,14 +57,18 @@ class UserController extends Controller
             $user->sources()->attach($source);
         }
 
+        foreach ($request->user_group_ids as $group) {
+            $user->usergroups()->attach($group);
+        }
+
         return redirect()->back();
     }
 
     public function show($guid, $user_guid)
     {
         $this->authorizeAdmin();
-        $company = Company::where('guid', $guid)->with('sources')->firstOrFail();
-        $user = User::where('guid', $user_guid)->with('sources', 'reports')->firstOrFail();
+        $company = Company::where('guid', $guid)->with('sources', 'usergroups.sources')->firstOrFail();
+        $user = User::where('guid', $user_guid)->with('sources', 'reports', 'usergroups')->firstOrFail();
 
 
         return Inertia::render('Company/Users/Read', [
@@ -89,6 +93,7 @@ class UserController extends Controller
 
     public function update($guid, $user_guid, Request $request)
     {
+        // dd($request->all());
         $this->authorizeAdmin();
 
         $request->validate([
@@ -116,6 +121,8 @@ class UserController extends Controller
 
         // Synchroniseer de gekoppelde bronnen
         $user->sources()->sync($request->source_ids ?? []);
+
+        $user->usergroups()->sync($request->user_group_ids ?? []);
 
         return redirect()->back()->with('success', 'Gebruiker succesvol bijgewerkt.');
     }

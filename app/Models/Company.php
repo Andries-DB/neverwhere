@@ -25,4 +25,9 @@ class Company extends Model
     {
         return $this->belongsToMany(Report::class, 'company_report');
     }
+
+    public function usergroups()
+    {
+        return $this->hasMany(UserGroup::class, 'company_id');
+    }
 }

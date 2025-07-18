@@ -19,6 +19,7 @@ class Message extends Model
         'thumbs_down',
         'feedback',
         'source_id',
+        'question_message'
     ];
 
     protected $casts = [

@@ -12,6 +12,7 @@ use App\Http\Controllers\SourceController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserGroupController;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -69,6 +70,11 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::post('/sources', [SourceController::class, 'store'])->name('source.create');
     Route::post('/company/reports', [ReportController::class, 'store_company'])->name('company.report.create');
     Route::post('/user/reports', [ReportController::class, 'store_user'])->name('user.report.create');
+
+    Route::post('/company/{guid}/usergroups', [UserGroupController::class, 'store'])->name('company.usergroup.store');
+    Route::get('/company/{guid}/usergroups/{usergroup_guid}', [UserGroupController::class, 'read'])->name('company.usergroup.read');
+    Route::patch('/companies/{guid}/usergroups/{usergroup_guid}', [UserGroupController::class, 'update'])->name('company.usergroup.update');
+    Route::delete('/companies//usergroups/{usergroup_guid}', [UserGroupController::class, 'delete'])->name('company.usergroup.delete');
 
     Route::get('/reports', [ReportController::class, 'get'])->name('reports.get');
 

@@ -7,42 +7,25 @@
             <h1 class="text-black font-bold text-4xl">{{ company.company }}</h1>
 
             <div class="flex gap-2">
-                <PrimaryButton
-                    @click="toggleEdit"
-                    v-if="show_sort === 'settings'"
-                >
-                    <i class="fas fa-edit mr-2"></i>Pas aan
-                </PrimaryButton>
-                <PrimaryButton
-                    v-if="editCompany && show_sort === 'settings'"
-                    @click="saveCompany"
-                >
-                    <i class="fas fa-check mr-2"></i>Sla op
-                </PrimaryButton>
-                <SecondaryButton
-                    v-if="show_sort === 'settings'"
-                    @click="deleteCompany"
-                >
-                    <i class="fas fa-trash-alt mr-2"></i>Verwijder
-                </SecondaryButton>
-                <PrimaryButton
-                    @click="toggleAddUser"
-                    v-if="show_sort === 'users'"
-                >
-                    + Voeg nieuwe gebruiker toe
-                </PrimaryButton>
-                <PrimaryButton
-                    @click="toggleAddSource"
-                    v-if="show_sort === 'sources'"
-                >
-                    + Voeg nieuwe bron toe
-                </PrimaryButton>
-                <PrimaryButton
-                    @click="toggleAddReport"
-                    v-if="show_sort === 'reports'"
-                >
-                    + Voeg nieuw rapport toe
-                </PrimaryButton>
+                <template v-for="(btn, i) in buttons" :key="i">
+                    <component
+                        :is="
+                            btn.type === 'secondary'
+                                ? 'SecondaryButton'
+                                : 'PrimaryButton'
+                        "
+                        v-if="
+                            show_sort === btn.condition &&
+                            (typeof btn.show === 'function'
+                                ? btn.show()
+                                : btn.show)
+                        "
+                        @click="btn.click"
+                    >
+                        <i v-if="btn.icon" :class="btn.icon + ' mr-2'"></i>
+                        {{ btn.text }}
+                    </component>
+                </template>
             </div>
         </div>
 
@@ -60,6 +43,17 @@
                     @click="changeSort('settings')"
                 >
                     Instellingen
+                </button>
+                <button
+                    :class="[
+                        'px-4 py-1 rounded-md text-center text-sm',
+                        show_sort === 'usergroups'
+                            ? 'bg-gray-200'
+                            : 'bg-gray-300',
+                    ]"
+                    @click="changeSort('usergroups')"
+                >
+                    Gebruikers groepen
                 </button>
                 <button
                     :class="[
@@ -295,6 +289,75 @@
                 </table>
             </div>
         </div>
+
+        <div v-if="this.show_sort === 'usergroups'">
+            <div class="overflow-x-auto mt-6">
+                <table class="w-full text-sm text-left rtl:text-right">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Naam</th>
+                            <th scope="col" class="px-6 py-3">Bronnen</th>
+
+                            <th scope="col" class="px-6 py-3">
+                                <span class="sr-only">Aanpassen</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            class="bg-white border-b border-gray-200"
+                            v-for="group in company.usergroups"
+                        >
+                            <th
+                                scope="row"
+                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                            >
+                                {{ group.name }}
+                            </th>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        v-for="source in group.sources"
+                                        :key="source.id"
+                                        class="px-2 py-1 rounded text-black text-sm text-center font-medium min-w-[80px]"
+                                        :style="{
+                                            backgroundColor:
+                                                source.hex_color || '#999',
+                                        }"
+                                    >
+                                        {{ source.name }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <a
+                                    :href="
+                                        route('company.usergroup.read', {
+                                            guid: company.guid,
+                                            usergroup_guid: group.guid,
+                                        })
+                                    "
+                                    class="font-medium text-blue-600 hover:underline"
+                                    >Pas aan</a
+                                >
+                            </td>
+                        </tr>
+                        <tr
+                            class="bg-white border-b border-gray-200"
+                            v-if="this.company.usergroups.length < 1"
+                        >
+                            <th
+                                scope="row"
+                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                                colspan="4"
+                            >
+                                Geen resultaten gevonden
+                            </th>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </AuthenticatedLayout>
 
     <Create
@@ -314,6 +377,13 @@
         :show="addReport"
         :company="this.company"
     />
+
+    <CreateGroups
+        :close="toggleAddUserGroup"
+        :show="addUserGroup"
+        :company="this.company"
+        :sources="this.company.sources"
+    />
 </template>
 
 <script>
@@ -327,6 +397,7 @@ import InputError from "@/Components/InputError.vue";
 import Create from "./Users/Create.vue";
 import CreateSources from "./Sources/Create.vue";
 import CreateReports from "./Reports/Create.vue";
+import CreateGroups from "./UserGroups/Create.vue";
 
 export default {
     name: "",
@@ -341,6 +412,7 @@ export default {
         Create,
         CreateSources,
         CreateReports,
+        CreateGroups,
     },
     props: {
         company: Object,
@@ -356,14 +428,7 @@ export default {
             addSource: false,
             addReport: false,
             addUser: false,
-            breadcrumbs: [
-                { title: "Dashboard", href: "/dashboard" },
-                { title: "Bedrijven", href: "/companies" },
-                {
-                    title: this.company.company,
-                    href: "/companies/" + this.company.guid,
-                },
-            ],
+            addUserGroup: false,
         };
     },
     methods: {
@@ -405,6 +470,9 @@ export default {
         toggleAddUser() {
             this.addUser = !this.addUser;
         },
+        toggleAddUserGroup() {
+            this.addUserGroup = !this.addUserGroup;
+        },
         toggleAddSource() {
             this.addSource = !this.addSource;
         },
@@ -412,7 +480,58 @@ export default {
             this.addReport = !this.addReport;
         },
     },
-    computed: {},
+    computed: {
+        buttons() {
+            return [
+                {
+                    condition: "settings",
+                    show: true,
+                    icon: "fas fa-edit",
+                    text: "Pas aan",
+                    click: this.toggleEdit,
+                },
+                {
+                    condition: "settings",
+                    show: this.editCompany,
+                    icon: "fas fa-check",
+                    text: "Sla op",
+                    click: this.saveCompany,
+                },
+                {
+                    condition: "settings",
+                    show: true,
+                    icon: "fas fa-trash-alt",
+                    text: "Verwijder",
+                    type: "secondary",
+                    click: this.deleteCompany,
+                },
+                {
+                    condition: "users",
+                    show: true,
+                    text: "+ Voeg nieuwe gebruiker toe",
+                    click: this.toggleAddUser,
+                },
+                {
+                    condition: "usergroups",
+                    show: true,
+                    text: "+ Voeg nieuwe groep toe",
+                    click: this.toggleAddUserGroup,
+                },
+                {
+                    condition: "sources",
+                    show: true,
+                    text: "+ Voeg nieuwe bron toe",
+                    click: this.toggleAddSource,
+                },
+                {
+                    condition: "reports",
+                    show: true,
+                    text: "+ Voeg nieuw rapport toe",
+                    click: this.toggleAddReport,
+                },
+            ];
+        },
+    },
     mounted() {
         const stored = localStorage.getItem("selected_sort");
 

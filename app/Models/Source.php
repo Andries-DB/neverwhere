@@ -28,4 +28,9 @@ class Source extends Model
     {
         return $this->hasMany(Message::class);
     }
+
+    public function userGroups()
+    {
+        return $this->belongsToMany(UserGroup::class);
+    }
 }

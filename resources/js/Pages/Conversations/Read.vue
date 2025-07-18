@@ -196,7 +196,7 @@
                                 </div>
 
                                 <!-- Tabel weergave met AG Grid -->
-                                <div v-else-if="message.displayAsTable">
+                                <div v-show="message.displayAsTable">
                                     <div class="mb-3 flex justify-end relative">
                                         <button
                                             :class="[
@@ -269,7 +269,7 @@
                                 </div>
 
                                 <div
-                                    v-else-if="message.displayAsQuery"
+                                    v-if="message.displayAsQuery"
                                     class="bg-transparent text-slate-900 text-xs font-mono rounded-md p-3 overflow-auto mb-3"
                                 >
                                     <p

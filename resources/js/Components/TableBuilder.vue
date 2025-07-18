@@ -5,7 +5,7 @@
         class="w-full bg-white rounded-lg border border-gray-200 overflow-hidden"
     >
         <!-- AG Grid -->
-        <div class="h-96">
+        <div :class="this.height === 'full' ? 'h-[75vh]' : 'h-96'">
             <ag-grid-vue
                 ref="agGrid"
                 class="ag-theme-alpine w-full h-full"
@@ -16,7 +16,11 @@
                 rowSelection="multiple"
                 groupDisplayType="multipleColumns"
                 @grid-ready="onGridReady"
-                @range-selection-changed="onRangeSelectionChanged"
+                @columnMoved="saveGridState"
+                @columnResized="saveGridState"
+                @columnVisible="saveGridState"
+                @filterChanged="saveGridState"
+                @sortChanged="saveGridState"
             />
         </div>
     </div>
@@ -27,6 +31,7 @@ import { ModuleRegistry } from "ag-grid-community";
 import { AgGridVue } from "ag-grid-vue3";
 import "ag-grid-enterprise"; // Dit activeert alle enterprise features
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
+import { ref } from "vue";
 
 import {
     AllEnterpriseModule,
@@ -38,14 +43,29 @@ ModuleRegistry.registerModules([
     IntegratedChartsModule.with(AgChartsEnterpriseModule),
 ]);
 LicenseManager.setLicenseKey(import.meta.env.VITE_AG_KEY);
+
+// let gridApi = ref(null);
+// let columnApi = ref(null);
 export default {
     name: "",
     components: {
         AgGridVue,
     },
-    props: { message: Object },
+    props: {
+        message: Object,
+        height: {
+            type: String,
+            default: "normal",
+        },
+    },
     data() {
         return {
+            gridApi: null,
+
+            savedGridState: {
+                columnState: null,
+                filterModel: null,
+            },
             defaultColDef: {
                 sortable: true,
                 filter: true,
@@ -86,6 +106,9 @@ export default {
             },
         };
     },
+    created() {
+        this.loadGridState();
+    },
     methods: {
         getTableRowData(message) {
             if (
@@ -96,7 +119,6 @@ export default {
                 return message.json;
             }
 
-            // Fallback naar oude methode
             const parsed = this.parseTableMessage(message.message);
 
             return parsed.rows.map((row) => {
@@ -418,6 +440,108 @@ export default {
                 rows,
                 below: belowLines.join("\n").trim(),
             };
+        },
+        getLocalStorageKey() {
+            return `agGridState_${this.message.guid || "default"}`;
+        },
+
+        // Laad de opgeslagen staat uit localStorage
+        loadGridState() {
+            if (!this.message.guid) {
+                return;
+            }
+            try {
+                const storedState = localStorage.getItem(
+                    this.getLocalStorageKey()
+                );
+                if (storedState) {
+                    this.savedGridState = JSON.parse(storedState);
+                } else {
+                    this.savedGridState = {
+                        columnState: null,
+                        filterModel: null,
+                    };
+                }
+            } catch (e) {
+                this.savedGridState = { columnState: null, filterModel: null };
+            }
+        },
+        saveGridState() {
+            if (this.gridApi) {
+                this.savedGridState.columnState = this.gridApi.getColumnState();
+                this.savedGridState.filterModel = this.gridApi.getFilterModel();
+
+                if (this.message.guid) {
+                    try {
+                        localStorage.setItem(
+                            this.getLocalStorageKey(),
+                            JSON.stringify(this.savedGridState)
+                        );
+                        console.log(
+                            "Grid state saved to localStorage for key:",
+                            this.getLocalStorageKey()
+                        );
+                    } catch (e) {
+                        console.error(
+                            "Error saving grid state to localStorage:",
+                            e
+                        );
+                    }
+                } else {
+                }
+            }
+        },
+        restoreGridState() {
+            if (
+                this.gridApi &&
+                this.savedGridState &&
+                this.savedGridState.columnState
+            ) {
+                this.gridApi.applyColumnState({
+                    state: this.savedGridState.columnState,
+                    applyOrder: true, // Belangrijk om de volgorde te behouden
+                });
+
+                if (this.savedGridState.filterModel) {
+                    this.gridApi.setFilterModel(
+                        this.savedGridState.filterModel
+                    );
+                }
+            } else {
+            }
+        },
+
+        onGridReady(params) {
+            this.gridApi = params.api;
+
+            setTimeout(() => {
+                this.restoreGridState();
+            }, 50);
+        },
+    },
+    watch: {
+        "message.guid": {
+            immediate: false,
+            handler(newGuid, oldGuid) {
+                if (newGuid && newGuid !== oldGuid) {
+                    this.loadGridState();
+                    if (this.gridApi) {
+                        this.$nextTick(() => {
+                            this.restoreGridState();
+                        });
+                    }
+                }
+            },
+        },
+
+        "message.displayAsTable": {
+            handler(newVal) {
+                if (newVal && this.gridApi) {
+                    this.$nextTick(() => {
+                        this.gridApi.sizeColumnsToFit();
+                    });
+                }
+            },
         },
     },
     computed: {},

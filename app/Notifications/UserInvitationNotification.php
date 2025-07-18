@@ -29,7 +29,7 @@ class UserInvitationNotification extends Notification
 
         return (new MailMessage)
             ->subject('Welkom bij ' . config('app.name'))
-            ->greeting('Hallo ' . $notifiable->name . ',')
+            ->greeting('Hallo ' . $notifiable->firstname . ' ' . $notifiable->name . ',')
             ->line('Je bent uitgenodigd om een account aan te maken op ons platform.')
             ->line('Klik op onderstaande knop om je wachtwoord in te stellen en toegang te krijgen tot je account.')
             ->action('Stel je wachtwoord in', $url)
