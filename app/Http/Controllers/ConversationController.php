@@ -206,6 +206,9 @@ class ConversationController extends Controller
 
     public function pinTable(Request $request)
     {
+        $request->validate([
+            'dashboard_id' => 'required|exists:dashboards,id',
+        ]);
         $dashboard = Dashboard::where('id', $request->dashboard_id)->first();
 
         PinnedTable::create([
