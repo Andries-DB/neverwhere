@@ -170,6 +170,10 @@ class ConversationController extends Controller
 
     public function pinChart(Request $request)
     {
+        $request->validate([
+            'dashboard_id' => 'required|exists:dashboards,id',
+        ]);
+
         $dashboard = Dashboard::where('id', $request->dashboard_id)->first();
 
         PinnedGraph::create([

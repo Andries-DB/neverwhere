@@ -285,7 +285,11 @@
 
                                 <!-- Normale tekst weergave -->
                                 <div
-                                    v-else
+                                    v-if="
+                                        !message.displayAsChart &&
+                                        !message.displayAsTable &&
+                                        !message.displayAsQuery
+                                    "
                                     v-html="formatMessage(message)"
                                     class="whitespace-pre-wrap"
                                 ></div>
