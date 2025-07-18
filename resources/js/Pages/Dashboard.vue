@@ -759,17 +759,6 @@
                                 :defaultColDef="defaultColDef"
                                 :gridOptions="gridOptions"
                                 rowSelection="multiple"
-                                @grid-ready="
-                                    (params) => onGridReady(params, table.id)
-                                "
-                                @range-selection-changed="
-                                    onRangeSelectionChanged
-                                "
-                                :key="`grid_${table.id}_${
-                                    savedGridStates[table.id]
-                                        ? 'with_state'
-                                        : 'default'
-                                }`"
                             />
                         </div>
 
@@ -1941,38 +1930,6 @@ export default {
             this.isDashboardOpen = false;
 
             this.$inertia.visit(route("dashboard", dashboard.guid));
-        },
-        getLocalStorageKey(tableId) {
-            return `grid_state_table_${tableId}`;
-        },
-
-        // Laad grid state voor een specifieke tabel
-        loadGridState(tableId) {
-            if (!tableId) {
-                return {
-                    columnState: null,
-                    filterModel: null,
-                };
-            }
-            try {
-                const storedState = localStorage.getItem(
-                    this.getLocalStorageKey(tableId)
-                );
-                if (storedState) {
-                    return JSON.parse(storedState);
-                } else {
-                    return {
-                        columnState: null,
-                        filterModel: null,
-                    };
-                }
-            } catch (e) {
-                console.error(
-                    `Error loading grid state for table ${tableId}:`,
-                    e
-                );
-                return { columnState: null, filterModel: null };
-            }
         },
     },
     beforeUnmount() {
