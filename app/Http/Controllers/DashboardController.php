@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use App\Models\Dashboard;
 use App\Models\PinnedGraph;
+use App\Models\PinnedItem;
 use App\Models\PinnedTable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,8 +24,8 @@ class DashboardController extends Controller
             ->when(!$guid, fn($q) => $q->where('default', 1))
             ->where('user_id', $user->id)
             ->with([
-                'pinned_graphs.message.conversation',
-                'pinned_tables.message.conversation',
+
+                'pinned_items.message.conversation',
             ])
             ->first();
 
@@ -39,15 +40,16 @@ class DashboardController extends Controller
 
             // Leeg laden zodat je geen fouten krijgt in frontend
             $dashboard->loadMissing([
-                'pinned_graphs.message.conversation',
-                'pinned_tables.message.conversation',
+
+                'pinned_items.message.conversation',
+
             ]);
         }
 
         return Inertia::render('Dashboard', [
             'dashboard' => $dashboard,
-            'pinned_graphs' => $dashboard->pinned_graphs,
-            'pinned_tables' => $dashboard->pinned_tables,
+
+            'pinned_items' => $dashboard->pinned_items,
             'all_dashboards' => $user->dashboards
         ]);
     }
@@ -71,25 +73,12 @@ class DashboardController extends Controller
         return redirect()->back();
     }
 
-    public function updateGraphOrder(Request $request)
+    public function updateItemOrder(Request $request)
     {
         foreach ($request->graphs as $graph) {
-            $pinned_graph = PinnedGraph::find($graph['id']);
-            $pinned_graph->display_order = $graph['display_order'];
-            $pinned_graph->save();
-        }
-
-        return [
-            'csrf_token' => csrf_token(),
-        ];
-    }
-
-    public function updateTableOrder(Request $request)
-    {
-        foreach ($request->tables as $table) {
-            $pinned_table = PinnedTable::find($table['id']);
-            $pinned_table->display_order = $table['display_order'];
-            $pinned_table->save();
+            $pinned_item = PinnedItem::find($graph['id']);
+            $pinned_item->display_order = $graph['display_order'];
+            $pinned_item->save();
         }
 
         return [

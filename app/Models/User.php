@@ -27,6 +27,9 @@ class User extends Authenticatable
         'google2fa_secret',
         'google2fa_enabled',
         'two_factor_verified_at',
+        'locale', // Added locale field
+        'number_format', // Added number_format field
+        'decimal_seperator', // Added decimal_seperator field
     ];
 
     /**
@@ -52,6 +55,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_verified_at' => 'datetime',
             'google2fa_enabled' => 'boolean',
+
         ];
     }
 

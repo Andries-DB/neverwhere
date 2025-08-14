@@ -1,5 +1,6 @@
 <template>
     <Modal :show="show" @close="close">
+        {{ this.coldefs }}
         <form
             @submit.prevent="sendFeedback"
             class="flex flex-col gap-6 w-full mt-8"
@@ -186,7 +187,8 @@ export default {
     props: {
         show: Boolean,
         close: Function,
-        message: Object, // optioneel, mag null zijn
+        message: Object,
+        coldefs: Array, // Nieuwe coldefs prop
         sort: String,
         dashboards: Array,
     },

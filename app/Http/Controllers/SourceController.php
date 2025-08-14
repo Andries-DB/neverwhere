@@ -109,7 +109,6 @@ class SourceController extends Controller
 
     private function validateAccessKey(string $providedKey, Source $source): bool
     {
-        // Optie 1: Vaste string voor alle sources
         $validKey = config('app.source_access_key', 'your-secret-key-here');
 
         return hash_equals($validKey, $providedKey);

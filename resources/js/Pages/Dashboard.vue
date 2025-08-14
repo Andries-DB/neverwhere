@@ -2,6 +2,11 @@
     <Head title="Dashboard" />
 
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
+        <!-- <div>
+            <h1>{{ $t("messages.hello") }}</h1>
+            <button @click="setLang('nl')">NL</button>
+            <button @click="setLang('en')">EN</button>
+        </div> -->
         <main class="space-y-6 sm:space-y-8 px-4 sm:px-0">
             <div class="flex justify-between items-center w-full">
                 <!-- Dashboard Dropdown -->
@@ -114,31 +119,12 @@
                     <!-- Settings Menu -->
                     <div
                         v-if="isSettingsDropdownOpen"
-                        class="absolute z-50 right-0 mt-1 w-48 rounded-lg bg-white shadow-lg"
+                        class="absolute right-0 top-full mt-1 w-52 bg-white rounded-md shadow-lg border border-slate-200 z-50"
                     >
-                        <div class="py-1">
-                            <!-- <button
-                                @click="createConversation"
-                                class="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                                <svg
-                                    class="h-4 w-4 mr-2"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                    />
-                                </svg>
-                                Voeg conversatie toe
-                            </button> -->
+                        <div>
                             <button
                                 @click="toggleAddDashboard()"
-                                class="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
                             >
                                 <svg
                                     class="h-4 w-4 mr-2"
@@ -155,10 +141,18 @@
                                 </svg>
                                 Maak nieuw dashboard
                             </button>
+                            <button
+                                @click="toggleExportDashbpard()"
+                                class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
+                            >
+                                <i class="far fa-file-pdf mr-[14px]"></i>
+
+                                Exporteer dashboard
+                            </button>
 
                             <button
                                 @click="makeDefault(dashboard)"
-                                class="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
                                 v-if="!dashboard.default"
                             >
                                 <svg
@@ -181,7 +175,7 @@
 
                             <button
                                 @click="deleteDashboard(dashboard)"
-                                class="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150 flex items-center"
                             >
                                 <svg
                                     class="h-4 w-4 mr-2"
@@ -206,27 +200,28 @@
             <!-- Welkomstbericht -->
             <section
                 class="text-center text-gray-600 max-w-md mx-auto px-4 sm:px-0"
-                v-if="!pinned_graphs?.length && !pinned_tables.length"
+                v-if="!pinned_items?.length"
             >
                 <p>
-                    Start een nieuwe conversatie door op de knop hierboven te
-                    klikken. Je gepinde informatie verschijnt hier.
+                    Welkom op je dashboard! Hier kun je grafieken en tabellen
+                    toevoegen om snel inzicht te krijgen in je data. Begin met
+                    het vastpinnen van items via de conversatie.
                 </p>
             </section>
 
-            <section v-if="pinned_graphs?.length" class="space-y-4">
+            <section v-if="pinned_items?.length" class="space-y-4">
                 <div
-                    ref="graphsContainer"
+                    ref="pinnedContainer"
                     class="grid grid-cols-1 xl:grid-cols-2 gap-6"
                 >
                     <div
-                        v-for="graph in pinned_graphs"
-                        :key="graph.id"
-                        :data-id="graph.id"
+                        v-for="item in pinned_items"
+                        :key="item.id"
+                        :data-id="item.id"
                         :class="[
                             'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-move',
-                            graph.width === 'full' ? 'col-span-2' : '',
-                            'sortable-graph',
+                            item.width === 'full' ? 'col-span-2' : '',
+                            'sortable-pinned',
                         ]"
                     >
                         <div
@@ -235,7 +230,7 @@
                             <div class="flex justify-between items-center">
                                 <div class="flex-1 mr-3">
                                     <!-- Editable Title -->
-                                    <div v-if="editingTitleId !== graph.id">
+                                    <div v-if="editingTitleId !== item.id">
                                         <h3
                                             class="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center gap-3"
                                         >
@@ -253,10 +248,7 @@
                                                     d="M4 8h16M4 16h16"
                                                 ></path>
                                             </svg>
-                                            {{
-                                                graph.title ||
-                                                getGraphTitle(graph)
-                                            }}
+                                            {{ item.title }}
                                         </h3>
                                     </div>
 
@@ -268,15 +260,15 @@
                                         <input
                                             ref="titleInput"
                                             v-model="editingTitle"
-                                            @keydown.enter="saveTitle(graph.id)"
+                                            @keydown.enter="saveTitle(item.id)"
                                             @keydown.escape="cancelEditingTitle"
-                                            @blur="saveTitle(graph.id)"
+                                            @blur="saveTitle(item.id)"
                                             class="flex-1 text-lg font-medium text-gray-900 bg-transparent border-blue-500 focus:outline-none focus:border-blue-600 transition-colors"
-                                            :placeholder="getGraphTitle(graph)"
+                                            :placeholder="getGraphTitle(item)"
                                         />
                                         <div class="flex space-x-1">
                                             <button
-                                                @click="saveTitle(graph.id)"
+                                                @click="saveTitle(item.id)"
                                                 class="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
                                                 title="Opslaan"
                                             >
@@ -318,7 +310,7 @@
                                 </div>
                                 <div class="relative">
                                     <button
-                                        @click="toggleDropdown(graph.id)"
+                                        @click="toggleDropdown(item.id)"
                                         class="text-gray-400 hover:text-gray-600 transition-colors"
                                         title="Acties"
                                     >
@@ -334,13 +326,13 @@
                                     </button>
 
                                     <div
-                                        v-if="this.openDropdown === graph.id"
+                                        v-if="this.openDropdown === item.id"
                                         class="absolute right-0 top-full mt-1 w-40 bg-white rounded-md shadow-lg border border-slate-200 z-50"
                                     >
                                         <!-- Titel bewerken optie -->
                                         <button
                                             @click="
-                                                startEditingTitle(graph);
+                                                startEditingTitle(item);
                                                 this.openDropdown = null;
                                             "
                                             class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
@@ -363,7 +355,7 @@
 
                                         <button
                                             @click="
-                                                toggleGraphWidth(graph);
+                                                toggleGraphWidth(item);
                                                 this.openDropdown = null;
                                             "
                                             class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
@@ -382,7 +374,7 @@
                                                 />
                                             </svg>
                                             {{
-                                                graph.width === "full"
+                                                item.width === "full"
                                                     ? "Verklein"
                                                     : "Vergroot"
                                             }}
@@ -390,7 +382,7 @@
 
                                         <button
                                             @click="
-                                                toggleGraphRefresh(graph);
+                                                toggleGraphRefresh(item);
                                                 this.openDropdown = null;
                                             "
                                             class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-all duration-150 flex items-center gap-2"
@@ -413,7 +405,7 @@
 
                                         <button
                                             @click="
-                                                duplicateGraph(graph);
+                                                duplicateGraph(item);
                                                 this.openDropdown = null;
                                             "
                                             class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
@@ -432,7 +424,7 @@
                                         <!-- Losmaken optie -->
                                         <button
                                             @click="
-                                                unpinGraph(graph.id);
+                                                unpinGraph(item.id);
                                                 this.openDropdown = null;
                                             "
                                             class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150 flex items-center"
@@ -461,14 +453,14 @@
                         <div>
                             <div
                                 class="w-full h-96 bg-white rounded border border-gray-100"
+                                v-if="item.type === 'graph'"
                             >
                                 <ag-charts
                                     v-if="
-                                        getPinnedChartOptions(graph).data
-                                            ?.length
+                                        getPinnedChartOptions(item).data?.length
                                     "
                                     class="w-full h-full"
-                                    :options="getPinnedChartOptions(graph)"
+                                    :options="getPinnedChartOptions(item)"
                                 />
                                 <div
                                     v-else
@@ -484,6 +476,21 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div
+                                class="w-full h-96 bg-white"
+                                v-if="item.type === 'table'"
+                            >
+                                <ag-grid-vue
+                                    :ref="`agGrid_${item.id}`"
+                                    class="ag-theme-alpine w-full h-full"
+                                    :rowData="getTableRowData(item)"
+                                    :columnDefs="getTableColumnDefs(item)"
+                                    :defaultColDef="defaultColDef"
+                                    :gridOptions="gridOptions"
+                                    rowSelection="multiple"
+                                />
+                            </div>
                         </div>
 
                         <!-- Footer -->
@@ -494,284 +501,11 @@
                                 class="flex justify-between items-center text-xs text-gray-500"
                             >
                                 <span
-                                    >{{ graph.json?.length || 0 }} records</span
+                                    >{{ item.json?.length || 0 }} records</span
                                 >
-                                <span>{{
-                                    formatChartType(graph.sort_chart)
+                                <span v-if="item.type == 'graph'">{{
+                                    formatChartType(item?.sort_chart)
                                 }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section v-if="pinned_tables?.length" class="space-y-4">
-                <div
-                    class="grid grid-cols-1 xl:grid-cols-2 gap-6"
-                    ref="tablesContainer"
-                >
-                    <div
-                        v-for="table in pinned_tables"
-                        :key="table.id"
-                        :class="[
-                            'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow',
-                            table.width === 'full' ? 'col-span-2' : '',
-                            'sortable-graph',
-                        ]"
-                    >
-                        <div
-                            class="px-4 py-2 border-b border-gray-100 drag-handle"
-                        >
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1 mr-3">
-                                    <!-- Editable Title -->
-                                    <div v-if="editingTitleId !== table.id">
-                                        <h3
-                                            class="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200 flex items-center gap-2"
-                                        >
-                                            <svg
-                                                class="w-4 h-4 text-gray-400"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                                title="Sleep om te verplaatsen"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M4 8h16M4 16h16"
-                                                ></path>
-                                            </svg>
-                                            {{ table.title }}
-                                        </h3>
-                                    </div>
-
-                                    <!-- Edit Mode -->
-                                    <div
-                                        v-else
-                                        class="flex items-center space-x-2"
-                                    >
-                                        <input
-                                            ref="titleInput"
-                                            v-model="editingTitle"
-                                            @keydown.enter="
-                                                saveTableTitle(table.id)
-                                            "
-                                            @keydown.escape="cancelEditingTitle"
-                                            @blur="saveTableTitle(table.id)"
-                                            class="flex-1 text-lg font-medium text-gray-900 bg-transparent border-blue-500 focus:outline-none focus:border-blue-600 transition-colors"
-                                            :placeholder="table.title"
-                                        />
-                                        <div class="flex space-x-1">
-                                            <button
-                                                @click="
-                                                    saveTableTitle(table.id)
-                                                "
-                                                class="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
-                                                title="Opslaan"
-                                            >
-                                                <svg
-                                                    class="w-4 h-4"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M5 13l4 4L19 7"
-                                                    />
-                                                </svg>
-                                            </button>
-                                            <button
-                                                @click="cancelEditingTitle"
-                                                class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
-                                                title="Annuleren"
-                                            >
-                                                <svg
-                                                    class="w-4 h-4"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M6 18L18 6M6 6l12 12"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="relative">
-                                    <button
-                                        @click="toggleDropdown(table.id)"
-                                        class="text-gray-400 hover:text-gray-600 transition-colors"
-                                        title="Acties"
-                                    >
-                                        <svg
-                                            class="w-5 h-5"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"
-                                            />
-                                        </svg>
-                                    </button>
-
-                                    <div
-                                        v-if="this.openDropdown === table.id"
-                                        class="absolute right-0 top-full mt-1 w-40 bg-white rounded-md shadow-lg border border-slate-200 z-50"
-                                    >
-                                        <!-- Titel bewerken optie -->
-                                        <button
-                                            @click="
-                                                startEditingTitle(table);
-                                                this.openDropdown = null;
-                                            "
-                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
-                                        >
-                                            <svg
-                                                class="w-4 h-4 mr-2 text-gray-400"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                                />
-                                            </svg>
-                                            Titel bewerken
-                                        </button>
-
-                                        <button
-                                            @click="
-                                                toggleTableWidth(table);
-                                                this.openDropdown = null;
-                                            "
-                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
-                                        >
-                                            <svg
-                                                class="w-4 h-4 mr-2 text-gray-400"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"
-                                                />
-                                            </svg>
-                                            {{
-                                                table.width === "full"
-                                                    ? "Verklein"
-                                                    : "Vergroot"
-                                            }}
-                                        </button>
-
-                                        <button
-                                            @click="
-                                                toggleTableRefresh(table);
-                                                this.openDropdown = null;
-                                            "
-                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-all duration-150 flex items-center gap-2"
-                                        >
-                                            <svg
-                                                class="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-transform duration-200"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M4 4v6h6M20 20v-6h-6M4 20l5-5M20 4l-5 5"
-                                                />
-                                            </svg>
-                                            <span>Refresh</span>
-                                        </button>
-
-                                        <button
-                                            @click="
-                                                duplicateTable(table);
-                                                this.openDropdown = null;
-                                            "
-                                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
-                                        >
-                                            <i
-                                                class="far fa-clone mr-2 w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-transform duration-200"
-                                            ></i>
-                                            Dupliceer
-                                        </button>
-
-                                        <!-- Divider -->
-                                        <div
-                                            class="border-t border-slate-200 my-1"
-                                        ></div>
-
-                                        <!-- Losmaken optie -->
-                                        <button
-                                            @click="
-                                                unpinTable(table.id);
-                                                this.openDropdown = null;
-                                            "
-                                            class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150 flex items-center"
-                                        >
-                                            <svg
-                                                class="w-4 h-4 mr-2 text-red-400"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                />
-                                            </svg>
-                                            Losmaken
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Chart -->
-
-                        <div class="w-full h-96 bg-white">
-                            <ag-grid-vue
-                                :ref="`agGrid_${table.id}`"
-                                class="ag-theme-alpine w-full h-full"
-                                :rowData="getTableRowData(table)"
-                                :columnDefs="getTableColumnDefs(table)"
-                                :defaultColDef="defaultColDef"
-                                :gridOptions="gridOptions"
-                                rowSelection="multiple"
-                            />
-                        </div>
-
-                        <!-- Footer -->
-                        <div
-                            class="px-6 py-3 bg-gray-50 border-t border-gray-100 rounded-b-lg"
-                        >
-                            <div
-                                class="flex justify-between items-center text-xs text-gray-500"
-                            >
-                                <span
-                                    >{{ table.json?.length || 0 }} records</span
-                                >
                             </div>
                         </div>
                     </div>
@@ -809,6 +543,7 @@ import { ref } from "vue";
 import RefreshGraph from "@/Components/Modals/RefreshGraph.vue";
 import Sortable from "sortablejs";
 import AddDashboard from "@/Components/Modals/AddDashboard.vue";
+import { changeLocale } from "@/lang";
 
 ModuleRegistry.registerModules([
     AllEnterpriseModule,
@@ -827,9 +562,8 @@ export default {
     },
     props: {
         dashboard: Object,
-        pinned_graphs: Array,
-        pinned_tables: Array,
         all_dashboards: Array,
+        pinned_items: Array,
     },
     data() {
         return {
@@ -856,7 +590,6 @@ export default {
                 { value: "min", label: "Minimum" },
                 { value: "max", label: "Maximum" },
             ],
-            localPinnedGraphs: [...this.pinned_graphs],
             editingTitleId: null,
             editingTitle: "",
             savingTitleId: null,
@@ -899,6 +632,9 @@ export default {
         };
     },
     methods: {
+        setLang(l) {
+            changeLocale(l);
+        },
         // Update CSRF token na response
         updateCsrfToken(response) {
             const newToken = response.headers.get("X-CSRF-TOKEN");
@@ -919,8 +655,10 @@ export default {
             this.openDropdown = this.openDropdown === id ? null : id;
         },
         toggleAddDashboard() {
-            console.log("hi");
             this.addDashboard = !this.addDashboard;
+        },
+        toggleExportDashbpard() {
+            console.log("Export dashboard clicked");
         },
         createConversation() {
             this.form.post(route("conversation.create"), {
@@ -1055,6 +793,9 @@ export default {
             });
         },
         getGraphTitle(graph) {
+            if (graph.type !== "graph") {
+                return "";
+            }
             // Generate a meaningful title based on the graph configuration
             const yLabel = graph._y.charAt(0).toUpperCase() + graph._y.slice(1);
             const xLabel = graph._x.charAt(0).toUpperCase() + graph._x.slice(1);
@@ -1087,7 +828,6 @@ export default {
                 return {};
             }
 
-            // GEBRUIK VERBETERDE DATA PREPARATIE
             const chartData = this.prepareChartData(
                 graph.json,
                 xAxis,
@@ -1110,11 +850,7 @@ export default {
 
             const baseOptions = {
                 data: sortedData,
-                // title: {
-                //     text: title,
-                //     fontSize: 14,
-                //     fontWeight: "bold",
-                // },
+
                 padding: {
                     top: 20,
                     right: 20,
@@ -1130,7 +866,6 @@ export default {
                 yAxis
             );
 
-            console.log("Final chart options:", finalConfig);
             return finalConfig;
         },
         prepareChartData(data, xAxis, yAxis, aggregation) {
@@ -1481,14 +1216,13 @@ export default {
             }
         },
         unpinGraph(graphId) {
-            // Handle unpinning logic - you'll need to implement this based on your backend
-            this.form.delete(route("conversation.unpinChart", graphId), {
+            this.form.delete(route("conversation.unpinItem", graphId), {
                 onSuccess: () => {
-                    const index = this.pinned_graphs.findIndex(
+                    const index = this.pinned_items.findIndex(
                         (g) => g.id === graphId
                     );
                     if (index !== -1) {
-                        this.pinned_graphs.splice(index, 1); // werkt reactief
+                        this.pinned_items.splice(index, 1); // werkt reactief
                     }
                 },
                 onError: (errors) => {
@@ -1497,7 +1231,7 @@ export default {
             });
         },
         duplicateGraph(graph) {
-            this.form.post(route("conversation.duplicateChart", graph.id), {
+            this.form.post(route("conversation.duplicateItem", graph.id), {
                 onSuccess: () => {
                     location.reload();
                 },
@@ -1508,9 +1242,8 @@ export default {
         },
         startEditingTitle(graph) {
             this.editingTitleId = graph.id;
-            this.editingTitle = graph.title || this.getGraphTitle(graph);
+            this.editingTitle = graph.title;
 
-            // Focus de input na een korte delay zodat het element bestaat
             this.$nextTick(() => {
                 if (this.$refs.titleInput) {
                     this.$refs.titleInput.focus();
@@ -1523,9 +1256,9 @@ export default {
             this.editingTitle = "";
         },
         async saveTitle(graphId) {
-            if (this.savingTitleId) return; // Voorkom dubbele saves
+            if (this.savingTitleId) return;
 
-            const graph = this.pinned_graphs.find((g) => g.id === graphId);
+            const graph = this.pinned_items.find((g) => g.id === graphId);
             if (!graph) return;
 
             // Als de titel niet is veranderd, gewoon annuleren
@@ -1538,14 +1271,13 @@ export default {
             this.savingTitleId = graphId;
 
             try {
-                // Maak een nieuwe form instance voor de title update
                 const titleForm = useForm({
                     title: this.editingTitle.trim(),
                 });
 
                 await new Promise((resolve, reject) => {
                     titleForm.patch(
-                        route("conversation.updateChartTitle", graphId),
+                        route("conversation.updateItemTitle", graphId),
                         {
                             onSuccess: () => {
                                 // Update de lokale data
@@ -1575,7 +1307,7 @@ export default {
             const newWidth = graph.width === "full" ? "half" : "full";
 
             try {
-                await fetch(route("conversation.updateChartWidth", graph.id), {
+                await fetch(route("conversation.updateItemWidth", graph.id), {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
@@ -1605,7 +1337,7 @@ export default {
             this.updateCsrfToken(response);
             // // Update local display_order values
             reorderedGraphs.forEach(({ id, display_order }) => {
-                const graph = this.pinned_graphs.find((g) => g.id === id);
+                const graph = this.pinned_items.find((g) => g.id === id);
                 if (graph) {
                     graph.display_order = display_order;
                 }
@@ -1671,8 +1403,12 @@ export default {
             ) {
                 const firstItem = message.json[0];
                 return Object.keys(firstItem).map((key) => {
-                    const isNumeric = this.isNumericField(key, message.json);
-                    const isDate = this.isDateField(key, message.json);
+                    let isNumeric = this.isNumericField(key, message.json);
+                    let isDate = this.isDateField(key, message.json);
+
+                    if (isNumeric) {
+                        isDate = false; // Als het een numeriek veld is, beschouwen we het niet als datum
+                    }
 
                     return {
                         field: key,
@@ -1682,9 +1418,9 @@ export default {
                             ? "agNumberColumnFilter"
                             : "agTextColumnFilter",
                         resizable: true,
-                        enableRowGroup: !isNumeric, // Numerieke velden niet grouperen
+                        enableRowGroup: true, // Numerieke velden niet grouperen
                         enablePivot: true,
-                        enableValue: isNumeric, // Alleen numerieke velden als waarden
+                        enableValue: true, // Alleen numerieke velden als waarden
 
                         // Chart configuratie
                         chartDataType: isNumeric
@@ -1717,6 +1453,9 @@ export default {
                             ) {
                                 return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
                             }
+                            if (isNumeric && !isDate) {
+                                return this.formatNumber(params.value);
+                            }
                             return params.value;
                         },
                     };
@@ -1747,123 +1486,41 @@ export default {
                 },
             }));
         },
-        unpinTable(tableId) {
-            this.form.delete(route("conversation.unpinTable", tableId), {
-                onSuccess: () => {
-                    const index = this.pinned_tables.findIndex(
-                        (t) => t.id === tableId
-                    );
-                    if (index !== -1) {
-                        this.pinned_tables.splice(index, 1);
-                    }
-                },
-                onError: (errors) => {
-                    console.log("Error unpinning graph:", errors);
-                },
-            });
-        },
-        async toggleTableWidth(table) {
-            const newWidth = table.width === "full" ? "half" : "full";
+        formatNumber(value) {
+            if (value === null || value === undefined) return "";
 
-            try {
-                await fetch(route("conversation.updateTableWidth", table.id), {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document
-                            .querySelector('meta[name="csrf-token"]')
-                            .getAttribute("content"),
-                    },
-                    body: JSON.stringify({ width: newWidth }),
-                });
+            let val = parseFloat(value);
+            if (isNaN(val)) return "";
 
-                table.width = newWidth;
-            } catch (error) {
-                console.error("Fout bij bijwerken breedte:", error);
-            }
-        },
-        toggleTableRefresh(table) {
-            this.selectedGraphRefresh = table;
-            this.selectedSortRefresh = "table";
-            this.showRefreshModal = !this.showRefreshModal;
-        },
-        duplicateTable(table) {
-            this.form.post(route("conversation.duplicateTable", table.id), {
-                onSuccess: () => {
-                    location.reload();
-                },
-                onError: (errors) => {
-                    console.log("Error unpinning table:", errors);
-                },
-            });
-        },
-        getTableTitle(table) {
-            return table.title;
-        },
-        async saveTableTitle(tableId) {
-            if (this.savingTitleId) return; // Voorkom dubbele saves
+            let hasDecimals = val % 1 !== 0;
+            let formatted = hasDecimals ? val.toFixed(2) : val.toString();
 
-            const table = this.pinned_tables.find((g) => g.id === tableId);
-            if (!table) return;
-
-            // Als de titel niet is veranderd, gewoon annuleren
-            const originalTitle = table.title;
-            if (this.editingTitle.trim() === originalTitle) {
-                this.cancelEditingTitle();
-                return;
-            }
-
-            this.savingTitleId = tableId;
-
-            try {
-                // Maak een nieuwe form instance voor de title update
-                const titleForm = useForm({
-                    title: this.editingTitle.trim(),
-                });
-
-                await new Promise((resolve, reject) => {
-                    titleForm.patch(
-                        route("conversation.updateTableTitle", tableId),
-                        {
-                            onSuccess: () => {
-                                // Update de lokale data
-                                table.title = this.editingTitle.trim();
-                                this.cancelEditingTitle();
-                                resolve();
-                            },
-                            onError: (errors) => {
-                                console.error("Error updating title:", errors);
-                                reject(errors);
-                            },
-                        }
-                    );
-                });
-            } catch (error) {
-                console.error("Failed to save title:", error);
-            } finally {
-                this.savingTitleId = null;
-            }
-        },
-        async updateTableOrder(reorderedTables) {
-            const response = await fetch(route("dashboard.updateTableOrder"), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": this.getCsrfToken(),
-                },
-                body: JSON.stringify({ tables: reorderedTables }),
-            });
-            if (!response.ok) {
-                throw new Error("Failed to update graph order");
-            }
-
-            this.updateCsrfToken(response);
-            reorderedTables.forEach(({ id, display_order }) => {
-                const table = this.pinned_tables.find((g) => g.id === id);
-                if (table) {
-                    table.display_order = display_order;
+            const decimalSep =
+                this.$page.props.auth.user.decimal_seperator === "comma"
+                    ? ","
+                    : ".";
+            const thousandSep = (() => {
+                switch (this.$page.props.auth.user.number_format) {
+                    case "comma":
+                        return ",";
+                    case "point":
+                        return ".";
+                    case "space":
+                        return " ";
+                    default:
+                        return ""; // 'none'
                 }
-            });
+            })();
+
+            let [intPart, decPart] = formatted.split(".");
+
+            if (thousandSep) {
+                intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSep);
+            }
+
+            return decPart !== undefined
+                ? `${intPart}${decimalSep}${decPart}`
+                : intPart;
         },
 
         // SortableJS
@@ -1872,21 +1529,16 @@ export default {
                 this.graphsSortable.destroy();
                 this.graphsSortable = null;
             }
-            if (this.tablesSortable) {
-                this.tablesSortable.destroy();
-                this.tablesSortable = null;
-            }
         },
         initializeDragAndDrop() {
             this.$nextTick(() => {
                 this.initializeGraphsSortable();
-                this.initializeTablesSortable();
             });
         },
         initializeGraphsSortable() {
-            const graphsContainer = this.$refs.graphsContainer;
-            if (graphsContainer && this.pinned_graphs.length > 0) {
-                this.graphsSortable = Sortable.create(graphsContainer, {
+            const pinnedContainer = this.$refs.pinnedContainer;
+            if (pinnedContainer && this.pinned_items.length > 0) {
+                this.graphsSortable = Sortable.create(pinnedContainer, {
                     animation: 150,
                     ghostClass: "sortable-ghost",
                     chosenClass: "sortable-chosen",
@@ -1898,27 +1550,10 @@ export default {
                 });
             }
         },
-        initializeTablesSortable() {
-            const tablesContainer = this.$refs.tablesContainer;
-            if (tablesContainer && this.pinned_tables.length > 0) {
-                this.tablesSortable = Sortable.create(tablesContainer, {
-                    animation: 150,
-                    ghostClass: "sortable-ghost",
-                    chosenClass: "sortable-chosen",
-                    dragClass: "sortable-drag",
-                    handle: ".drag-handle",
-                    onEnd: (evt) => {
-                        this.onTableReorder(evt);
-                    },
-                });
-            }
-        },
         async onGraphReorder(evt) {
-            this.reorderItems(evt, this.pinned_graphs, this.updateGraphOrder);
+            this.reorderItems(evt, this.pinned_items, this.updateGraphOrder);
         },
-        async onTableReorder(evt) {
-            this.reorderItems(evt, this.pinned_tables, this.updateTableOrder);
-        },
+
         toggleDashboardDropdown() {
             this.isDashboardOpen = !this.isDashboardOpen;
         },
@@ -1936,11 +1571,8 @@ export default {
         this.destroySortables();
     },
     mounted() {
-        this.localPinnedGraphs = [...this.pinned_graphs];
-
         this.initializeDragAndDrop();
 
-        // Set initial selected dashboard
         if (this.dashboard) {
             this.selectedDashboard = this.dashboard;
         } else if (this.all_dashboards && this.all_dashboards.length > 0) {
@@ -1949,20 +1581,14 @@ export default {
     },
 
     watch: {
-        pinned_graphs: {
+        pinned_items: {
             handler() {
                 this.destroySortables();
                 this.initializeDragAndDrop();
             },
             deep: true,
         },
-        pinned_tables: {
-            handler() {
-                this.destroySortables();
-                this.initializeDragAndDrop();
-            },
-            deep: true,
-        },
+
         current_dashboard: {
             handler(newVal) {
                 if (newVal) {

@@ -18,6 +18,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Symfony\Component\Mime\MessageConverter;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\File;
+use Illuminate\Http\Request;
+
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -33,15 +37,15 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
 
     Route::get('/pinboard/{guid?}', [DashboardController::class, 'show'])->name('dashboard');
 
-    Route::post('/pinboard/charts/reorder', [DashboardController::class, 'updateGraphOrder'])->name('dashboard.updateGraphOrder');
-    Route::post('/pinboard/tables/reorder', [DashboardController::class, 'updateTableOrder'])->name('dashboard.updateTableOrder');
+    Route::post('/pinboard/charts/reorder', [DashboardController::class, 'updateItemOrder'])->name('dashboard.updateGraphOrder');
+
     Route::post('/pinboard/default', [DashboardController::class, 'makeDefault'])->name('dashboard.makeDefault');
     Route::delete('/pinboard/delete', [DashboardController::class, 'delete'])->name('dashboard.delete');
     Route::post('/pinboard/create', [DashboardController::class, 'create'])->name('dashboard.create');
 
 
-    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/companies', [CompanyController::class, 'index'])->name('company.get');
@@ -99,20 +103,14 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::get('/conversation/{guid}/bot-response', [ConversationController::class, 'getBotResponse'])->name('conversation.getBotResponse');
 
     Route::post('/conversation/pin', [ConversationController::class, 'pinChart'])->name('conversation.pinChart');
-    Route::delete('/conversation/pin/{id}', [ConversationController::class, 'unpinChart'])->name('conversation.unpinChart');
-    Route::delete('/conversation/message/pin/{id}', [ConversationController::class, 'unpinChartByMessage'])->name('conversation.unpinChartByMessage');
-    Route::patch('/conversation/chart/{id}', [ConversationController::class, 'updateChartTitle'])->name('conversation.updateChartTitle');
-    Route::patch('/conversation/table/{id}', [ConversationController::class, 'updateTableTitle'])->name('conversation.updateTableTitle');
     Route::post('/conversation/pin/table', [ConversationController::class, 'pinTable'])->name('conversation.pinTable');
-    Route::delete('/conversation/message/pin/{id}', [ConversationController::class, 'unpinTableByMessage'])->name('conversation.unpinTable');
-    Route::delete('/conversation/table/pin/{id}', [ConversationController::class, 'unpinTable'])->name('conversation.unpinTable');
-    Route::patch('/conversation/chart/{id}/width', [ConversationController::class, 'updateChartWidth'])->name('conversation.updateChartWidth');
-    Route::patch('/conversation/table/{id}/width', [ConversationController::class, 'updateTableWidth'])->name('conversation.updateTableWidth');
-    Route::patch('/conversation/chart/{id}/refresh', [ConversationController::class, 'updateChartJson'])->name('conversation.updateChartJson');
-    Route::patch('/conversation/table/{id}/refresh', [ConversationController::class, 'updateTableJson'])->name('conversation.updateTableJson');
-    Route::post('/conversation/chart/{id}/duplicate', [ConversationController::class, 'duplicateGraph'])->name('conversation.duplicateChart');
-    Route::post('/conversation/table/{id}/duplicate', [ConversationController::class, 'duplicateTable'])->name('conversation.duplicateTable');
 
+
+    Route::patch('/conversation/chart/{id}', [ConversationController::class, 'updateItemTitle'])->name('conversation.updateItemTitle');
+    Route::delete('/conversation/pin/{id}', [ConversationController::class, 'unpinItem'])->name('conversation.unpinItem');
+    Route::patch('/conversation/chart/{id}/width', [ConversationController::class, 'updateItemWidth'])->name('conversation.updateItemWidth');
+    Route::patch('/conversation/chart/{id}/refresh', [ConversationController::class, 'updateItemJson'])->name('conversation.updateItemJson');
+    Route::post('/conversation/chart/{id}/duplicate', [ConversationController::class, 'duplicateItem'])->name('conversation.duplicateItem');
 
     Route::post('/conversation/likemessage', [ConversationController::class, 'likeMessage'])->name('conversation.likeMessage');
     Route::post('/conversation/dislikemessage', [ConversationController::class, 'dislikeMessage'])->name('conversation.dislikeMessage');
@@ -124,9 +122,41 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::get('/logs', [Logscontroller::class, 'index'])->name('logs.get');
 
     Route::post('/dr-itchy/summary', [ConversationController::class, 'summarize'])->name('conversation.message.summarize');
+
+    Route::post('/conversation/savecoldef', [ConversationController::class, 'saveColDef'])->name('conversation.saveColDef');
 });
 
 
+Route::get('/lang/{locale}.json', function ($locale) {
+    $available = ['en', 'nl', 'fr']; // jouw talen
+    if (!in_array($locale, $available)) {
+        abort(404);
+    }
+
+    App::setLocale($locale);
+
+    $langPath = resource_path("lang/{$locale}");
+    $files = File::allFiles($langPath);
+
+    $translations = [];
+    foreach ($files as $file) {
+        $name = pathinfo($file, PATHINFO_FILENAME);
+        $translations[$name] = require $file->getRealPath();
+    }
+
+    return response()->json($translations);
+});
+
+Route::post('/locale', function (Request $request) {
+    $request->validate(['locale' => 'required|string|in:nl,en']); // voeg meer toe indien nodig
+    $user = $request->user();
+    if ($user) {
+        $user->locale = $request->locale;
+        $user->save();
+    }
+    App::setLocale($request->locale);
+    return response()->json(['success' => true]);
+})->middleware('auth');
 
 
 require __DIR__ . '/auth.php';

@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,
+            'setLocale' => \App\Http\Middleware\SetLocaleFromUser::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

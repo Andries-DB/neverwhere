@@ -21,21 +21,30 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'settings' => [
+                'locale' => $request->user()->locale,
+                'number_format' => $request->user()->number_format,
+                'decimal_seperator' => $request->user()->decimal_seperator,
+            ],
         ]);
     }
 
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        // dd($request->all());
+        $request->validate([
+            'language' => ['required', 'string'],
+            'number_format' => ['required', 'string'],
+        ]);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
-
-        $request->user()->save();
+        $user = $request->user();
+        $user->locale = $request->input('language');
+        $user->decimal_seperator = $request->input('decimal_seperator');
+        $user->number_format = $request->input('number_format');
+        $user->save();
 
         return Redirect::route('profile.edit');
     }

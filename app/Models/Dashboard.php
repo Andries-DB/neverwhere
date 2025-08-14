@@ -27,4 +27,9 @@ class Dashboard extends Model
     {
         return $this->hasMany(PinnedTable::class)->orderBy('display_order', 'asc');
     }
+
+    public function pinned_items()
+    {
+        return $this->hasMany(PinnedItem::class)->orderBy('display_order', 'asc');
+    }
 }

@@ -63,15 +63,9 @@ const form = useForm({
 
 // Sidebar menu items
 const sidebarItems = [
-    // {
-    //     name: "Dashboard",
-    //     route: "dashboard",
-    //     routes: ["dashboard"],
-    //     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-    //     role: "user",
-    // },
     {
-        name: "Bedrijven",
+        name: "Dashboard",
+        namekey: "companies",
         route: "company.get",
         routes: ["company.get", "company.read", "company.user.read"],
         icon: "M3 21h18M5 21V7l8-4v18M9 9h1m0 4h1m4-4h1m0 4h1",
@@ -79,6 +73,7 @@ const sidebarItems = [
     },
     {
         name: "Gebruikers",
+        namekey: "users",
         route: "user.get",
         routes: ["user.get", "user.read"],
         icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
@@ -86,6 +81,7 @@ const sidebarItems = [
     },
     {
         name: "Logs",
+        namekey: "logs",
         route: "logs.get",
         routes: ["logs.get"],
         icon: "M15 12h4.5M19.5 12l-2-2m2 2l-2 2M16 6a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 18a6 6 0 0 1 12 0v1H4v-1z",
@@ -94,28 +90,13 @@ const sidebarItems = [
     },
     {
         name: "Feedback",
+        namekey: "feedback",
         route: "reports.get.admin",
         routes: ["reports.get.admin"],
         icon: "M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
 
         role: "admin",
     },
-    // {
-    //     name: "Rapporten",
-    //     route: "reports.get",
-    //     routes: ["reports.get"],
-    //     icon: "M6 2a1 1 0 00-1 1v18a1 1 0 001.447.894l5.553-2.776 5.553 2.776A1 1 0 0020 21V3a1 1 0 00-1-1H6zm1 2h10v15.382l-4.553-2.276a1 1 0 00-.894 0L7 19.382V4z",
-
-    //     role: "user",
-    // },
-    // {
-    //     name: "Tweestapsverificatie",
-    //     route: "two-factor.setup",
-    //     routes: ["two-factor.setup", "two-factor.manage"],
-    //     icon: "M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z M16.5 10V7a4.5 4.5 0 10-9 0v3m-1.5 0a1.5 1.5 0 00-1.5 1.5v7A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5v-7a1.5 1.5 0 00-1.5-1.5h-13z",
-
-    //     role: "user",
-    // },
 ];
 
 const isActive = (routes) => {
@@ -337,7 +318,7 @@ watch(sidebarCollapsed, (newValue) => {
                                 v-if="!sidebarCollapsed"
                                 class="ml-3 truncate"
                             >
-                                {{ item.name }}
+                                {{ $t("menu." + item.namekey) }}
                             </span>
 
                             <!-- Active indicator -->
@@ -666,6 +647,13 @@ watch(sidebarCollapsed, (newValue) => {
                         class="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50"
                     >
                         <Link
+                            :href="route('profile.edit')"
+                            class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 transition-colors duration-200"
+                        >
+                            <i class="far fa-user text-slate-500 mr-3"></i>
+                            {{ $t("menu.settings") }}
+                        </Link>
+                        <Link
                             :href="route('two-factor.setup')"
                             class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 transition-colors duration-200"
                         >
@@ -682,7 +670,7 @@ watch(sidebarCollapsed, (newValue) => {
                                     d="M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z M16.5 10V7a4.5 4.5 0 10-9 0v3m-1.5 0a1.5 1.5 0 00-1.5 1.5v7A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5v-7a1.5 1.5 0 00-1.5-1.5h-13z"
                                 />
                             </svg>
-                            Tweestapsverificatie
+                            {{ $t("menu.2fauth") }}
                         </Link>
 
                         <Link
@@ -702,7 +690,7 @@ watch(sidebarCollapsed, (newValue) => {
                                     d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                                 />
                             </svg>
-                            Feedback
+                            {{ $t("menu.feedback") }}
                         </Link>
 
                         <div class="border-t border-slate-200 my-1"></div>
@@ -724,7 +712,7 @@ watch(sidebarCollapsed, (newValue) => {
                                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                                 />
                             </svg>
-                            Uitloggen
+                            {{ $t("menu.logout") }}
                         </button>
                     </div>
                 </div>

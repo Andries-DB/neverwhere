@@ -64,9 +64,10 @@ const maxWidthClass = computed(() => {
         <Transition leave-active-class="duration-200">
             <div
                 v-show="show"
-                class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
+                class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0"
                 scroll-region
             >
+                <!-- Overlay -->
                 <Transition
                     enter-active-class="ease-out duration-300"
                     enter-from-class="opacity-0"
@@ -77,26 +78,33 @@ const maxWidthClass = computed(() => {
                 >
                     <div
                         v-show="show"
-                        class="fixed inset-0 transform transition-all"
+                        class="fixed inset-0 bg-black/40 backdrop-blur-sm"
                         @click="close"
-                    >
-                        <div class="absolute inset-0 bg-gray-500 opacity-75" />
-                    </div>
+                    />
                 </Transition>
 
+                <!-- Modal content -->
                 <Transition
                     enter-active-class="ease-out duration-300"
-                    enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    enter-to-class="opacity-100 translate-y-0 sm:scale-100"
+                    enter-from-class="opacity-0 scale-95"
+                    enter-to-class="opacity-100 scale-100"
                     leave-active-class="ease-in duration-200"
-                    leave-from-class="opacity-100 translate-y-0 sm:scale-100"
-                    leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    leave-from-class="opacity-100 scale-100"
+                    leave-to-class="opacity-0 scale-95"
                 >
                     <div
                         v-show="show"
-                        class="mb-6 bg-white rounded-lg p-5 overflow-scroll shadow-xl transform transition-all sm:w-full sm:mx-auto"
+                        class="relative bg-white rounded-2xl shadow-2xl p-6 sm:w-full sm:max-w-lg max-h-[80vh] overflow-y-auto"
                         :class="maxWidthClass"
                     >
+                        <!-- Close button -->
+                        <button
+                            @click="close"
+                            class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition"
+                        >
+                            ✕
+                        </button>
+
                         <slot v-if="show" />
                     </div>
                 </Transition>

@@ -618,6 +618,7 @@ export default {
         conversation: Object,
         pinned_charts: Array,
         pinned_tables: Array,
+        pinned_items: Array,
         dashboards: Array,
     },
     data() {
@@ -1294,13 +1295,17 @@ export default {
 
         this.form.source ??= this.conversation.user.sources?.[0] ?? null;
 
-        this.pinnedCharts = this.pinned_charts.map((chart) => ({
-            messageId: chart.message_id,
-        }));
+        this.pinnedCharts = this.pinned_items
+            .filter((item) => item.type === "graph")
+            .map((chart) => ({
+                messageId: chart.message_id,
+            }));
 
-        this.pinnedTables = this.pinned_tables.map((table) => ({
-            messageId: table.message_id,
-        }));
+        this.pinnedTables = this.pinned_items
+            .filter((item) => item.type === "table")
+            .map((table) => ({
+                messageId: table.message_id,
+            }));
 
         this.scrollToBottom();
 

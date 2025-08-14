@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use App\Models\Dashboard;
 use App\Models\Message;
 use App\Models\PinnedGraph;
+use App\Models\PinnedItem;
 use App\Models\PinnedTable;
 use App\Models\Source;
 use App\Models\User;
@@ -26,6 +27,7 @@ class ConversationController extends Controller
             'conversation' => $conversation,
             'pinned_charts' => PinnedGraph::with('message')->where('user_id', auth()->user()->id)->get(),
             'pinned_tables' => PinnedTable::with('message')->where('user_id', auth()->user()->id)->get(),
+            'pinned_items' => PinnedItem::with('message')->where('user_id', auth()->user()->id)->get(),
             'dashboards' => Dashboard::where('user_id',  auth()->user()->id)->orderBy('default', 'desc')->get(),
         ]);
     }
@@ -176,48 +178,54 @@ class ConversationController extends Controller
 
         $dashboard = Dashboard::where('id', $request->dashboard_id)->first();
 
-        PinnedGraph::create([
+        PinnedItem::create([
             'user_id' => auth()->id(),
             'message_id' => $request->message['id'],
             'title' => $request->title ?? null,
+            'type' => 'graph',
             'sort_chart' => $request->message['selectedChartType'],
             '_x' => $request->message['selectedXAxis'],
             '_y' => $request->message['selectedYAxis'],
             '_agg' => $request->message['selectedAggregation'],
             'width' => $request->width,
             ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
-            'display_order' => (PinnedGraph::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
+
+            'display_order' => (PinnedItem::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
             'dashboard_id' => $dashboard->id,
         ]);
+
 
         return;
     }
 
-    public function unpinChart($id, Request $request)
+    public function unpinItem($id)
     {
-        $pinned_graph = PinnedGraph::find($id);
+        $pinned_item = PinnedItem::find($id);
 
-        abort_unless($pinned_graph, 403, "This pinned graph does not exist");
+        abort_unless($pinned_item, 403, "This pinned item does not exist");
 
-        $pinned_graph->delete();
+        $pinned_item->delete();
 
         return redirect()->route('dashboard');
     }
 
     public function pinTable(Request $request)
     {
+        // dd($request->all());
         $request->validate([
             'dashboard_id' => 'required|exists:dashboards,id',
         ]);
         $dashboard = Dashboard::where('id', $request->dashboard_id)->first();
 
-        PinnedTable::create([
+        PinnedItem::create([
             'user_id' => auth()->id(),
             'message_id' => $request->message['id'],
             'title' => $request->title ?? null,
+            'type' => 'table',
             'width' => $request->width,
             ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
-            'display_order' => (PinnedTable::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
+            'col_def' => $request->message['col_def'],
+            'display_order' => (PinnedItem::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
             'dashboard_id' => $dashboard->id,
 
         ]);
@@ -225,116 +233,46 @@ class ConversationController extends Controller
         return;
     }
 
-    public function unpinTable($id, Request $request)
+
+    public function updateItemTitle($id, Request $request)
     {
-        $pinned_table = PinnedTable::find($id);
+        $pinned_item = PinnedItem::find($id);
 
-        abort_unless($pinned_table, 403, "This pinned graph does not exist");
+        abort_unless($pinned_item, 403, "This pinned item does not exist");
 
-        $pinned_table->delete();
-
-        return redirect()->route('dashboard');
-    }
-
-    public function unpinTableByMessage($id, Request $request)
-    {
-        $pinned_table = PinnedTable::where('message_id', $id)
-            ->where('user_id', auth()->user()->id)
-            ->first();
-
-        abort_unless($pinned_table, 403, "This pinned graph does not exist");
-
-        $pinned_table->delete();
-
-        return [
-            'success' => true,
-            'message' => 'Chart unpinned successfully.',
-            'csrf_token' => csrf_token(),
-
-        ];
-    }
-
-    public function unpinChartByMessage($id, Request $request)
-    {
-
-        $pinned_graph = PinnedGraph::where('message_id', $id)
-            ->where('user_id', auth()->user()->id)
-            ->first();
-
-        abort_unless($pinned_graph, 403, "This pinned graph does not exist");
-
-        $pinned_graph->delete();
-
-        return [
-            'success' => true,
-            'message' => 'Chart unpinned successfully.',
-            'csrf_token' => csrf_token(),
-
-        ];
-    }
-
-    public function updateChartTitle($id, Request $request)
-    {
-        $pinned_graph = PinnedGraph::find($id);
-
-        abort_unless($pinned_graph, 403, "This pinned graph does not exist");
-
-        $pinned_graph->title = $request->title;
-        $pinned_graph->save();
+        $pinned_item->title = $request->title;
+        $pinned_item->save();
 
         return redirect()->back();
     }
 
-    public function updateTableTitle($id, Request $request)
+    public function updateItemWidth($id, Request $request)
     {
-        $pinned_table = PinnedTable::find($id);
+        $pinned_item = PinnedItem::find($id);
 
-        abort_unless($pinned_table, 403, "This pinned table does not exist");
+        abort_unless($pinned_item, 403, "This pinned item does not exist");
 
-        $pinned_table->title = $request->title;
-        $pinned_table->save();
-
-        return redirect()->back();
-    }
-
-    public function updateChartWidth($id, Request $request)
-    {
-        $pinned_graph = PinnedGraph::find($id);
-
-        abort_unless($pinned_graph, 403, "This pinned graph does not exist");
-
-        $pinned_graph->width = $request->input('width');
-        $pinned_graph->save();
+        $pinned_item->width = $request->input('width');
+        $pinned_item->save();
 
         return;
     }
 
-    public function updateTableWidth($id, Request $request)
+
+    public function updateItemJson($id, Request $request)
     {
-        $pinned_table = PinnedTable::find($id);
+        $pinnedItem = PinnedItem::with(['message.source', 'message.conversation'])->find($id);
 
-        abort_unless($pinned_table, 403, "This pinned table does not exist");
-
-        $pinned_table->width = $request->input('width');
-        $pinned_table->save();
-
-        return;
-    }
-
-    public function updateChartJson($id, Request $request)
-    {
-        $pinnedGraph = PinnedGraph::with(['message.source', 'message.conversation'])->find($id);
-
-        abort_if(!$pinnedGraph, 403, 'This pinned graph does not exist');
+        abort_if(!$pinnedItem, 403, 'This pinned item does not exist');
 
         $user = auth()->user()->loadMissing('companies');
 
-        $message = $pinnedGraph->message;
+        $message = $pinnedItem->message;
         $company = $user->companies->first();
 
         $response = Http::timeout(60)->post($message->source->webhook, [
             'chat_id' => $message->conversation->id,
-            'message_id' => $message->id,
+            'message_id' => $message->question_message,
             'type' => 'refresh',
             'input' => $request->input('feedback'),
             'user' => [
@@ -358,8 +296,7 @@ class ConversationController extends Controller
 
         $json = $response->json();
 
-        // TODO: If i get the JSON back, update it with the current json.
-        $pinnedGraph->update([
+        $pinnedItem->update([
             ...(isset($json['data'])
                 ? ['json' => is_string($json['data']) ? json_decode($json['data'], true) : $json['data']]
                 : []
@@ -369,75 +306,14 @@ class ConversationController extends Controller
         return;
     }
 
-    public function updateTableJson($id, Request $request)
+
+    public function duplicateItem($id, Request $request)
     {
+        $pinnedItem = PinnedItem::find($id);
 
-        $pinnedTable = PinnedTable::with(['message.source', 'message.conversation'])->find($id);
-        abort_if(!$pinnedTable, 403, 'This pinned tables does not exist');
+        abort_if(!$pinnedItem, 403, 'This pinned graph does not exist');
 
-        $user = auth()->user()->loadMissing('companies');
-
-        $message = $pinnedTable->message;
-        $company = $user->companies->first();
-
-        $response = Http::timeout(60)->post($message->source->webhook, [
-            'chat_id' => $message->conversation->id,
-            'message_id' => $message->id,
-            'type' => 'refresh',
-            'input' => $request->input('feedback'),
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-            ],
-            'company' => [
-                'id' => $company->id,
-                'name' => $company->company,
-            ],
-            'source' => [
-                'id' => $message->source->id,
-                'name' => $message->source->name,
-            ],
-            'query' => $message->sql_query,
-        ]);
-
-
-        if ($response->failed()) {
-            return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
-        }
-
-        $json = $response->json();
-
-        $pinnedTable->update([
-            ...(isset($json['data'])
-                ? ['json' => is_string($json['data']) ? json_decode($json['data'], true) : $json['data']]
-                : []
-            ),
-        ]);
-
-        return;
-    }
-
-    public function duplicateGraph($id, Request $request)
-    {
-        $pinnedGraph = PinnedGraph::find($id);
-
-        abort_if(!$pinnedGraph, 403, 'This pinned graph does not exist');
-
-        $newGraph = $pinnedGraph->replicate();
-        $newGraph->created_at = now();
-        $newGraph->updated_at = now();
-        $newGraph->save();
-
-        return;
-    }
-
-    public function duplicateTable($id, Request $request)
-    {
-        $pinned_table = PinnedTable::find($id);
-
-        abort_if(!$pinned_table, 403, 'This pinned table does not exist');
-
-        $newGraph = $pinned_table->replicate();
+        $newGraph = $pinnedItem->replicate();
         $newGraph->created_at = now();
         $newGraph->updated_at = now();
         $newGraph->save();
@@ -581,6 +457,27 @@ class ConversationController extends Controller
 
         return [
             'summary' => $output,
+            'csrf_token' => csrf_token(),
+        ];
+    }
+
+    public function saveColDef(Request $request)
+    {
+        $message = Message::where('guid', $request->input('message_guid'))->first();
+
+
+        if (!$message) {
+            return response()->json(['error' => 'Message not found'], 404);
+        }
+
+        $data = $request->input('data');
+
+        $message->col_def = $data;
+
+        $message->save();
+
+        return [
+            'summary' => $data,
             'csrf_token' => csrf_token(),
         ];
     }

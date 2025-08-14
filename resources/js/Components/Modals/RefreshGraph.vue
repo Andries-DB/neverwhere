@@ -64,29 +64,13 @@ export default {
                 form.message_id = props.message.id;
             }
 
-            if (props.sort === "table") {
-                form.patch(
-                    route("conversation.updateTableJson", props.graph?.id),
-                    {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            form.reset();
-                            props.close();
-                        },
-                    }
-                );
-            } else {
-                form.patch(
-                    route("conversation.updateChartJson", props.graph?.id),
-                    {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            form.reset();
-                            props.close();
-                        },
-                    }
-                );
-            }
+            form.patch(route("conversation.updateItemJson", props.graph?.id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    form.reset();
+                    props.close();
+                },
+            });
         };
 
         const hasErrors = computed(() => Object.keys(form.errors).length > 0);

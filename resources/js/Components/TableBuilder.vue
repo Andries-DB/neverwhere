@@ -1,4 +1,12 @@
 <template>
+    <div class="p-2 flex justify-end">
+        <button
+            @click="manualSaveGridState()"
+            class="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-md border border-gray-300 hover:bg-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-300"
+        >
+            Sla volgorde op
+        </button>
+    </div>
     <!-- AG Grid component met chart ondersteuning -->
     <div
         v-if="message.json"
@@ -16,11 +24,6 @@
                 rowSelection="multiple"
                 groupDisplayType="multipleColumns"
                 @grid-ready="onGridReady"
-                @columnMoved="saveGridState"
-                @columnResized="saveGridState"
-                @columnVisible="saveGridState"
-                @filterChanged="saveGridState"
-                @sortChanged="saveGridState"
             />
         </div>
     </div>
@@ -31,7 +34,6 @@ import { ModuleRegistry } from "ag-grid-community";
 import { AgGridVue } from "ag-grid-vue3";
 import "ag-grid-enterprise"; // Dit activeert alle enterprise features
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
-import { ref } from "vue";
 
 import {
     AllEnterpriseModule,
@@ -44,8 +46,6 @@ ModuleRegistry.registerModules([
 ]);
 LicenseManager.setLicenseKey(import.meta.env.VITE_AG_KEY);
 
-// let gridApi = ref(null);
-// let columnApi = ref(null);
 export default {
     name: "",
     components: {
@@ -61,7 +61,6 @@ export default {
     data() {
         return {
             gridApi: null,
-
             savedGridState: {
                 columnState: null,
                 filterModel: null,
@@ -77,7 +76,6 @@ export default {
                 enablePivot: true,
                 chartDataType: "category",
                 autoHeight: true,
-
                 wrapText: true,
             },
             gridOptions: {
@@ -94,7 +92,7 @@ export default {
                 enableValue: true,
                 chartThemes: ["ag-default", "ag-material", "ag-pastel"],
                 getContextMenuItems: (params) => {
-                    return [
+                    const defaultItems = [
                         "copy",
                         "copyWithHeaders",
                         "separator",
@@ -102,6 +100,29 @@ export default {
                         "separator",
                         "export",
                     ];
+
+                    if (params.column) {
+                        defaultItems.unshift({
+                            name: "Kolomtitel aanpassen",
+                            action: () => {
+                                const currentName =
+                                    params.column.getColDef().headerName ||
+                                    params.column.getColDef().field;
+                                const newName = prompt(
+                                    "Nieuwe kolomtitel:",
+                                    currentName
+                                );
+
+                                if (newName && newName.trim() !== "") {
+                                    params.column.getColDef().headerName =
+                                        newName;
+                                    params.api.refreshHeader();
+                                }
+                            },
+                        });
+                    }
+
+                    return defaultItems;
                 },
             },
         };
@@ -110,6 +131,74 @@ export default {
         this.loadGridState();
     },
     methods: {
+        getContextMenuItems: (params) => {
+            const defaultItems = [
+                "copy",
+                "copyWithHeaders",
+                "separator",
+                "chartRange",
+                "separator",
+                "export",
+            ];
+
+            // Alleen tonen als een kolom aangeklikt is
+            if (params.column) {
+                defaultItems.unshift({
+                    name: "Kolomtitel aanpassen",
+                    action: () => {
+                        const currentName =
+                            params.column.getColDef().headerName ||
+                            params.column.getColDef().field;
+                        const newName = prompt(
+                            "Nieuwe kolomtitel:",
+                            currentName
+                        );
+
+                        if (newName && newName.trim() !== "") {
+                            params.column.getColDef().headerName = newName;
+                            params.api.refreshHeader(); // Header direct updaten
+                        }
+                    },
+                });
+            }
+
+            return defaultItems;
+        },
+        manualSaveGridState() {
+            if (!this.gridApi || !this.message.guid) {
+                return;
+            }
+
+            this.savedGridState.columnState = this.gridApi.getColumnState();
+            this.savedGridState.filterModel = this.gridApi.getFilterModel();
+            try {
+                localStorage.setItem(
+                    this.getLocalStorageKey(),
+                    JSON.stringify(this.savedGridState)
+                );
+
+                const data = {
+                    message_guid: this.message.guid,
+                    data: this.savedGridState,
+                };
+
+                const response = fetch("/conversation/savecoldef", {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json", // <-- voeg deze toe
+                        "X-CSRF-TOKEN": this.getCsrfToken(),
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    console.log(response);
+                }
+
+                this.updateCsrfToken(response);
+            } catch (e) {}
+        },
         getTableRowData(message) {
             if (
                 message.json &&
@@ -129,6 +218,20 @@ export default {
                 return obj;
             });
         },
+        getCsrfToken() {
+            return document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute("content");
+        },
+
+        updateCsrfToken(response) {
+            const newToken = response.headers.get("X-CSRF-TOKEN");
+            if (newToken) {
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    .setAttribute("content", newToken);
+            }
+        },
         getTableColumnDefs(message) {
             if (
                 message.json &&
@@ -137,8 +240,13 @@ export default {
             ) {
                 const firstItem = message.json[0];
                 return Object.keys(firstItem).map((key) => {
-                    const isNumeric = this.isNumericField(key, message.json);
-                    const isDate = this.isDateField(key, message.json);
+                    let isNumeric = this.isNumericField(key, message.json);
+                    let isDate = this.isDateField(key, message.json);
+
+                    if (isNumeric) {
+                        isDate = false; // Als het een numeriek veld is, beschouwen we het niet als datum
+                    }
+
                     return {
                         field: key,
                         headerName: this.getFieldDisplayName(key),
@@ -149,7 +257,7 @@ export default {
                         resizable: true,
                         enableRowGroup: true,
                         enablePivot: true,
-                        enableValue: true, // Alleen numerieke velden als waarden
+                        enableValue: true,
 
                         // Chart configuratie
                         chartDataType: isNumeric
@@ -163,15 +271,6 @@ export default {
                             type: "numericColumn",
                             cellClass: "number-cell",
                             aggFunc: "sum",
-                            valueFormatter: (params) => {
-                                const value = parseFloat(params.value);
-                                if (isNaN(value)) return "";
-
-                                return value
-                                    .toFixed(2) // twee decimalen
-                                    .replace(".", ",") // decimaalteken vervangen
-                                    .replace(/\B(?=(\d{3})+(?!\d))/g, "."); // duizendtallen
-                            },
                         }),
 
                         ...(isDate && {
@@ -190,6 +289,9 @@ export default {
                                 params.value.includes("http")
                             ) {
                                 return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
+                            }
+                            if (isNumeric && !isDate) {
+                                return this.formatNumber(params.value);
                             }
                             return params.value;
                         },
@@ -220,6 +322,43 @@ export default {
                     return params.value;
                 },
             }));
+        },
+        formatNumber(value) {
+            if (value === null || value === undefined) return "";
+
+            let val = parseFloat(value);
+            if (isNaN(val)) return "";
+
+            let hasDecimals = val % 1 !== 0;
+            let formatted = hasDecimals ? val.toFixed(2) : val.toString();
+
+            const decimalSep =
+                this.$page.props.auth.user.decimal_seperator === "comma"
+                    ? ","
+                    : ".";
+
+            const thousandSep = (() => {
+                switch (this.$page.props.auth.user.number_format) {
+                    case "comma":
+                        return ",";
+                    case "point":
+                        return ".";
+                    case "space":
+                        return " ";
+                    default:
+                        return ""; // 'none'
+                }
+            })();
+
+            let [intPart, decPart] = formatted.split(".");
+
+            if (thousandSep) {
+                intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSep);
+            }
+
+            return decPart !== undefined
+                ? `${intPart}${decimalSep}${decPart}`
+                : intPart;
         },
         isNumericField(fieldName, data) {
             if (!data || data.length === 0) return false;
@@ -444,18 +583,19 @@ export default {
         getLocalStorageKey() {
             return `agGridState_${this.message.guid || "default"}`;
         },
-
-        // Laad de opgeslagen staat uit localStorage
         loadGridState() {
             if (!this.message.guid) {
                 return;
             }
+
             try {
-                const storedState = localStorage.getItem(
-                    this.getLocalStorageKey()
-                );
+                let storedState = this.message.col_def;
+
                 if (storedState) {
-                    this.savedGridState = JSON.parse(storedState);
+                    this.savedGridState = {
+                        columnState: JSON.parse(storedState).columnState,
+                        filterModel: JSON.parse(storedState).filterModel,
+                    };
                 } else {
                     this.savedGridState = {
                         columnState: null,
@@ -466,49 +606,30 @@ export default {
                 this.savedGridState = { columnState: null, filterModel: null };
             }
         },
-        saveGridState() {
-            if (this.gridApi) {
-                this.savedGridState.columnState = this.gridApi.getColumnState();
-                this.savedGridState.filterModel = this.gridApi.getFilterModel();
 
-                if (this.message.guid) {
-                    try {
-                        localStorage.setItem(
-                            this.getLocalStorageKey(),
-                            JSON.stringify(this.savedGridState)
-                        );
-                        console.log(
-                            "Grid state saved to localStorage for key:",
-                            this.getLocalStorageKey()
-                        );
-                    } catch (e) {
-                        console.error(
-                            "Error saving grid state to localStorage:",
-                            e
-                        );
-                    }
-                } else {
-                }
-            }
-        },
         restoreGridState() {
-            if (
-                this.gridApi &&
-                this.savedGridState &&
-                this.savedGridState.columnState
-            ) {
-                this.gridApi.applyColumnState({
-                    state: this.savedGridState.columnState,
-                    applyOrder: true, // Belangrijk om de volgorde te behouden
-                });
+            if (!this.gridApi) {
+                return;
+            }
+
+            if (!this.savedGridState || !this.savedGridState.columnState) {
+                return;
+            }
+
+            try {
+                if (this.savedGridState.columnState) {
+                    this.gridApi.applyColumnState({
+                        state: this.savedGridState.columnState,
+                        applyOrder: true,
+                    });
+                }
 
                 if (this.savedGridState.filterModel) {
                     this.gridApi.setFilterModel(
                         this.savedGridState.filterModel
                     );
                 }
-            } else {
-            }
+            } catch (e) {}
         },
 
         onGridReady(params) {
@@ -516,7 +637,7 @@ export default {
 
             setTimeout(() => {
                 this.restoreGridState();
-            }, 50);
+            }, 1);
         },
     },
     watch: {
@@ -527,20 +648,11 @@ export default {
                     this.loadGridState();
                     if (this.gridApi) {
                         this.$nextTick(() => {
-                            this.restoreGridState();
+                            // this.restoreGridState();
                         });
                     }
                 }
-            },
-        },
-
-        "message.displayAsTable": {
-            handler(newVal) {
-                if (newVal && this.gridApi) {
-                    this.$nextTick(() => {
-                        this.gridApi.sizeColumnsToFit();
-                    });
-                }
+                this.columnDefs = this.getTableColumnDefs(newMessage);
             },
         },
     },

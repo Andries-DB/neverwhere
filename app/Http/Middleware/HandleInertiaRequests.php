@@ -40,6 +40,9 @@ class HandleInertiaRequests extends Middleware
                 ->orderByDesc('created_at')
                 ->get(['id', 'guid', 'title', 'status'])
                 : [],
+            'locale' => $request->user()?->locale ?? app()->getLocale(),
+
+
         ];
     }
 }

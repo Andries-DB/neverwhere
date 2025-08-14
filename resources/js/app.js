@@ -7,6 +7,9 @@ import { createApp, h } from "vue";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 
+import i18n from "./i18n";
+import { loadLocaleMessages } from "./lang";
+
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 // Register ag-Grid Community modules globally
@@ -19,10 +22,14 @@ createInertiaApp({
             `./Pages/${name}.vue`,
             import.meta.glob("./Pages/**/*.vue")
         ),
-    setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
+    async setup({ el, App, props, plugin }) {
+        const initialLocale = props.initialPage.props.locale || "en";
+        await loadLocaleMessages(initialLocale);
+
+        createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
+            .use(i18n)
             .mount(el);
     },
     progress: {
