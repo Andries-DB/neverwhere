@@ -2,11 +2,6 @@
     <Head title="Dashboard" />
 
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
-        <!-- <div>
-            <h1>{{ $t("messages.hello") }}</h1>
-            <button @click="setLang('nl')">NL</button>
-            <button @click="setLang('en')">EN</button>
-        </div> -->
         <main class="space-y-6 sm:space-y-8 px-4 sm:px-0">
             <div class="flex justify-between items-center w-full">
                 <!-- Dashboard Dropdown -->
@@ -449,7 +444,6 @@
                             </div>
                         </div>
 
-                        <!-- Chart -->
                         <div>
                             <div
                                 class="w-full h-96 bg-white rounded border border-gray-100"
@@ -481,14 +475,10 @@
                                 class="w-full h-96 bg-white"
                                 v-if="item.type === 'table'"
                             >
-                                <ag-grid-vue
-                                    :ref="`agGrid_${item.id}`"
-                                    class="ag-theme-alpine w-full h-full"
-                                    :rowData="getTableRowData(item)"
-                                    :columnDefs="getTableColumnDefs(item)"
-                                    :defaultColDef="defaultColDef"
-                                    :gridOptions="gridOptions"
-                                    rowSelection="multiple"
+                                <TableBuilder
+                                    :message="item.message"
+                                    sort="pinned"
+                                    :col_def="item.col_def"
                                 />
                             </div>
                         </div>
@@ -531,34 +521,22 @@ import { format, isToday, parseISO } from "date-fns";
 import { AgCharts } from "ag-charts-vue3";
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
 
-import { AgGridVue } from "ag-grid-vue3";
 import "ag-grid-enterprise"; // Dit activeert alle enterprise features
-import { ModuleRegistry } from "ag-grid-community";
-import {
-    AllEnterpriseModule,
-    LicenseManager,
-    IntegratedChartsModule,
-} from "ag-grid-enterprise";
 import { ref } from "vue";
 import RefreshGraph from "@/Components/Modals/RefreshGraph.vue";
 import Sortable from "sortablejs";
 import AddDashboard from "@/Components/Modals/AddDashboard.vue";
 import { changeLocale } from "@/lang";
-
-ModuleRegistry.registerModules([
-    AllEnterpriseModule,
-    IntegratedChartsModule.with(AgChartsEnterpriseModule),
-]);
-LicenseManager.setLicenseKey(import.meta.env.VITE_AG_KEY);
+import TableBuilder from "@/Components/TableBuilder.vue";
 
 export default {
     components: {
         AuthenticatedLayout,
         Head,
         AgCharts,
-        AgGridVue,
         RefreshGraph,
         AddDashboard,
+        TableBuilder,
     },
     props: {
         dashboard: Object,
@@ -593,41 +571,7 @@ export default {
             editingTitleId: null,
             editingTitle: "",
             savingTitleId: null,
-            defaultColDef: {
-                sortable: true,
-                filter: true,
-                resizable: true,
-                flex: 1,
-                minWidth: 100,
-                enableValue: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                chartDataType: "category", // of 'series', 'time', 'excluded'
-            },
-            gridOptions: {
-                rowHeight: 45,
-                headerHeight: 45,
-                animateRows: true,
-                pagination: false,
-                paginationPageSize: 1000,
-                enableCharts: true,
-                enableRangeSelection: true, // Nodig voor charts
-                suppressRowClickSelection: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                enableValue: true,
-                chartThemes: ["ag-default", "ag-material", "ag-pastel"],
-                getContextMenuItems: (params) => {
-                    return [
-                        "copy",
-                        "copyWithHeaders",
-                        "separator",
-                        "chartRange",
-                        "separator",
-                        "export",
-                    ];
-                },
-            },
+
             graphsSortable: null,
         };
     },
@@ -823,6 +767,7 @@ export default {
             const xAxis = graph._x;
             const yAxis = graph._y;
             const aggregation = graph._agg || "sum";
+            const order = graph._order || "value_desc";
 
             if (!xAxis || !yAxis || !graph.json) {
                 return {};
@@ -841,10 +786,11 @@ export default {
             }
 
             // Sorteer en limiteer data met verbeterde functie
-            const sortedData = this.sortChartData(chartData, xAxis).slice(
-                0,
-                chartData.length
-            );
+            const sortedData = this.sortChartData(
+                chartData,
+                xAxis,
+                order
+            ).slice(0, chartData.length);
 
             const title = this.generateChartTitle(xAxis, yAxis, aggregation);
 
@@ -1021,17 +967,95 @@ export default {
 
             return numValue;
         },
-        sortChartData(chartData, xAxis) {
+        sortChartData(chartData, xAxis, sortOrder) {
             // Bepaal of het datums zijn door te kijken naar het eerste item
             const isDateData =
                 chartData.length > 0 && chartData[0].category instanceof Date;
 
-            if (isDateData) {
-                // Sorteer datums chronologisch
-                return chartData.sort((a, b) => a.category - b.category);
-            } else {
-                // Sorteer andere waarden op waarde (hoogste eerst)
-                return chartData.sort((a, b) => b.value - a.value);
+            switch (sortOrder) {
+                case "value_desc":
+                    return chartData.sort((a, b) => b.value - a.value);
+
+                case "value_asc":
+                    return chartData.sort((a, b) => a.value - b.value);
+
+                case "category_asc":
+                    if (isDateData) {
+                        return chartData.sort(
+                            (a, b) => a.category - b.category
+                        );
+                    } else {
+                        return chartData.sort((a, b) =>
+                            String(a.category).localeCompare(
+                                String(b.category),
+                                "nl"
+                            )
+                        );
+                    }
+
+                case "category_desc":
+                    if (isDateData) {
+                        return chartData.sort(
+                            (a, b) => b.category - a.category
+                        );
+                    } else {
+                        return chartData.sort((a, b) =>
+                            String(b.category).localeCompare(
+                                String(a.category),
+                                "nl"
+                            )
+                        );
+                    }
+
+                case "date_asc":
+                    if (isDateData) {
+                        return chartData.sort(
+                            (a, b) => a.category - b.category
+                        );
+                    } else {
+                        // Probeer alsnog te sorteren op datum als het geen Date object is
+                        return chartData.sort((a, b) => {
+                            const dateA = this.parseDate(a.category);
+                            const dateB = this.parseDate(b.category);
+                            if (dateA && dateB) {
+                                return dateA - dateB;
+                            }
+                            return String(a.category).localeCompare(
+                                String(b.category),
+                                "nl"
+                            );
+                        });
+                    }
+
+                case "date_desc":
+                    if (isDateData) {
+                        return chartData.sort(
+                            (a, b) => b.category - a.category
+                        );
+                    } else {
+                        // Probeer alsnog te sorteren op datum als het geen Date object is
+                        return chartData.sort((a, b) => {
+                            const dateA = this.parseDate(a.category);
+                            const dateB = this.parseDate(b.category);
+                            if (dateA && dateB) {
+                                return dateB - dateA;
+                            }
+                            return String(b.category).localeCompare(
+                                String(a.category),
+                                "nl"
+                            );
+                        });
+                    }
+
+                default:
+                    // Fallback naar oude logica
+                    if (isDateData) {
+                        return chartData.sort(
+                            (a, b) => a.category - b.category
+                        );
+                    } else {
+                        return chartData.sort((a, b) => b.value - a.value);
+                    }
             }
         },
         aggregateValues(values, aggregation) {
@@ -1356,173 +1380,6 @@ export default {
                 },
             });
         },
-
-        // Table functions
-        hasTableData(message) {
-            if (message.send_by !== "ai") return false;
-
-            // Controleer eerst of message.json bestaat en niet leeg is
-            if (!message.json || Object.keys(message.json).length === 0) {
-                return false;
-            }
-
-            // Als json bestaat, controleer of het een array is met data
-            if (Array.isArray(message.json) && message.json.length > 0) {
-                return true;
-            }
-
-            // Fallback naar de oude parseTableMessage methode
-            const parsed = this.parseTableMessage(message.message);
-            return parsed.rows.length > 0;
-        },
-        getTableRowData(message) {
-            if (
-                message.json &&
-                Array.isArray(message.json) &&
-                message.json.length > 0
-            ) {
-                return message.json;
-            }
-
-            // Fallback naar oude methode
-            const parsed = this.parseTableMessage(message.message);
-
-            return parsed.rows.map((row) => {
-                const obj = {};
-                parsed.headers.forEach((header, index) => {
-                    obj[header] = row[index] || "";
-                });
-                return obj;
-            });
-        },
-        getTableColumnDefs(message) {
-            if (
-                message.json &&
-                Array.isArray(message.json) &&
-                message.json.length > 0
-            ) {
-                const firstItem = message.json[0];
-                return Object.keys(firstItem).map((key) => {
-                    let isNumeric = this.isNumericField(key, message.json);
-                    let isDate = this.isDateField(key, message.json);
-
-                    if (isNumeric) {
-                        isDate = false; // Als het een numeriek veld is, beschouwen we het niet als datum
-                    }
-
-                    return {
-                        field: key,
-                        headerName: this.getFieldDisplayName(key),
-                        sortable: true,
-                        filter: isNumeric
-                            ? "agNumberColumnFilter"
-                            : "agTextColumnFilter",
-                        resizable: true,
-                        enableRowGroup: true, // Numerieke velden niet grouperen
-                        enablePivot: true,
-                        enableValue: true, // Alleen numerieke velden als waarden
-
-                        // Chart configuratie
-                        chartDataType: isNumeric
-                            ? "series"
-                            : isDate
-                            ? "time"
-                            : "category",
-
-                        // Type-specifieke configuratie
-                        ...(isNumeric && {
-                            type: "numericColumn",
-                            cellClass: "number-cell",
-                            aggFunc: "sum",
-                        }),
-
-                        ...(isDate && {
-                            type: "dateColumn",
-                            cellClass: "date-cell",
-                        }),
-
-                        menuTabs: [
-                            "filterMenuTab",
-                            "generalMenuTab",
-                            "columnsMenuTab",
-                        ],
-                        cellRenderer: (params) => {
-                            if (
-                                typeof params.value === "string" &&
-                                params.value.includes("http")
-                            ) {
-                                return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
-                            }
-                            if (isNumeric && !isDate) {
-                                return this.formatNumber(params.value);
-                            }
-                            return params.value;
-                        },
-                    };
-                });
-            }
-
-            // Fallback naar oude methode...
-            const parsed = this.parseTableMessage(message.message);
-            return parsed.headers.map((header) => ({
-                field: header,
-                headerName: header,
-                sortable: true,
-                filter: true,
-                resizable: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                enableValue: true,
-                chartDataType: "category",
-                menuTabs: ["filterMenuTab", "generalMenuTab", "columnsMenuTab"],
-                cellRenderer: (params) => {
-                    if (
-                        typeof params.value === "string" &&
-                        params.value.includes("http")
-                    ) {
-                        return `<a href="${params.value}" target="_blank" class="text-blue-600 hover:underline">${params.value}</a>`;
-                    }
-                    return params.value;
-                },
-            }));
-        },
-        formatNumber(value) {
-            if (value === null || value === undefined) return "";
-
-            let val = parseFloat(value);
-            if (isNaN(val)) return "";
-
-            let hasDecimals = val % 1 !== 0;
-            let formatted = hasDecimals ? val.toFixed(2) : val.toString();
-
-            const decimalSep =
-                this.$page.props.auth.user.decimal_seperator === "comma"
-                    ? ","
-                    : ".";
-            const thousandSep = (() => {
-                switch (this.$page.props.auth.user.number_format) {
-                    case "comma":
-                        return ",";
-                    case "point":
-                        return ".";
-                    case "space":
-                        return " ";
-                    default:
-                        return ""; // 'none'
-                }
-            })();
-
-            let [intPart, decPart] = formatted.split(".");
-
-            if (thousandSep) {
-                intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSep);
-            }
-
-            return decPart !== undefined
-                ? `${intPart}${decimalSep}${decPart}`
-                : intPart;
-        },
-
         // SortableJS
         destroySortables() {
             if (this.graphsSortable) {

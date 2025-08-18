@@ -9,6 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\SourceController;
+use App\Http\Controllers\StudioController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
@@ -82,6 +83,9 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
 
     Route::get('/reports', [ReportController::class, 'get'])->name('reports.get');
 
+    Route::get('/studio', [StudioController::class, 'get'])->name('studio.get');
+    Route::patch('/studio', [StudioController::class, 'patch'])->name('studio.patch');
+
     Route::get('/feedback', [RequestController::class, 'get'])->name('requests.get');
     Route::post('/feedback', [RequestController::class, 'post'])->name('requests.post');
     Route::get('/feedback/admin', [RequestController::class, 'get_admin'])->name('reports.get.admin');
@@ -124,6 +128,7 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::post('/dr-itchy/summary', [ConversationController::class, 'summarize'])->name('conversation.message.summarize');
 
     Route::post('/conversation/savecoldef', [ConversationController::class, 'saveColDef'])->name('conversation.saveColDef');
+    Route::post('/conversation/savechartdef', [ConversationController::class, 'saveChartDef'])->name('conversation.saveChartDef');
 });
 
 

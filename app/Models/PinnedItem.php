@@ -20,6 +20,7 @@ class PinnedItem extends Model
         '_x',
         '_y',
         '_agg',
+        '_order',
         'json',
         'width',
         'display_order',

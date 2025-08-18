@@ -1,6 +1,5 @@
 <template>
     <Modal :show="show" @close="close">
-        {{ this.coldefs }}
         <form
             @submit.prevent="sendFeedback"
             class="flex flex-col gap-6 w-full mt-8"

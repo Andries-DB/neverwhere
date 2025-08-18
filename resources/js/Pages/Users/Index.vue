@@ -139,6 +139,7 @@
                     <option value="">Alle rollen</option>
                     <option value="admin">Admin</option>
                     <option value="user">User</option>
+                    <option value="cdo">CDO</option>
                 </select>
 
                 <!-- Company Filter -->
@@ -231,14 +232,14 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span
-                                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize"
+                                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                                     :class="{
-                                        'bg-blue-100 text-blue-800':
+                                        'bg-blue-100 text-blue-800 capitalize':
                                             user.role === 'admin',
-                                        'bg-gray-100 text-gray-800':
+                                        'bg-gray-100 text-gray-800 capitalize':
                                             user.role === 'user',
-                                        'bg-green-100 text-green-800':
-                                            user.role === 'manager',
+                                        'bg-green-100 text-green-800 uppercase':
+                                            user.role === 'cdo',
                                     }"
                                 >
                                     {{ user.role }}

@@ -20,7 +20,12 @@ class Message extends Model
         'feedback',
         'source_id',
         'question_message',
-        'col_def'
+        'col_def',
+        '_x',
+        '_y',
+        '_agg',
+        '_order',
+        '_sort'
     ];
 
     protected $casts = [

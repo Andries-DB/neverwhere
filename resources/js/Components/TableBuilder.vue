@@ -18,15 +18,6 @@
                 @grid-ready="onGridReady"
             />
         </div>
-
-        <div class="px-2 py-1 flex justify-start">
-            <button
-                @click="manualSaveGridState()"
-                class="px-3 py-1.5 text-xs text-gray-600 rounded-md hover:bg-slate-50 focus:outline-none"
-            >
-                <i class="far fa-bookmark mr-1"></i> Opslaan
-            </button>
-        </div>
     </div>
 </template>
 
@@ -58,13 +49,23 @@ export default {
             type: String,
             default: "normal",
         },
+        sort: {
+            type: String,
+            default: "normal",
+        },
+        col_def: {
+            type: Object,
+            required: false,
+        },
     },
     data() {
         return {
             gridApi: null,
+            customHeaders: {},
             savedGridState: {
                 columnState: null,
                 filterModel: null,
+                customHeaders: null,
             },
             defaultColDef: {
                 sortable: true,
@@ -102,26 +103,57 @@ export default {
                         "export",
                     ];
 
-                    if (params.column) {
-                        defaultItems.unshift({
-                            name: "Kolomtitel aanpassen",
-                            action: () => {
-                                const currentName =
-                                    params.column.getColDef().headerName ||
-                                    params.column.getColDef().field;
-                                const newName = prompt(
-                                    "Nieuwe kolomtitel:",
-                                    currentName
-                                );
+                    return defaultItems;
+                },
+                getMainMenuItems: (params) => {
+                    const defaultItems = params.defaultItems;
 
-                                if (newName && newName.trim() !== "") {
-                                    params.column.getColDef().headerName =
-                                        newName;
-                                    params.api.refreshHeader();
+                    defaultItems.push({
+                        name: "Change column name",
+                        action: () => {
+                            const currentName =
+                                params.column.getColDef().headerName ||
+                                params.column.getColDef().field;
+                            const newName = prompt(
+                                "Nieuwe kolomtitel:",
+                                currentName
+                            );
+
+                            if (newName && newName.trim() !== "") {
+                                const colDef = params.column.getColDef();
+                                colDef.headerName = newName;
+
+                                if (
+                                    !this.savedGridState ||
+                                    !this.savedGridState.columnState
+                                ) {
+                                    this.savedGridState = {
+                                        columnState:
+                                            this.gridApi.getColumnState(),
+                                        filterModel:
+                                            this.gridApi.getFilterModel(),
+                                    };
                                 }
-                            },
-                        });
-                    }
+
+                                let colState =
+                                    this.savedGridState.columnState.find(
+                                        (c) => c.colId === colDef.field
+                                    );
+
+                                if (!colState) {
+                                    // als hij nog niet bestaat, maak een nieuwe entry
+                                    colState = { colId: colDef.field };
+                                    this.savedGridState.columnState.push(
+                                        colState
+                                    );
+                                }
+                                // voeg de naam eraan toe
+                                colState.headerName = newName;
+
+                                params.api.refreshHeader();
+                            }
+                        },
+                    });
 
                     return defaultItems;
                 },
@@ -132,52 +164,24 @@ export default {
         this.loadGridState();
     },
     methods: {
-        getContextMenuItems: (params) => {
-            const defaultItems = [
-                "copy",
-                "copyWithHeaders",
-                "separator",
-                "chartRange",
-                "separator",
-                "export",
-            ];
-
-            // Alleen tonen als een kolom aangeklikt is
-            if (params.column) {
-                defaultItems.unshift({
-                    name: "Kolomtitel aanpassen",
-                    action: () => {
-                        const currentName =
-                            params.column.getColDef().headerName ||
-                            params.column.getColDef().field;
-                        const newName = prompt(
-                            "Nieuwe kolomtitel:",
-                            currentName
-                        );
-
-                        if (newName && newName.trim() !== "") {
-                            params.column.getColDef().headerName = newName;
-                            params.api.refreshHeader(); // Header direct updaten
-                        }
-                    },
-                });
-            }
-
-            return defaultItems;
-        },
-        manualSaveGridState() {
+        SaveGridState() {
             if (!this.gridApi || !this.message.guid) {
+                // this.saveLoading = false;
+
                 return;
             }
 
-            this.savedGridState.columnState = this.gridApi.getColumnState();
-            this.savedGridState.filterModel = this.gridApi.getFilterModel();
-            try {
-                localStorage.setItem(
-                    this.getLocalStorageKey(),
-                    JSON.stringify(this.savedGridState)
-                );
+            const columnState = this.gridApi.getColumnState().map((c) => {
+                const colDef = this.gridApi.getColumnDef(c.colId);
+                return { ...c, headerName: colDef.headerName };
+            });
 
+            this.savedGridState = {
+                columnState,
+                filterModel: this.gridApi.getFilterModel(),
+            };
+
+            try {
                 const data = {
                     message_guid: this.message.guid,
                     data: this.savedGridState,
@@ -244,8 +248,8 @@ export default {
                     let isNumeric = this.isNumericField(key, message.json);
                     let isDate = this.isDateField(key, message.json);
 
-                    if (isNumeric) {
-                        isDate = false; // Als het een numeriek veld is, beschouwen we het niet als datum
+                    if (isDate) {
+                        isNumeric = false; // Als het een numeriek veld is, beschouwen we het niet als datum
                     }
 
                     return {
@@ -590,7 +594,12 @@ export default {
             }
 
             try {
-                let storedState = this.message.col_def;
+                let storedState = null;
+                if (this.col_def) {
+                    storedState = this.col_def;
+                } else {
+                    storedState = this.message.col_def;
+                }
 
                 if (storedState) {
                     this.savedGridState = {
@@ -604,6 +613,7 @@ export default {
                     };
                 }
             } catch (e) {
+                console.log(e);
                 this.savedGridState = { columnState: null, filterModel: null };
             }
         },
@@ -618,12 +628,23 @@ export default {
             }
 
             try {
-                if (this.savedGridState.columnState) {
-                    this.gridApi.applyColumnState({
-                        state: this.savedGridState.columnState,
-                        applyOrder: true,
-                    });
-                }
+                // standaard state restoren (breedte, sort, etc.)
+                this.gridApi.applyColumnState({
+                    state: this.savedGridState.columnState,
+                    applyOrder: true,
+                });
+
+                // custom headerName restoren
+                this.savedGridState.columnState.forEach((col) => {
+                    if (col.headerName) {
+                        const colDef = this.gridApi.getColumnDef(col.colId);
+                        if (colDef) {
+                            colDef.headerName = col.headerName;
+                        }
+                    }
+                });
+
+                this.gridApi.refreshHeader();
 
                 if (this.savedGridState.filterModel) {
                     this.gridApi.setFilterModel(

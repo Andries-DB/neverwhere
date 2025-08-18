@@ -27,6 +27,7 @@ class UserController extends Controller
     }
     public function store($guid, Request $request)
     {
+        // dd($request->all());
         $this->authorizeAdmin();
 
         // dd($request->all());
@@ -45,7 +46,7 @@ class UserController extends Controller
             'guid' => (string) Str::uuid(),
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'user',
+            'role' => $request->role,
         ]);
 
         $token = Password::createToken($user);

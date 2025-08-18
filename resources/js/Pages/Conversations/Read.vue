@@ -120,41 +120,6 @@
                                     class="relative"
                                 >
                                     <div class="mb-3 flex justify-end">
-                                        <!-- Dr. Itchy Summary Button -->
-                                        <button
-                                            :class="[
-                                                'absolute -top-10 right-14 z-10 transition-all duration-200 ease-in-out',
-                                                'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
-                                                'bg-yellow-400 text-yellow-800 border-yellow-500 hover:bg-yellow-500',
-                                                loadingSummary &&
-                                                loadingSummary.id === message.id
-                                                    ? 'animate-pulse'
-                                                    : '',
-                                            ]"
-                                            @click="
-                                                generateSummary(
-                                                    message,
-                                                    'chart'
-                                                )
-                                            "
-                                            title="Dr. Itchy Samenvatting"
-                                            :disabled="
-                                                loadingSummary &&
-                                                loadingSummary.id === message.id
-                                            "
-                                        >
-                                            <i
-                                                :class="[
-                                                    'text-base',
-                                                    loadingSummary &&
-                                                    loadingSummary.id ===
-                                                        message.id
-                                                        ? 'fas fa-spinner fa-spin'
-                                                        : 'fas fa-user-md',
-                                                ]"
-                                            ></i>
-                                        </button>
-
                                         <!-- Pin button-->
                                         <button
                                             v-if="!isChartPinned(message)"
@@ -192,7 +157,10 @@
                                         </button>
                                     </div>
 
-                                    <ChartBuilder :message="message" />
+                                    <ChartBuilder
+                                        :message="message"
+                                        :ref="`chartBuilder_${message.id}`"
+                                    />
                                 </div>
 
                                 <!-- Tabel weergave met AG Grid -->
@@ -265,11 +233,10 @@
                                         </button>
                                     </div>
 
-                                    <TableBuilder :message="message" />
-
-                                    <!-- <div
-                                        class="w-full bg-red-300 px-2 py-2"
-                                    ></div> -->
+                                    <TableBuilder
+                                        :message="message"
+                                        :ref="`tableBuilder_${message.id}`"
+                                    />
                                 </div>
 
                                 <div
@@ -301,7 +268,9 @@
                                 <div
                                     class="flex justify-between items-center mt-2"
                                 >
-                                    <div class="text-xs ml-2 text-gray-600">
+                                    <div
+                                        class="flex justify-start items-center gap-2"
+                                    >
                                         <span
                                             :style="{
                                                 visibility:
@@ -310,10 +279,27 @@
                                                         ? 'visible'
                                                         : 'hidden',
                                             }"
+                                            class="text-xs ml-2 text-gray-600"
                                         >
                                             {{ message.json?.length || 0 }}
                                             records
                                         </span>
+
+                                        <button
+                                            @click="
+                                                manualSaveGridState(message)
+                                            "
+                                            v-if="
+                                                message.displayAsChart ||
+                                                message.displayAsTable
+                                            "
+                                            :class="[
+                                                'px-3 py-1.5 text-xs rounded-md focus:outline-none flex items-center text-gray-600 hover:bg-gray-200',
+                                            ]"
+                                        >
+                                            <i class="far fa-bookmark mr-1"></i>
+                                            Opslaan
+                                        </button>
                                     </div>
 
                                     <div
@@ -655,6 +641,45 @@ export default {
         };
     },
     methods: {
+        manualSaveGridState(message) {
+            if (message.displayAsTable) {
+                const refName = `tableBuilder_${message.id}`;
+                const tableBuilderRef = this.$refs[refName];
+                const tableBuilder = Array.isArray(tableBuilderRef)
+                    ? tableBuilderRef[0]
+                    : tableBuilderRef;
+
+                if (
+                    tableBuilder &&
+                    typeof tableBuilder.SaveGridState === "function"
+                ) {
+                    tableBuilder.SaveGridState();
+                } else {
+                    console.error(
+                        "SaveGridState method not available for:",
+                        refName
+                    );
+                }
+            } else if (message.displayAsChart) {
+                const refName = `chartBuilder_${message.id}`;
+                const chartBuilderRef = this.$refs[refName];
+                const chartBuilder = Array.isArray(chartBuilderRef)
+                    ? chartBuilderRef[0]
+                    : chartBuilderRef;
+
+                if (
+                    chartBuilderRef &&
+                    typeof chartBuilder.SaveGraphState === "function"
+                ) {
+                    chartBuilder.SaveGraphState();
+                } else {
+                    console.error(
+                        "SaveGraphState method not available for:",
+                        refName
+                    );
+                }
+            }
+        },
         toggleDislikeModal(message, sort = "dislike") {
             this.dislikedMessage = message;
             this.dislikedSort = sort;
@@ -1291,10 +1316,11 @@ export default {
             displayAsQuery: m.respond_type === "Query",
             thumbs_up: m.thumbs_up || 0,
             thumbs_down: m.thumbs_down || 0,
-            selectedChartType: "bar",
-            selectedXAxis: null,
-            selectedYAxis: null,
-            selectedAggregation: "sum",
+            selectedChartType: m._sort || "bar",
+            selectedXAxis: m._x || null,
+            selectedYAxis: m._y || null,
+            selectedAggregation: m._agg || "sum",
+            seelctedOrder: m._order || "value_desc",
         }));
 
         this.form.source ??= this.conversation.user.sources?.[0] ?? null;

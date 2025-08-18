@@ -798,8 +798,25 @@ watch(sidebarCollapsed, (newValue) => {
                                     !route().current('reports.get'),
                             }"
                             class="px-4 py-2 rounded-md transition-colors duration-200"
+                            v-if="
+                                $page.props.auth.user.role === 'admin' ||
+                                $page.props.auth.user.role === 'cdo '
+                            "
                         >
                             Rapporten
+                        </a>
+
+                        <a
+                            :href="route('studio.get')"
+                            :class="{
+                                'bg-slate-100 text-slate-900':
+                                    route().current('studio.get'),
+                                'text-slate-600 hover:text-slate-900 hover:bg-slate-50':
+                                    !route().current('studio.get'),
+                            }"
+                            class="px-4 py-2 rounded-md transition-colors duration-200"
+                        >
+                            Studio
                         </a>
                     </div>
                 </div>

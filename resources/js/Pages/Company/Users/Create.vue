@@ -35,6 +35,104 @@
                 :class="{ 'border-red-500': this.form.errors.password }"
             />
 
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-700"
+                    >Rol</label
+                >
+                <div class="relative" v-click-outside="closeRoleDropdown">
+                    <button
+                        type="button"
+                        @click="toggleRoleDropdown"
+                        class="w-full inline-flex items-center justify-between px-3 py-2 text-sm font-base text-gray-900 hover:bg-gray-50 rounded-md border border-gray-300 transition-colors"
+                        :class="{ 'border-red-500': form.errors.role }"
+                    >
+                        <span class="truncate">{{
+                            this.selectedRole
+                                ? this.selectedRole.name
+                                : "Selecteer rol"
+                        }}</span>
+                        <div class="ml-2 flex flex-col">
+                            <svg
+                                class="h-3 w-3 -mb-1"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                            <svg
+                                class="h-3 w-3"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                        </div>
+                    </button>
+                    <!-- Dashboard Dropdown -->
+                    <div
+                        v-if="isRoleDropdownOpen"
+                        class="absolute z-50 mt-1 w-full rounded-lg bg-white shadow-lg border border-gray-200"
+                    >
+                        <div class="py-1 max-h-60 overflow-auto">
+                            <div
+                                v-for="role in roles"
+                                :key="role.value"
+                                @click="this.selectRole(role)"
+                                class="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
+                                :class="{
+                                    'bg-gray-100 text-gray-900':
+                                        selectedRole &&
+                                        selectedRole.value === role.value,
+                                }"
+                            >
+                                <div class="flex items-center">
+                                    <span class="truncate">{{
+                                        role.name
+                                    }}</span>
+                                    <span
+                                        v-if="role.value === 'user'"
+                                        class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
+                                    >
+                                        Default
+                                    </span>
+                                </div>
+                                <svg
+                                    v-if="
+                                        selectedRole &&
+                                        selectedRole.value === role.value
+                                    "
+                                    class="h-4 w-4 text-gray-900"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+
+                            <!-- Empty state -->
+                            <div
+                                v-if="!this.roles || this.roles.length === 0"
+                                class="px-3 py-2 text-sm text-gray-500"
+                            >
+                                Geen dashboards beschikbaar
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-slate-700"
                     >Gebruikersgroepen</label
@@ -132,6 +230,13 @@ export default {
         return {
             errors: {},
             selectedUserGroups: [],
+            isRoleDropdownOpen: false,
+            selectedRole: null,
+            roles: [
+                { name: "User", value: "user" }, // Default
+                { name: "Admin", value: "admin" }, // Admin met alle rechten
+                { name: "CDO", value: "cdo" }, // Specifieke rol
+            ],
 
             form: useForm({
                 firstname: "",
@@ -140,12 +245,27 @@ export default {
                 password: "",
                 sources: [],
                 user_group_ids: [],
+                role: "",
             }),
         };
     },
     methods: {
         click() {
             this.close();
+        },
+        selectRole(role) {
+            this.selectedRole = role;
+            console.log(this.selectedRole);
+            this.form.role = role.value;
+            this.isRoleDropdownOpen = false;
+        },
+        toggleRoleDropdown() {
+            this.isRoleDropdownOpen = !this.isRoleDropdownOpen;
+            // console.log(this.isRoleDropdownOpen);
+        },
+
+        closeRoleDropdown() {
+            this.isRoleDropdownOpen = false;
         },
         addUser() {
             this.form.post(route("company.user.store", this.company.guid), {

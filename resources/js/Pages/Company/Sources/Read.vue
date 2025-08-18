@@ -52,7 +52,7 @@
                 <div class="w-full mt-2">
                     <InputLabel for="model" value="Model*" />
                     <textarea
-                        class="w-full h-48 resize-none overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                        class="w-full h-[500px] resize-vertical overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
                         placeholder="Typ hier je tekst..."
                         v-model="form.model"
                         :disabled="!editSource"

@@ -1,7 +1,7 @@
 <template>
     <div v-if="message.json">
         <!-- Configuratiepaneel -->
-        <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div class="p-3 bg-gray-50 rounded-t-lg border border-gray-200">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <!-- Grafiek Type -->
                 <div>
@@ -183,6 +183,52 @@ export default {
         };
     },
     methods: {
+        SaveGraphState() {
+            try {
+                const data = {
+                    message_guid: this.message.guid,
+                    data: {
+                        _sort: this.message.selectedChartType,
+                        _agg: this.message.selectedAggregation,
+                        _x: this.message.selectedXAxis,
+                        _y: this.message.selectedYAxis,
+                        _order: this.message.selectedSortOrder,
+                    },
+                };
+
+                const response = fetch("/conversation/savechartdef", {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json", // <-- voeg deze toe
+                        "X-CSRF-TOKEN": this.getCsrfToken(),
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    console.log(response);
+                }
+
+                this.updateCsrfToken(response);
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        getCsrfToken() {
+            return document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute("content");
+        },
+
+        updateCsrfToken(response) {
+            const newToken = response.headers.get("X-CSRF-TOKEN");
+            if (newToken) {
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    .setAttribute("content", newToken);
+            }
+        },
         parseDate(value) {
             if (!value) return null;
 

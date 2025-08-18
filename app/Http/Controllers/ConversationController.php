@@ -187,6 +187,7 @@ class ConversationController extends Controller
             '_x' => $request->message['selectedXAxis'],
             '_y' => $request->message['selectedYAxis'],
             '_agg' => $request->message['selectedAggregation'],
+            '_order' => $request->message['selectedSortOrder'],
             'width' => $request->width,
             ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
 
@@ -465,19 +466,38 @@ class ConversationController extends Controller
     {
         $message = Message::where('guid', $request->input('message_guid'))->first();
 
+        if (!$message) {
+            return response()->json(['error' => 'Message not found'], 404);
+        }
+
+        $message->col_def = $request->input('data');;
+        $message->save();
+
+        return [
+            'summary' => $data,
+            'csrf_token' => csrf_token(),
+        ];
+    }
+
+    public function saveChartDef(Request $request)
+    {
+        // dd($request->all());
+        $message = Message::where('guid', $request->input('message_guid'))->first();
+
 
         if (!$message) {
             return response()->json(['error' => 'Message not found'], 404);
         }
 
-        $data = $request->input('data');
-
-        $message->col_def = $data;
-
+        $message->_agg = $request->input('data')['_agg'];
+        $message->_sort = $request->input('data')['_sort'];
+        $message->_x = $request->input('data')['_x'];
+        $message->_y = $request->input('data')['_y'];
+        $message->_order = $request->input('data')['_order'];
         $message->save();
 
         return [
-            'summary' => $data,
+            'summary' => $request->input('data'),
             'csrf_token' => csrf_token(),
         ];
     }
