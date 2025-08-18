@@ -470,11 +470,11 @@ class ConversationController extends Controller
             return response()->json(['error' => 'Message not found'], 404);
         }
 
-        $message->col_def = $request->input('data');;
+        $message->col_def = $request->input('data');
         $message->save();
 
         return [
-            'summary' => $data,
+            'summary' => $request->input('data'),
             'csrf_token' => csrf_token(),
         ];
     }
