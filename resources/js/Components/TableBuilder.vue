@@ -1,12 +1,4 @@
 <template>
-    <div class="p-2 flex justify-end">
-        <button
-            @click="manualSaveGridState()"
-            class="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-md border border-gray-300 hover:bg-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-300"
-        >
-            Sla volgorde op
-        </button>
-    </div>
     <!-- AG Grid component met chart ondersteuning -->
     <div
         v-if="message.json"
@@ -25,6 +17,15 @@
                 groupDisplayType="multipleColumns"
                 @grid-ready="onGridReady"
             />
+        </div>
+
+        <div class="px-2 py-1 flex justify-start">
+            <button
+                @click="manualSaveGridState()"
+                class="px-3 py-1.5 text-xs text-gray-600 rounded-md hover:bg-slate-50 focus:outline-none"
+            >
+                <i class="far fa-bookmark mr-1"></i> Opslaan
+            </button>
         </div>
     </div>
 </template>

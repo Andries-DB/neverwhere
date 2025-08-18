@@ -162,7 +162,13 @@
             </div>
 
             <div class="flex justify-end mt-4">
-                <PrimaryButton type="submit">Verstuur</PrimaryButton>
+                <PrimaryButton
+                    :disabled="form.processing"
+                    type="submit"
+                    :class="{ 'opacity-50': form.processing }"
+                >
+                    {{ form.processing ? "Aan het pinnen ..." : "Pin" }}
+                </PrimaryButton>
             </div>
         </form>
     </Modal>
@@ -277,6 +283,7 @@ export default {
                 preserveScroll: true,
                 onSuccess: () => {
                     form.reset();
+                    setDefaultDashboard(props.dashboards);
                     props.close();
 
                     emit("item-pinned", {

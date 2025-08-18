@@ -266,6 +266,10 @@
                                     </div>
 
                                     <TableBuilder :message="message" />
+
+                                    <!-- <div
+                                        class="w-full bg-red-300 px-2 py-2"
+                                    ></div> -->
                                 </div>
 
                                 <div
