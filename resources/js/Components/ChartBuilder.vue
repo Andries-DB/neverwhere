@@ -183,7 +183,7 @@ export default {
         };
     },
     methods: {
-        SaveGraphState() {
+        async SaveGraphState() {
             try {
                 const data = {
                     message_guid: this.message.guid,
@@ -196,7 +196,7 @@ export default {
                     },
                 };
 
-                const response = fetch("/conversation/savechartdef", {
+                const response = await fetch("/conversation/savechartdef", {
                     method: "POST",
                     headers: {
                         Accept: "application/json",
@@ -211,8 +211,17 @@ export default {
                 }
 
                 this.updateCsrfToken(response);
+
+                const result = await response.json();
+
+                return {
+                    success: true,
+                    data: result.summary,
+                };
             } catch (e) {
-                console.log(e);
+                return {
+                    success: false,
+                };
             }
         },
         getCsrfToken() {

@@ -368,8 +368,6 @@ export default {
             ],
 
             form: useForm({
-                // Get lang from user settings
-
                 language: this.settings.locale || "nl",
                 decimal_seperator: this.settings.decimal_seperator || "comma",
                 number_format: this.settings.number_format || "comma",
@@ -393,14 +391,10 @@ export default {
         this.selectedLanguage = this.availableLanguages.find(
             (lang) => lang.code === this.form.language
         );
-
-        console.log("User settings:", this.settings);
-        console.log("Selected language:", this.selectedLanguage);
     },
 
     methods: {
         toggleLanguageDropdown() {
-            console.log(this.$page);
             this.isLanguageDropdownOpen = !this.isLanguageDropdownOpen;
         },
 
@@ -423,8 +417,7 @@ export default {
             setTimeout(() => {
                 this.form.patch(route("profile.update"), {
                     onSuccess: () => {
-                        this.showSuccessMessage = true;
-                        this.form.processing = false;
+                        location.reload();
                     },
                     onError: (errors) => {
                         this.form.errors = errors;

@@ -10,7 +10,6 @@ class PinnedItem extends Model
 {
     use HasFactory;
 
-
     protected $fillable = [
         'user_id',
         'message_id',
@@ -30,6 +29,7 @@ class PinnedItem extends Model
 
     protected $casts = [
         'json' => 'array',
+        'col_def' => 'array',
     ];
 
     public function user()

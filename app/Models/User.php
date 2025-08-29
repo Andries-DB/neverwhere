@@ -104,6 +104,13 @@ class User extends Authenticatable
         return $this->hasMany(PinnedGraph::class);
     }
 
+    public function suggestions()
+    {
+        return $this->hasMany(Suggestion::class);
+    }
+
+
+
     public function needsTwoFactorVerification(): bool
     {
         if (!$this->google2fa_enabled) {
@@ -117,9 +124,6 @@ class User extends Authenticatable
         return $this->two_factor_verified_at->diffInDays(now()) >= 14;
     }
 
-    /**
-     * Mark 2FA as verified
-     */
     public function markTwoFactorAsVerified(): void
     {
         $this->update(['two_factor_verified_at' => now()]);

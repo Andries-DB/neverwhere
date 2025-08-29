@@ -12,7 +12,7 @@ class StudioController extends Controller
 {
     public function get()
     {
-        $user = Auth::user()->load('sources');
+        $user = Auth::user()->load('sources', 'sources.suggestions');
 
         return Inertia::render('Studio/Index', [
             'sources' => $user->sources
@@ -21,6 +21,7 @@ class StudioController extends Controller
 
     public function patch(Request $request)
     {
+        // dd($request->all());
         $user_id = Auth::id();
 
         $validated = $request->validate([
@@ -30,10 +31,22 @@ class StudioController extends Controller
                     ->where(fn($query) => $query->where('user_id', $user_id)),
             ],
             'model' => ['string'], // eventueel aanpassen
+            'suggestions' => ['array'],
         ]);
 
-        Source::findOrFail($validated['source_id'])
-            ->update(['model' => $validated['model']]);
+        $source = Source::findOrFail($validated['source_id']);
+        $source->update(['model' => $validated['model']]);
+
+        $source->suggestions()->delete();
+        $source->suggestions()->createMany(
+            collect($validated['suggestions'])
+                ->filter(fn($s) => !empty($s['question'])) // alleen met question ingevuld
+                ->map(fn($s) => [
+                    'question' => $s['question'],
+                    'user_id' => Auth::id(),
+                ])
+                ->toArray()
+        );
 
         return back();
     }

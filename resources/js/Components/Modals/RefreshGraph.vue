@@ -59,7 +59,6 @@ export default {
         });
 
         const sendFeedback = () => {
-            // Optional: update message_id dynamically if it became available later
             if (props.message?.id) {
                 form.message_id = props.message.id;
             }
@@ -67,8 +66,7 @@ export default {
             form.patch(route("conversation.updateItemJson", props.graph?.id), {
                 preserveScroll: true,
                 onSuccess: () => {
-                    form.reset();
-                    props.close();
+                    location.reload();
                 },
             });
         };

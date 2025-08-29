@@ -293,12 +293,146 @@
                                                 message.displayAsChart ||
                                                 message.displayAsTable
                                             "
-                                            :class="[
-                                                'px-3 py-1.5 text-xs rounded-md focus:outline-none flex items-center text-gray-600 hover:bg-gray-200',
-                                            ]"
+                                            class="px-3 py-1.5 text-xs rounded-md focus:outline-none flex items-center text-gray-600 hover:bg-gray-200"
                                         >
-                                            <i class="far fa-bookmark mr-1"></i>
-                                            Opslaan
+                                            <template
+                                                v-if="message.displayAsTable"
+                                            >
+                                                <span v-if="message.col_def">
+                                                    <i
+                                                        class="fas fa-bookmark mr-1"
+                                                    ></i>
+                                                    Opgeslagen
+                                                </span>
+                                                <span v-else>
+                                                    <i
+                                                        class="far fa-bookmark mr-1"
+                                                    ></i>
+                                                    Opslaan
+                                                </span>
+                                            </template>
+                                            <template
+                                                v-if="message.displayAsChart"
+                                            >
+                                                <span
+                                                    v-if="
+                                                        message._sort &&
+                                                        message._x &&
+                                                        message._y &&
+                                                        message._agg &&
+                                                        message._order
+                                                    "
+                                                >
+                                                    <i
+                                                        class="fas fa-bookmark mr-1"
+                                                    ></i>
+                                                    Opgeslagen
+                                                </span>
+                                                <span v-else>
+                                                    <i
+                                                        class="far fa-bookmark mr-1"
+                                                    ></i>
+                                                    Opslaan
+                                                </span>
+                                            </template>
+                                        </button>
+                                        <div
+                                            class="relative inline-block"
+                                            v-if="message.displayAsTable"
+                                        >
+                                            <!-- Button -->
+                                            <button
+                                                @click="
+                                                    message.openFeatures =
+                                                        !message.openFeatures
+                                                "
+                                                class="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors flex items-center"
+                                            >
+                                                <i
+                                                    class="fas fa-sliders-h mr-1.5"
+                                                ></i>
+                                                Grid Features
+                                                <i
+                                                    class="fas fa-chevron-down ml-1.5 text-xs transition-transform"
+                                                    :class="{
+                                                        'rotate-180':
+                                                            message.openFeatures,
+                                                    }"
+                                                ></i>
+                                            </button>
+
+                                            <!-- Dropdown -->
+                                            <div
+                                                v-if="message.openFeatures"
+                                                class="absolute bottom-full mb-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                                            >
+                                                <div class="pace-y-1">
+                                                    <!-- Sorting -->
+                                                    <label
+                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                                    >
+                                                        <span
+                                                            class="text-xs text-gray-700"
+                                                            >Sorting</span
+                                                        >
+                                                        <input
+                                                            type="checkbox"
+                                                            v-model="
+                                                                message.features
+                                                                    .sorting
+                                                            "
+                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                                        />
+                                                    </label>
+
+                                                    <!-- Filtering -->
+                                                    <label
+                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                                    >
+                                                        <span
+                                                            class="text-xs text-gray-700"
+                                                            >Filtering</span
+                                                        >
+                                                        <input
+                                                            type="checkbox"
+                                                            v-model="
+                                                                message.features
+                                                                    .filtering
+                                                            "
+                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                                        />
+                                                    </label>
+
+                                                    <!-- Grouping -->
+                                                    <label
+                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                                    >
+                                                        <span
+                                                            class="text-xs text-gray-700"
+                                                            >Grouping</span
+                                                        >
+                                                        <input
+                                                            type="checkbox"
+                                                            v-model="
+                                                                message.features
+                                                                    .grouping
+                                                            "
+                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                                        />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            @click="exportTable(message)"
+                                            v-if="message.displayAsTable"
+                                            class="px-3 py-1.5 text-xs rounded-md focus:outline-none flex items-center text-gray-600 hover:bg-gray-200"
+                                        >
+                                            <span>
+                                                <i class="fas fa-download"></i>
+                                                Exporteer
+                                            </span>
                                         </button>
                                     </div>
 
@@ -351,7 +485,6 @@
                                 <a
                                     v-if="message.send_by === 'ai'"
                                     :href="route('message.read', message.guid)"
-                                    target="_blank"
                                     class="absolute -top-2 -right-2 bg-slate-300 text-gray-600 hover:text-gray-800 hover:bg-slate-200 rounded-full px-2 py-1 transition-all"
                                     title="Bekijk in detail"
                                 >
@@ -386,6 +519,20 @@
                         >
                             {{ this.error }}
                         </div>
+                    </div>
+                </div>
+
+                <div v-if="suggestions.length" class="w-full px-2">
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="s in suggestions"
+                            :key="s.id"
+                            type="button"
+                            @click="useSuggestion(s.question)"
+                            class="px-3 py-1.5 rounded-full bg-slate-200 text-xs text-gray-700 hover:bg-slate-300 transition-colors"
+                        >
+                            {{ s.question }}
+                        </button>
                     </div>
                 </div>
 
@@ -594,7 +741,7 @@ import PinItem from "@/Components/Modals/PinItem.vue";
 import TableBuilder from "@/Components/TableBuilder.vue";
 
 export default {
-    name: "",
+    name: "Read Conversation",
     components: {
         AuthenticatedLayout,
         Head,
@@ -634,10 +781,16 @@ export default {
             dislikeModal: false,
             dislikedMessage: null,
             dislikedSort: "",
-            pinnedInformation: [],
             pinnedMessage: null,
             pinnedSort: "",
             pinModal: false,
+            suggestions: [],
+            openFeatures: false,
+            features: {
+                sorting: true,
+                filtering: true,
+                grouping: true,
+            },
         };
     },
     methods: {
@@ -653,12 +806,29 @@ export default {
                     tableBuilder &&
                     typeof tableBuilder.SaveGridState === "function"
                 ) {
-                    tableBuilder.SaveGridState();
-                } else {
-                    console.error(
-                        "SaveGridState method not available for:",
-                        refName
-                    );
+                    tableBuilder
+                        .SaveGridState()
+                        .then((result) => {
+                            if (result.success) {
+                                message.col_def = result.data;
+
+                                this.$refs.snackbar.show(
+                                    "Tabel is goed opgeslagen",
+                                    "success"
+                                );
+                            } else {
+                                this.$refs.snackbar.show(
+                                    "Er is een fout opgetreden bij het opslaan van de tabel",
+                                    "error"
+                                );
+                            }
+                        })
+                        .catch((error) => {
+                            this.$refs.snackbar.show(
+                                "Er is een fout opgetreden bij het opslaan van de tabel",
+                                "error"
+                            );
+                        });
                 }
             } else if (message.displayAsChart) {
                 const refName = `chartBuilder_${message.id}`;
@@ -671,12 +841,58 @@ export default {
                     chartBuilderRef &&
                     typeof chartBuilder.SaveGraphState === "function"
                 ) {
-                    chartBuilder.SaveGraphState();
-                } else {
-                    console.error(
-                        "SaveGraphState method not available for:",
-                        refName
-                    );
+                    chartBuilder
+                        .SaveGraphState()
+                        .then((result) => {
+                            if (result.success) {
+                                console.log(result.data._x);
+                                message._x = result.data._x;
+                                message._y = result.data._y;
+                                message._sort = result.data._sort;
+                                message._order = result.data._order;
+                                message._agg = result.data._agg;
+
+                                this.$refs.snackbar.show(
+                                    "Grafiek is goed opgeslagen",
+                                    "success"
+                                );
+                            } else {
+                                this.$refs.snackbar.show(
+                                    "Er is een fout opgetreden bij het opslaan van de grafiek",
+                                    "error"
+                                );
+                            }
+                        })
+                        .catch((error) => {
+                            this.$refs.snackbar.show(
+                                "Er is een fout opgetreden bij het opslaan van de grafiek",
+                                "error"
+                            );
+                        });
+                }
+            }
+        },
+        exportTable(message) {
+            if (message.displayAsTable) {
+                const refName = `tableBuilder_${message.id}`;
+                const tableBuilderRef = this.$refs[refName];
+                const tableBuilder = Array.isArray(tableBuilderRef)
+                    ? tableBuilderRef[0]
+                    : tableBuilderRef;
+
+                if (
+                    tableBuilder &&
+                    typeof tableBuilder.SaveGridState === "function"
+                ) {
+                    tableBuilder
+                        .exportTable()
+                        .then((result) => {})
+                        .catch((error) => {
+                            this.$refs.snackbar.show(
+                                "Er is een fout opgetreden bij het opslaan van de tabel",
+                                "error"
+                            );
+                        });
                 }
             }
         },
@@ -685,7 +901,6 @@ export default {
             this.dislikedSort = sort;
             this.dislikeModal = !this.dislikeModal;
         },
-
         async generateSummary(message, type) {
             this.loadingSummary = { id: message.id, type };
             this.summaryType = type;
@@ -695,12 +910,10 @@ export default {
             this.summaryError = null;
 
             try {
-                // Prepare data for the API call
                 const data = {
                     type: type,
                     message_id: message.id,
                     data: message.json,
-                    // Add any additional context needed
                     context: {
                         xAxis: message.selectedXAxis,
                         yAxis: message.selectedYAxis,
@@ -708,12 +921,11 @@ export default {
                     },
                 };
 
-                // Replace with your actual API endpoint
                 const response = await fetch("/dr-itchy/summary", {
                     method: "POST",
                     headers: {
                         Accept: "application/json",
-                        "Content-Type": "application/json", // <-- voeg deze toe
+                        "Content-Type": "application/json",
                         "X-CSRF-TOKEN": this.getCsrfToken(),
                     },
                     body: JSON.stringify(data),
@@ -735,7 +947,6 @@ export default {
                 this.loadingSummary = null;
             }
         },
-
         closeSummaryModal() {
             this.showSummaryModal = false;
             this.summaryContent = null;
@@ -743,40 +954,28 @@ export default {
             this.summaryLoading = false;
             this.summaryType = null;
         },
-
         async copySummary() {
             try {
                 await navigator.clipboard.writeText(this.summaryContent);
-                // You might want to show a toast notification here
-                console.log("Summary copied to clipboard");
-            } catch (error) {
-                console.error("Failed to copy summary:", error);
-            }
+            } catch (error) {}
         },
-        // Table functions
         hasTableData(message) {
             if (message.send_by !== "ai") return false;
 
-            // Controleer eerst of message.json bestaat en niet leeg is
             if (!message.json || Object.keys(message.json).length === 0) {
                 return false;
             }
 
-            // Als json bestaat, controleer of het een array is met data
             if (Array.isArray(message.json) && message.json.length > 0) {
                 return true;
             }
 
-            // Fallback naar de oude parseTableMessage methode
             const parsed = this.parseTableMessage(message.message);
             return parsed.rows.length > 0;
         },
-
-        // Chart functions
         hasChartData(message) {
             if (message.send_by !== "ai") return false;
 
-            // Controleer of er JSON data is
             if (
                 !message.json ||
                 !Array.isArray(message.json) ||
@@ -785,7 +984,6 @@ export default {
                 return false;
             }
 
-            // Controleer of het eerste object minstens 1 veld heeft (we kunnen altijd count gebruiken)
             const firstItem = message.json[0];
             const keys = Object.keys(firstItem);
 
@@ -853,8 +1051,6 @@ export default {
                 display: this.getFieldDisplayName(key),
             }));
         },
-
-        // Helpers
         autoResize() {
             const textarea = this.$refs.messageTextarea;
             if (textarea) {
@@ -1091,12 +1287,12 @@ export default {
             );
         },
         saveSourceSelection() {
-            // Sla de geselecteerde source op per conversatie GUID
             const storageKey = `selected_source_${this.conversation.guid}`;
             localStorage.setItem(storageKey, this.form.source.id);
+
+            this.suggestions = this.form.source.suggestions || [];
         },
         loadSourceSelection() {
-            // Laad de opgeslagen source voor deze conversatie
             const storageKey = `selected_source_${this.conversation.guid}`;
             const savedSource = localStorage.getItem(storageKey);
             if (savedSource) {
@@ -1109,6 +1305,7 @@ export default {
 
                     if (sourceExists) {
                         this.form.source = sourceExists;
+                        this.suggestions = sourceExists.suggestions || [];
                     }
                 } catch (error) {
                     localStorage.removeItem(storageKey);
@@ -1127,14 +1324,11 @@ export default {
                 return `${valueName} per ${categoryName}`;
             }
         },
-
-        // CSRF Token functions
         getCsrfToken() {
             return document
                 .querySelector('meta[name="csrf-token"]')
                 ?.getAttribute("content");
         },
-
         updateCsrfToken(response) {
             const newToken = response.headers.get("X-CSRF-TOKEN");
             if (newToken) {
@@ -1144,9 +1338,122 @@ export default {
             }
         },
 
-        // Requests
-        async sendMessage() {
+        async useSuggestion(message) {
+            if (!message.trim()) return;
+
+            this.no_message = false;
+            if (message === "" || this.form.source === "x") {
+                this.no_message = true;
+                return;
+            }
+
+            const params = new URLSearchParams({
+                message: message,
+                conversation: this.form.conversation.guid,
+                source: this.form.source.id || "",
+            });
+
+            try {
+                const userresponse = await fetch(
+                    `${route(
+                        "conversation.postUserMessage",
+                        this.conversation.guid
+                    )}?${params.toString()}`,
+                    {
+                        headers: {
+                            Accept: "application/json",
+                            "X-CSRF-TOKEN": this.getCsrfToken(),
+                        },
+                    }
+                );
+
+                if (!userresponse.ok)
+                    throw new Error("Network response was not ok");
+
+                this.updateCsrfToken(userresponse);
+
+                const { message = [] } = await userresponse.json();
+                if (message && message.created_at) {
+                    this.messages.push({
+                        ...message,
+                        displayAsTable: false,
+                        displayAsChart: false,
+                        displayAsQuery: false,
+                        thumbs_up: 0,
+                        thumbs_down: 0,
+                        selectedChartType: "bar",
+                        selectedXAxis: null,
+                        selectedYAxis: null,
+                        selectedAggregation: "sum",
+                        col_ref: null,
+                    });
+                }
+
+                this.form.message = "";
+                this.$nextTick(() => {
+                    this.autoResize(); // Reset hoogte correct na DOM-update
+                });
+                this.loading = true;
+
+                try {
+                    const botresponse = await fetch(
+                        `${route(
+                            "conversation.getBotResponse",
+                            this.conversation.guid
+                        )}?${params.toString()}`,
+                        {
+                            headers: {
+                                Accept: "application/json",
+                                "X-CSRF-TOKEN": this.getCsrfToken(),
+                            },
+                        }
+                    );
+
+                    if (!botresponse.ok)
+                        throw new Error("Network response was not ok");
+
+                    this.updateCsrfToken(botresponse);
+
+                    const { bot_message = [] } = await botresponse.json();
+                    this.loading = false;
+                    if (bot_message && bot_message.created_at) {
+                        this.messages.push({
+                            ...bot_message,
+                            displayAsTable:
+                                bot_message.respond_type === "Table",
+                            displayAsChart:
+                                bot_message.respond_type === "Chart",
+                            displayAsQuery:
+                                bot_message.respond_type === "Query",
+                            thumbs_up: 0,
+                            thumbs_down: 0,
+                            selectedChartType: bot_message._sort,
+                            selectedXAxis: bot_message._x,
+                            selectedYAxis: bot_message._y,
+                            selectedAggregation: "sum",
+                            col_def: null,
+                            _x: bot_message._x,
+                            _y: bot_message._y,
+                            _order: null,
+                            _agg: null,
+                            _sort: bot_message._sort,
+                        });
+                    }
+                } catch (error) {
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.error =
+                            "There was an error fetching the information. Please try again.";
+                    }, 1000);
+                }
+            } catch (error) {
+                this.error =
+                    "There was an error fetching the information. Please try again.";
+            }
+        },
+        async sendMessage(message = null) {
             if (!this.form.message.trim()) return;
+
             this.no_message = false;
             if (this.form.message === "" || this.form.source === "x") {
                 this.no_message = true;
@@ -1191,6 +1498,7 @@ export default {
                         selectedXAxis: null,
                         selectedYAxis: null,
                         selectedAggregation: "sum",
+                        col_ref: null,
                     });
                 }
 
@@ -1233,11 +1541,25 @@ export default {
                                 bot_message.respond_type === "Query",
                             thumbs_up: 0,
                             thumbs_down: 0,
-                            selectedChartType: "bar",
-                            selectedXAxis: null,
-                            selectedYAxis: null,
+                            selectedChartType: bot_message._sort,
+                            selectedXAxis: bot_message._x,
+                            selectedYAxis: bot_message._y,
                             selectedAggregation: "sum",
+                            col_def: null,
+                            _x: bot_message._x,
+                            _y: bot_message._y,
+                            _order: null,
+                            _agg: null,
+                            _sort: bot_message._sort,
+                            features: {
+                                sorting: true,
+                                filtering: true,
+                                grouping: true,
+                            },
+                            openFeatures: false,
                         });
+
+                        console.log(this.messages);
                     }
                 } catch (error) {
                     setTimeout(() => {
@@ -1307,7 +1629,6 @@ export default {
             );
         },
     },
-    commputed: {},
     mounted() {
         this.messages = this.conversation.messages.map((m) => ({
             ...m,
@@ -1320,7 +1641,19 @@ export default {
             selectedXAxis: m._x || null,
             selectedYAxis: m._y || null,
             selectedAggregation: m._agg || "sum",
-            seelctedOrder: m._order || "value_desc",
+            selectedOrder: m._order || "value_desc",
+            col_ref: m.col_def || null,
+            _x: m._x,
+            _y: m._y,
+            _order: m._order,
+            _agg: m._agg,
+            _sort: m._sort,
+            features: m.features || {
+                sorting: true,
+                filtering: true,
+                grouping: true,
+            },
+            openFeatures: false,
         }));
 
         this.form.source ??= this.conversation.user.sources?.[0] ?? null;

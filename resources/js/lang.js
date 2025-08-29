@@ -11,5 +11,5 @@ export async function loadLocaleMessages(locale) {
 export async function changeLocale(locale) {
     await axios.post("/locale", { locale });
     await loadLocaleMessages(locale);
-    router.reload(); // herlaad Inertia props
+    router.reload();
 }

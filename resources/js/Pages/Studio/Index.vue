@@ -92,15 +92,77 @@
 
         <div v-if="selectedSource" class="w-full">
             <form @submit.prevent="updateSource">
-                <div class="w-full mt-2">
+                <div class="w-full mt-4">
                     <InputLabel for="model" value="Model*" />
                     <textarea
-                        class="w-full h-[500px] resize-vertical overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                        class="w-full h-[500px] resize-vertical overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm py-2"
                         placeholder="Typ hier je tekst..."
                         v-model="this.form.model"
                     ></textarea>
                     <InputError class="mt-2" :message="form.errors.model" />
                 </div>
+
+                <InputLabel for="model" value="Suggestievragen" class="mt-4" />
+
+                <div
+                    v-for="(suggestion, index) in form.suggestions"
+                    :key="suggestion.id"
+                    class="grid grid-cols-12 gap-4 items-center py-2"
+                >
+                    <div class="col-span-11">
+                        <TextInput
+                            v-model="suggestion.question"
+                            placeholder="Vraag"
+                            class="w-full"
+                        />
+                    </div>
+
+                    <div class="col-span-1 flex justify-end">
+                        <button
+                            @click.prevent="addCombination()"
+                            v-if="index + 1 === form.suggestions.length"
+                            class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+                        >
+                            <svg
+                                class="w-5 h-5 rotate-45"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
+                        </button>
+                        <button
+                            @click.prevent="removeCombination(suggestion.id)"
+                            class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                            :disabled="form.suggestions.length === 1"
+                            :class="{
+                                'opacity-40 cursor-not-allowed hover:text-gray-400 hover:bg-transparent':
+                                    form.suggestions.length === 1,
+                            }"
+                        >
+                            <svg
+                                class="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="flex justify-end mt-4">
                     <PrimaryButton
                         type="submit"
@@ -122,6 +184,7 @@ import InputLabel from "@/Components/InputLabel.vue";
 import InputError from "@/Components/InputError.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import Snackbar from "@/Components/Snackbar.vue";
+import TextInput from "@/Components/TextInput.vue";
 export default {
     name: "ReportsIndex",
     components: {
@@ -131,6 +194,7 @@ export default {
         InputError,
         PrimaryButton,
         Snackbar,
+        TextInput,
     },
     props: {
         sources: Array,
@@ -142,14 +206,46 @@ export default {
             form: useForm({
                 source_id: "",
                 model: "",
+                suggestions: [],
             }),
         };
     },
     methods: {
+        addCombination() {
+            this.form.suggestions.push({
+                question: "",
+                id: this.form.suggestions.length + 1,
+            });
+        },
+        removeCombination(id) {
+            this.form.suggestions = this.form.suggestions.filter(
+                (suggestion) => suggestion.id !== id
+            );
+
+            this.form.suggestions.forEach((suggestion, index) => {
+                suggestion.id = index + 1;
+            });
+        },
         selectSource(source) {
             this.selectedSource = source;
             this.form.source_id = source.id;
             this.form.model = source.model;
+
+            this.form.suggestions = [];
+
+            if (source.suggestions.length === 0) {
+                this.form.suggestions.push({
+                    question: "",
+                    id: 1,
+                });
+            } else {
+                source.suggestions.forEach((suggestion, index) => {
+                    this.form.suggestions.push({
+                        question: suggestion.question,
+                        id: index + 1,
+                    });
+                });
+            }
 
             this.closeSourceDropdown();
         },
@@ -167,7 +263,13 @@ export default {
                         "success"
                     );
                 },
-                onError: (errors) => {},
+                onError: (errors) => {
+                    this.$refs.snackbar.show(
+                        "Er is een fout opgetreden bij het opslaan van de bron: " +
+                            Object.values(errors).join(" "),
+                        "error"
+                    );
+                },
             });
         },
     },

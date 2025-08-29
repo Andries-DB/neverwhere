@@ -33,4 +33,9 @@ class Source extends Model
     {
         return $this->belongsToMany(UserGroup::class);
     }
+
+    public function suggestions()
+    {
+        return $this->hasMany(Suggestion::class);
+    }
 }

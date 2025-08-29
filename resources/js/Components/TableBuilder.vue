@@ -1,5 +1,6 @@
 <template>
     <!-- AG Grid component met chart ondersteuning -->
+
     <div
         v-if="message.json"
         class="w-full bg-white rounded-lg border border-gray-200 overflow-hidden"
@@ -26,7 +27,6 @@ import { ModuleRegistry } from "ag-grid-community";
 import { AgGridVue } from "ag-grid-vue3";
 import "ag-grid-enterprise"; // Dit activeert alle enterprise features
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
-
 import {
     AllEnterpriseModule,
     LicenseManager,
@@ -39,7 +39,7 @@ ModuleRegistry.registerModules([
 LicenseManager.setLicenseKey(import.meta.env.VITE_AG_KEY);
 
 export default {
-    name: "",
+    name: "TableBuilder",
     components: {
         AgGridVue,
     },
@@ -67,19 +67,21 @@ export default {
                 filterModel: null,
                 customHeaders: null,
             },
+            // Maak defaultColDef dynamisch gebaseerd op features
             defaultColDef: {
-                sortable: true,
-                filter: true,
+                sortable: this.getFeature("sorting", true), // default true
+                filter: this.getFeature("filtering", true), // default true
                 resizable: true,
                 flex: 1,
                 minWidth: 100,
-                enableValue: true,
-                enableRowGroup: true,
-                enablePivot: true,
+                enableValue: this.getFeature("grouping", true),
+                enableRowGroup: this.getFeature("grouping", true),
+                enablePivot: this.getFeature("grouping", true),
                 chartDataType: "category",
                 autoHeight: true,
-                wrapText: true,
+                wrapText: false,
             },
+            // Maak gridOptions ook dynamisch
             gridOptions: {
                 rowHeight: 45,
                 headerHeight: 45,
@@ -89,20 +91,23 @@ export default {
                 enableCharts: true,
                 enableRangeSelection: true,
                 suppressRowClickSelection: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                enableValue: true,
+                enableRowGroup: this.getFeature("grouping", true),
+                enablePivot: this.getFeature("grouping", true),
+                enableValue: this.getFeature("grouping", true),
                 chartThemes: ["ag-default", "ag-material", "ag-pastel"],
                 getContextMenuItems: (params) => {
                     const defaultItems = [
                         "copy",
                         "copyWithHeaders",
                         "separator",
-                        "chartRange",
-                        "separator",
-                        "export",
                     ];
 
+                    // Voeg chart opties alleen toe als grouping enabled is
+                    if (this.getFeature("grouping", true)) {
+                        defaultItems.push("chartRange", "separator");
+                    }
+
+                    defaultItems.push("export");
                     return defaultItems;
                 },
                 getMainMenuItems: (params) => {
@@ -164,10 +169,21 @@ export default {
         this.loadGridState();
     },
     methods: {
-        SaveGridState() {
+        exportTable() {
+            this.gridApi.exportDataAsCsv({
+                fileName: `export_${this.message.guid || "table"}.csv`,
+            });
+        },
+        getFeature(featureName, defaultValue = true) {
+            if (!this.message.features) {
+                return defaultValue;
+            }
+            return this.message.features[featureName] !== undefined
+                ? this.message.features[featureName]
+                : defaultValue;
+        },
+        async SaveGridState() {
             if (!this.gridApi || !this.message.guid) {
-                // this.saveLoading = false;
-
                 return;
             }
 
@@ -187,7 +203,7 @@ export default {
                     data: this.savedGridState,
                 };
 
-                const response = fetch("/conversation/savecoldef", {
+                const response = await fetch("/conversation/savecoldef", {
                     method: "POST",
                     headers: {
                         Accept: "application/json",
@@ -201,8 +217,19 @@ export default {
                     console.log(response);
                 }
 
+                const result = await response.json();
+
                 this.updateCsrfToken(response);
-            } catch (e) {}
+
+                return {
+                    success: true,
+                    data: result.summary,
+                };
+            } catch (e) {
+                return {
+                    success: false,
+                };
+            }
         },
         getTableRowData(message) {
             if (
@@ -249,45 +276,28 @@ export default {
                     let isDate = this.isDateField(key, message.json);
 
                     if (isDate) {
-                        isNumeric = false; // Als het een numeriek veld is, beschouwen we het niet als datum
+                        isNumeric = false;
                     }
 
-                    return {
+                    const columnDef = {
                         field: key,
                         headerName: this.getFieldDisplayName(key),
-                        sortable: true,
-                        filter: isNumeric
-                            ? "agNumberColumnFilter"
-                            : "agTextColumnFilter",
+                        sortable: this.getFeature("sorting", true),
+                        filter: this.getFeature("filtering", true)
+                            ? isNumeric
+                                ? "agNumberColumnFilter"
+                                : "agTextColumnFilter"
+                            : false,
                         resizable: true,
-                        enableRowGroup: true,
-                        enablePivot: true,
-                        enableValue: true,
-
-                        // Chart configuratie
+                        enableRowGroup: this.getFeature("grouping", true),
+                        enablePivot: this.getFeature("grouping", true),
+                        enableValue: this.getFeature("grouping", true),
                         chartDataType: isNumeric
                             ? "series"
                             : isDate
                             ? "time"
                             : "category",
-
-                        // Type-specifieke configuratie
-                        ...(isNumeric && {
-                            type: "numericColumn",
-                            cellClass: "number-cell",
-                            aggFunc: "sum",
-                        }),
-
-                        ...(isDate && {
-                            type: "dateColumn",
-                            cellClass: "date-cell",
-                        }),
-
-                        menuTabs: [
-                            "filterMenuTab",
-                            "generalMenuTab",
-                            "columnsMenuTab",
-                        ],
+                        menuTabs: this.getMenuTabs(),
                         cellRenderer: (params) => {
                             if (
                                 typeof params.value === "string" &&
@@ -301,22 +311,41 @@ export default {
                             return params.value;
                         },
                     };
+
+                    // Type-specifieke configuratie alleen toevoegen als grouping enabled is
+                    if (this.getFeature("grouping", true)) {
+                        if (isNumeric) {
+                            Object.assign(columnDef, {
+                                type: "numericColumn",
+                                cellClass: "number-cell",
+                                aggFunc: "sum",
+                            });
+                        }
+                        if (isDate) {
+                            Object.assign(columnDef, {
+                                type: "dateColumn",
+                                cellClass: "date-cell",
+                            });
+                        }
+                    }
+
+                    return columnDef;
                 });
             }
 
-            // Fallback naar oude methode...
+            // Fallback voor oude methode
             const parsed = this.parseTableMessage(message.message);
             return parsed.headers.map((header) => ({
                 field: header,
                 headerName: header,
-                sortable: true,
-                filter: true,
+                sortable: this.getFeature("sorting", true),
+                filter: this.getFeature("filtering", true),
                 resizable: true,
-                enableRowGroup: true,
-                enablePivot: true,
-                enableValue: true,
+                enableRowGroup: this.getFeature("grouping", true),
+                enablePivot: this.getFeature("grouping", true),
+                enableValue: this.getFeature("grouping", true),
                 chartDataType: "category",
-                menuTabs: ["filterMenuTab", "generalMenuTab", "columnsMenuTab"],
+                menuTabs: this.getMenuTabs(),
                 cellRenderer: (params) => {
                     if (
                         typeof params.value === "string" &&
@@ -327,6 +356,17 @@ export default {
                     return params.value;
                 },
             }));
+        },
+        getMenuTabs() {
+            const tabs = ["generalMenuTab"];
+
+            if (this.getFeature("filtering", true)) {
+                tabs.unshift("filterMenuTab"); // Voeg toe aan het begin
+            }
+
+            tabs.push("columnsMenuTab");
+
+            return tabs;
         },
         formatNumber(value) {
             if (value === null || value === undefined) return "";
@@ -386,31 +426,77 @@ export default {
 
             // Check eerste paar records om te zien of het veld datum-achtige waarden bevat
             const sampleValues = data
-                .slice(0, 5)
+                .slice(0, Math.min(20, data.length)) // Beperk tot eerste 20 records voor performance
                 .map((item) => item[fieldName])
-                .filter((val) => val != null);
+                .filter((val) => val != null && val !== "");
 
             if (sampleValues.length === 0) return false;
 
-            return sampleValues.some((value) => {
+            // Minimaal 70% van de waarden moet een datum zijn
+            const dateCount = sampleValues.filter((value) => {
                 if (!value) return false;
 
-                // Check verschillende datum formaten
-                const str = value.toString();
+                const str = value.toString().trim();
 
-                // ISO datum format (YYYY-MM-DD of YYYY-MM-DDTHH:mm:ss)
-                if (/^\d{4}-\d{2}-\d{2}/.test(str)) return true;
+                // Skip obvious non-dates
+                if (str === "") return false;
 
-                // DD/MM/YYYY of MM/DD/YYYY
-                if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) return true;
+                // Check if it's a number (including decimals with comma or dot)
+                if (/^-?\d+([,.]\d+)*$/.test(str)) return false;
 
-                // DD-MM-YYYY of MM-DD-YYYY
-                if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) return true;
+                // Check if it contains only digits and common separators
+                if (!/[^\d\s\-\/\.\:T]/.test(str)) {
+                    // ISO datum format (YYYY-MM-DD of YYYY-MM-DDTHH:mm:ss)
+                    if (/^\d{4}-\d{2}-\d{2}(\T\d{2}:\d{2}:\d{2})?/.test(str))
+                        return true;
 
-                // Probeer Date parsing
-                const parsed = new Date(str);
-                return !isNaN(parsed.getTime()) && parsed.getFullYear() > 1900;
-            });
+                    // DD/MM/YYYY of MM/DD/YYYY (maar niet 1.234,56 achtige nummers)
+                    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) return true;
+
+                    // DD-MM-YYYY of MM-DD-YYYY
+                    if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) return true;
+
+                    if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(str)) return true;
+
+                    if (
+                        /^\d{1,2}[\-\/\.]\d{1,2}[\-\/\.]\d{4}\s+\d{1,2}:\d{2}/.test(
+                            str
+                        )
+                    )
+                        return true;
+
+                    if (/^\d{1,2}[\-\/\.]\d{4}$/.test(str)) return true;
+
+                    // Jaar/Maand formaten (YYYY/MM, YYYY-MM, YYYY.MM)
+                    if (/^\d{4}[\-\/\.]\d{1,2}$/.test(str)) return true;
+
+                    // Andere datum formaten met tijd
+                    if (
+                        /^\d{1,2}[\-\/\.]\d{1,2}[\-\/\.]\d{4}\s+\d{1,2}:\d{2}/.test(
+                            str
+                        )
+                    )
+                        return true;
+                }
+
+                if (str.length >= 8 && str.length <= 30) {
+                    const parsed = new Date(str);
+                    if (!isNaN(parsed.getTime())) {
+                        const year = parsed.getFullYear();
+                        if (year >= 1900 && year <= 2100) {
+                            return (
+                                /[\-\/\.\s:]/.test(str) &&
+                                !/^[\d,.]+$/.test(str)
+                            );
+                        }
+                    }
+                }
+
+                return false;
+            }).length;
+
+            // Minimaal 80% van de waarden moet een geldige datum zijn
+            return dateCount / sampleValues.length >= 0.8;
         },
         getFieldDisplayName(fieldName) {
             // Verbeterde field name mapping
@@ -613,11 +699,9 @@ export default {
                     };
                 }
             } catch (e) {
-                console.log(e);
                 this.savedGridState = { columnState: null, filterModel: null };
             }
         },
-
         restoreGridState() {
             if (!this.gridApi) {
                 return;
@@ -653,7 +737,6 @@ export default {
                 }
             } catch (e) {}
         },
-
         onGridReady(params) {
             this.gridApi = params.api;
 
@@ -668,16 +751,10 @@ export default {
             handler(newGuid, oldGuid) {
                 if (newGuid && newGuid !== oldGuid) {
                     this.loadGridState();
-                    if (this.gridApi) {
-                        this.$nextTick(() => {
-                            // this.restoreGridState();
-                        });
-                    }
                 }
                 this.columnDefs = this.getTableColumnDefs(newMessage);
             },
         },
     },
-    computed: {},
 };
 </script>

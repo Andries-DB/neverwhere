@@ -19,7 +19,8 @@ class ConversationController extends Controller
 {
     public function read($guid, Request $request)
     {
-        $conversation = Conversation::where('guid', $guid)->with('messages', 'user', 'user.sources')->where('visible', 1)->first();
+        $conversation = Conversation::where('guid', $guid)->with('messages', 'user.sources.suggestions')->where('visible', 1)->first();
+
 
         abort_unless($conversation, 403, 'This conversation does not exist');
 
@@ -57,7 +58,6 @@ class ConversationController extends Controller
 
     public function postUserMessage($guid, Request $request)
     {
-        // dd($request->all());
         $messageText = $request->input('message');
         $conversation = Conversation::where('guid', $guid)->firstOrFail();
 
@@ -120,11 +120,11 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => $source->id,
+                'id' => 3,
                 'name' => $source->name,
             ],
             'query' => '',
-            'thumb' => '',
+
         ]);
 
 
@@ -133,6 +133,24 @@ class ConversationController extends Controller
         }
 
         $json = $response->json();
+
+        $graph = $json['graph'] ?? null;
+
+        $type = null;
+        $x = null;
+        $y = null;
+
+        if ($graph) {
+            $graphData = is_string($graph) ? json_decode($graph, true) : $graph;
+
+            if (isset($graphData['series'][0]['type'])) {
+                $type = $graphData['series'][0]['type']; // bv "bar"
+                $x = $graphData['series'][0]['xKey'];
+                $y = $graphData['series'][0]['yKey'];
+            }
+        }
+
+        // dd($type, $x, $y);
         $botMessage = $conversation->messages()->create([
             'guid' => (string) Str::uuid(),
             'user_id' => $user->id,
@@ -146,8 +164,12 @@ class ConversationController extends Controller
                 : []
             ),
             'question_message' => $lastUserMessage->id,
+            '_sort' => $type,
+            '_x' => $x,
+            '_y' => $y,
 
         ]);
+
 
         return [
             'bot_message' => array_merge(
@@ -481,9 +503,7 @@ class ConversationController extends Controller
 
     public function saveChartDef(Request $request)
     {
-        // dd($request->all());
         $message = Message::where('guid', $request->input('message_guid'))->first();
-
 
         if (!$message) {
             return response()->json(['error' => 'Message not found'], 404);

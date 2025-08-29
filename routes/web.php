@@ -43,6 +43,8 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::post('/pinboard/default', [DashboardController::class, 'makeDefault'])->name('dashboard.makeDefault');
     Route::delete('/pinboard/delete', [DashboardController::class, 'delete'])->name('dashboard.delete');
     Route::post('/pinboard/create', [DashboardController::class, 'create'])->name('dashboard.create');
+    Route::post('/pinboard/{guid?}/export', [DashboardController::class, 'export'])->name('dashboard.export');
+
 
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

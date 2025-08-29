@@ -144,7 +144,6 @@
 
                                 Exporteer dashboard
                             </button>
-
                             <button
                                 @click="makeDefault(dashboard)"
                                 class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-150 flex items-center"
@@ -207,18 +206,21 @@
             <section v-if="pinned_items?.length" class="space-y-4">
                 <div
                     ref="pinnedContainer"
-                    class="grid grid-cols-1 xl:grid-cols-2 gap-6"
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6 dashboard-content"
                 >
                     <div
                         v-for="item in pinned_items"
                         :key="item.id"
                         :data-id="item.id"
                         :class="[
-                            'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-move',
-                            item.width === 'full' ? 'col-span-2' : '',
+                            'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-move ',
+                            item.width === 'full'
+                                ? 'col-span-2 '
+                                : 'md:col-span-1 col-span-2',
                             'sortable-pinned',
                         ]"
                     >
+                        <!-- Header -->
                         <div
                             class="drag-handle px-4 py-2 border-b border-gray-100"
                         >
@@ -444,6 +446,7 @@
                             </div>
                         </div>
 
+                        <!-- Content -->
                         <div>
                             <div
                                 class="w-full h-96 bg-white rounded border border-gray-100"
@@ -519,10 +522,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, useForm, router } from "@inertiajs/vue3";
 import { format, isToday, parseISO } from "date-fns";
 import { AgCharts } from "ag-charts-vue3";
-import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
 
-import "ag-grid-enterprise"; // Dit activeert alle enterprise features
-import { ref } from "vue";
 import RefreshGraph from "@/Components/Modals/RefreshGraph.vue";
 import Sortable from "sortablejs";
 import AddDashboard from "@/Components/Modals/AddDashboard.vue";
@@ -601,9 +601,47 @@ export default {
         toggleAddDashboard() {
             this.addDashboard = !this.addDashboard;
         },
-        toggleExportDashbpard() {
-            console.log("Export dashboard clicked");
+        async toggleExportDashbpard() {
+            try {
+                const response = await fetch(
+                    "/pinboard/" + this.dashboard?.guid + "/export",
+                    {
+                        method: "POST",
+                        headers: {
+                            Accept: "application/json",
+
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": this.getCsrfToken(),
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert("Export failed: " + error.message);
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    let link = document.createElement("a");
+                    link.href = result.file_url;
+                    link.download = result.file_name || "quotes_export.xlsx";
+                    document.body.appendChild(link);
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    this.updateCsrfToken(response);
+                }
+
+                this.loading = false;
+            } catch (error) {
+                console.error("Error generating PDF:", error);
+
+                this.loading = false;
+            }
         },
+
         createConversation() {
             this.form.post(route("conversation.create"), {
                 onSuccess: () => {
@@ -1242,16 +1280,9 @@ export default {
         unpinGraph(graphId) {
             this.form.delete(route("conversation.unpinItem", graphId), {
                 onSuccess: () => {
-                    const index = this.pinned_items.findIndex(
-                        (g) => g.id === graphId
-                    );
-                    if (index !== -1) {
-                        this.pinned_items.splice(index, 1); // werkt reactief
-                    }
+                    location.reload();
                 },
-                onError: (errors) => {
-                    console.log("Error unpinning graph:", errors);
-                },
+                onError: (errors) => {},
             });
         },
         duplicateGraph(graph) {
@@ -1259,9 +1290,7 @@ export default {
                 onSuccess: () => {
                     location.reload();
                 },
-                onError: (errors) => {
-                    console.log("Error unpinning graph:", errors);
-                },
+                onError: (errors) => {},
             });
         },
         startEditingTitle(graph) {

@@ -7,6 +7,7 @@ use App\Models\Dashboard;
 use App\Models\PinnedGraph;
 use App\Models\PinnedItem;
 use App\Models\PinnedTable;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
@@ -137,5 +138,207 @@ class DashboardController extends Controller
             ->first();
 
         return redirect()->route('dashboard', $default?->guid ?? '');
+    }
+
+    public function export(Request $request, $guid)
+    {
+        $user = auth()->user();
+        $dashboard = Dashboard::where('user_id', $user->id)
+            ->where('guid', $guid)
+            ->with('pinned_items.message.conversation')
+            ->first();
+
+        // Prepare chart data voor PDF
+        $processedItems = $this->processItemsForPDF($dashboard->pinned_items);
+
+        $filePath = public_path('storage/pdf/' . "dashboard-{$dashboard->name}-" . now()->format('Y-m-d') . ".pdf");
+
+        // dd($processedItems);
+        Pdf::loadView('dashboard.pdf', [
+            'dashboard' => $dashboard,
+            'items' => $processedItems
+        ])
+            // ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isRemoteEnabled' => true,
+                'isHtml5ParserEnabled' => true,
+            ])
+            ->save($filePath);
+
+        return [
+            'success' => true,
+            'csrf_token' => csrf_token(),
+            'file_url' => asset('storage/pdf/' . "dashboard-{$dashboard->name}-" . now()->format('Y-m-d') . ".pdf"),
+            'file_name' => "dashboard-{$dashboard->name}-" . now()->format('Y-m-d') . ".pdf"
+        ];
+    }
+
+    private function processItemsForPDF($items)
+    {
+        $processedItems = [];
+
+        foreach ($items as $item) {
+            $processedItem = [
+                'id' => $item->id,
+                'title' => $item->title,
+                'type' => $item->type,
+                'width' => $item->width ?? 'half',
+            ];
+
+            if ($item->type === 'graph') {
+                $processedItem['chart_data'] = $this->prepareChartDataForPDF($item);
+            } elseif ($item->type === 'table') {
+                $processedItem['table_data'] = $this->prepareTableDataForPDF($item);
+            }
+
+            $processedItems[] = $processedItem;
+        }
+
+
+        // dd($processedItems);
+        return $processedItems;
+    }
+
+    private function prepareChartDataForPDF($item)
+    {
+        $json = $item->json ?? [];
+        $xAxis = $item->_x;
+        $yAxis = $item->_y;
+        $aggregation = $item->_agg ?? 'sum';
+
+        if (!$json || !$xAxis || !$yAxis) {
+            return ['data' => [], 'max_value' => 0];
+        }
+
+        // Aggregeer data
+        if ($yAxis === '__count') {
+            $chartData = $this->aggregateCountData($json, $xAxis);
+        } else {
+            $chartData = $this->aggregateValueData($json, $xAxis, $yAxis, $aggregation);
+        }
+
+        // Sorteer en limiteer
+        $chartData = collect($chartData)->sortByDesc('value')->take(10)->values()->toArray();
+        $maxValue = collect($chartData)->max('value') ?: 100;
+
+
+        return [
+            'data' => $chartData,
+            'max_value' => $maxValue,
+            'chart_type' => $item->sort_chart ?? 'column',
+            'x_label' => $this->formatFieldName($xAxis),
+            'y_label' => $this->formatFieldName($yAxis),
+        ];
+    }
+
+    private function aggregateCountData($data, $xAxis)
+    {
+        $counts = [];
+
+        foreach ($data as $row) {
+            $category = $row[$xAxis] ?? 'Onbekend';
+            $category = is_string($category) ? $category : (string)$category;
+            $counts[$category] = ($counts[$category] ?? 0) + 1;
+        }
+
+        $result = [];
+        foreach ($counts as $category => $count) {
+            $result[] = [
+                'category' => $category,
+                'value' => $count
+            ];
+        }
+
+        return $result;
+    }
+
+    private function aggregateValueData($data, $xAxis, $yAxis, $aggregation)
+    {
+        $groups = [];
+
+        foreach ($data as $row) {
+            $category = $row[$xAxis] ?? 'Onbekend';
+            $value = is_numeric($row[$yAxis] ?? 0) ? floatval($row[$yAxis]) : 0;
+
+            if (!isset($groups[$category])) {
+                $groups[$category] = [];
+            }
+            $groups[$category][] = $value;
+        }
+
+        $result = [];
+        foreach ($groups as $category => $values) {
+            $aggregatedValue = $this->aggregateValues($values, $aggregation);
+            $result[] = [
+                'category' => $category,
+                'value' => $aggregatedValue
+            ];
+        }
+
+        return $result;
+    }
+
+    private function aggregateValues($values, $aggregation)
+    {
+        switch ($aggregation) {
+            case 'avg':
+                return count($values) > 0 ? array_sum($values) / count($values) : 0;
+            case 'count':
+                return count($values);
+            case 'min':
+                return count($values) > 0 ? min($values) : 0;
+            case 'max':
+                return count($values) > 0 ? max($values) : 0;
+            case 'sum':
+            default:
+                return array_sum($values);
+        }
+    }
+
+    private function prepareTableDataForPDF($item)
+    {
+        $json = $item->json ?? [];
+
+        if (empty($json)) {
+            return ['headers' => [], 'rows' => []];
+        }
+
+        // Get headers
+        $headers = [];
+        if ($item->col_def) {
+            $colDef = json_decode($item->col_def, true);
+
+            $headers = collect($colDef['columnState'])
+                ->filter(fn($col) => empty($col['hide']) || $col['hide'] === false)
+                ->map(fn($col) => [
+                    'id' => $col['colId'] ?? null,
+                    'headerName' => $col['headerName'] ?? null,
+                ])
+                ->all();
+        } else {
+            $headers = collect(array_keys($json[0]))
+                ->map(fn($key) => ['id' => $key, 'headerName' => $key])
+                ->all();
+        }
+
+
+        // Limiteer rijen voor PDF (max 20)
+        // $rows = array_slice($json, 0, 20);
+        $totalRows = count($json);
+
+        return [
+            'headers' => $headers,
+            'rows' => $json,
+            'total_rows' => $totalRows,
+        ];
+    }
+
+    private function formatFieldName($fieldName)
+    {
+        if ($fieldName === '__count') return 'Aantal';
+        if ($fieldName === '__index') return 'Index';
+
+        return ucfirst(str_replace('_', ' ', $fieldName));
     }
 }
