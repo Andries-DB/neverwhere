@@ -522,7 +522,7 @@
                     </div>
                 </div>
 
-                <div v-if="suggestions.length" class="w-full px-2">
+                <div v-if="suggestions.length" class="w-full px-2 hidden">
                     <div class="flex flex-wrap gap-2">
                         <button
                             v-for="s in suggestions"
