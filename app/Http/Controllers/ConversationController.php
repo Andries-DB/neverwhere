@@ -120,7 +120,7 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => 3,
+                'id' => $source->id,
                 'name' => $source->name,
             ],
             'query' => '',
