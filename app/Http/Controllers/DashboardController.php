@@ -307,7 +307,7 @@ class DashboardController extends Controller
         // Get headers
         $headers = [];
         if ($item->col_def) {
-            $colDef = json_decode($item->col_def, true);
+            $colDef = json_decode($item->col_def);
 
             $headers = collect($colDef['columnState'])
                 ->filter(fn($col) => empty($col['hide']) || $col['hide'] === false)

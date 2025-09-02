@@ -682,7 +682,7 @@ export default {
             try {
                 let storedState = null;
                 if (this.col_def) {
-                    storedState = this.col_def;
+                    storedState = JSON.stringify(this.col_def);
                 } else {
                     storedState = this.message.col_def;
                 }
