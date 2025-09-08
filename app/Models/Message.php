@@ -25,7 +25,9 @@ class Message extends Model
         '_y',
         '_agg',
         '_order',
-        '_sort'
+        '_sort',
+        '_order_dir',
+        '_color'
     ];
 
     protected $casts = [

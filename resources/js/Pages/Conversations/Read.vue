@@ -120,6 +120,36 @@
                                     class="relative"
                                 >
                                     <div class="mb-3 flex justify-end">
+                                        <!-- Change graph button -->
+                                        <button
+                                            :class="[
+                                                'absolute -top-10 right-14 z-10 transition-all duration-200 ease-in-out',
+                                                'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
+                                                'bg-blue-400 text-blue-800 border-blue-500 hover:bg-blue-500',
+                                                changingInput &&
+                                                changingInput.id === message.id
+                                                    ? 'animate-pulse'
+                                                    : '',
+                                            ]"
+                                            @click="toggleChangeInput(message)"
+                                            title="Verande grafiek layout"
+                                            :disabled="
+                                                changingInput &&
+                                                changingInput.id === message.id
+                                            "
+                                        >
+                                            <i
+                                                :class="[
+                                                    'text-base',
+                                                    changingInput &&
+                                                    changingInput.id ===
+                                                        message.id
+                                                        ? 'fas fa-spinner fa-spin'
+                                                        : 'fas fa-comment',
+                                                ]"
+                                            ></i>
+                                        </button>
+
                                         <!-- Pin button-->
                                         <button
                                             v-if="!isChartPinned(message)"
@@ -416,6 +446,59 @@
                                                             v-model="
                                                                 message.features
                                                                     .grouping
+                                                            "
+                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                                        />
+                                                    </label>
+
+                                                    <label
+                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                                    >
+                                                        <span
+                                                            class="text-xs text-gray-700"
+                                                            >Pagination</span
+                                                        >
+                                                        <input
+                                                            type="checkbox"
+                                                            v-model="
+                                                                message.features
+                                                                    .pagination
+                                                            "
+                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                                        />
+                                                    </label>
+
+                                                    <label
+                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                                    >
+                                                        <span
+                                                            class="text-xs text-gray-700"
+                                                            >Multi line
+                                                            text</span
+                                                        >
+                                                        <input
+                                                            type="checkbox"
+                                                            v-model="
+                                                                message.features
+                                                                    .multiline_text
+                                                            "
+                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                                        />
+                                                    </label>
+
+                                                    <label
+                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                                    >
+                                                        <span
+                                                            class="text-xs text-gray-700"
+                                                            >Floating
+                                                            filters</span
+                                                        >
+                                                        <input
+                                                            type="checkbox"
+                                                            v-model="
+                                                                message.features
+                                                                    .floating_filters
                                                             "
                                                             class="w-3 h-3 text-yellow-500 rounded border-gray-300"
                                                         />
@@ -727,7 +810,15 @@
         :message="pinnedMessage"
         :sort="pinnedSort"
         :dashboards="dashboards"
+        :pinnedDef="pinnedDef"
         @item-pinned="handleItemPinned"
+    />
+
+    <UpdateGraph
+        :show="changeInput"
+        :close="toggleChangeInput"
+        :message="changedMessage"
+        @item-changed="handleItemChanged"
     />
 </template>
 
@@ -739,6 +830,7 @@ import DislikeModal from "@/Components/Modals/DislikeModal.vue";
 import ChartBuilder from "@/Components/ChartBuilder.vue";
 import PinItem from "@/Components/Modals/PinItem.vue";
 import TableBuilder from "@/Components/TableBuilder.vue";
+import UpdateGraph from "@/Components/Modals/UpdateGraph.vue";
 
 export default {
     name: "Read Conversation",
@@ -750,6 +842,7 @@ export default {
         ChartBuilder,
         PinItem,
         TableBuilder,
+        UpdateGraph,
     },
     props: {
         conversation: Object,
@@ -783,6 +876,7 @@ export default {
             dislikedSort: "",
             pinnedMessage: null,
             pinnedSort: "",
+            pinnedDef: null,
             pinModal: false,
             suggestions: [],
             openFeatures: false,
@@ -790,10 +884,48 @@ export default {
                 sorting: true,
                 filtering: true,
                 grouping: true,
+                pagination: false,
+                multiline_text: false,
+                floating_filters: false,
             },
+            changeInput: false,
+            changedMessage: null,
         };
     },
     methods: {
+        handleItemChanged({ message_id, message }) {
+            const index = this.messages.findIndex((m) => m.id === message_id);
+            if (index !== -1) {
+                // Bewaar de lokale props
+                const {
+                    selectedXAxis,
+                    selectedYAxis,
+                    selectedChartType,
+                    selectedOrder,
+                    selectedAggregation,
+                    selectedOrderDirection,
+                    selectedSortField,
+                } = this.messages[index];
+
+                // Overschrijf de message met de nieuwe van backend
+                this.messages[index] = {
+                    ...message,
+                    selectedXAxis,
+                    selectedYAxis,
+                    selectedChartType,
+                    selectedOrder,
+                    selectedAggregation,
+                    selectedSortField,
+                    selectedOrderDirection,
+                };
+
+                this.setDisplayMode(this.messages[index], "chart");
+            }
+        },
+        toggleChangeInput(message) {
+            this.changeInput = !this.changeInput;
+            this.changedMessage = message;
+        },
         manualSaveGridState(message) {
             if (message.displayAsTable) {
                 const refName = `tableBuilder_${message.id}`;
@@ -940,7 +1072,6 @@ export default {
                 const result = await response.json();
                 this.summaryContent = result.summary;
             } catch (error) {
-                console.error("Error generating summary:", error);
                 this.summaryError = error.message;
             } finally {
                 this.summaryLoading = false;
@@ -990,6 +1121,23 @@ export default {
             return keys.length >= 1;
         },
         togglePinModal(message, sort) {
+            if (sort === "table") {
+                const refName = `tableBuilder_${message.id}`;
+                const tableBuilderRef = this.$refs[refName];
+                const tableBuilder = Array.isArray(tableBuilderRef)
+                    ? tableBuilderRef[0]
+                    : tableBuilderRef;
+
+                if (
+                    tableBuilder &&
+                    typeof tableBuilder.getColdef === "function"
+                ) {
+                    const result = tableBuilder.getColdef();
+
+                    this.pinnedDef = result;
+                }
+            }
+
             this.pinnedMessage = message;
             this.pinnedSort = sort;
 
@@ -1498,6 +1646,8 @@ export default {
                         selectedXAxis: null,
                         selectedYAxis: null,
                         selectedAggregation: "sum",
+                        selectedSortField: null,
+                        selectedSortDirection: null,
                         col_ref: null,
                     });
                 }
@@ -1545,16 +1695,22 @@ export default {
                             selectedXAxis: bot_message._x,
                             selectedYAxis: bot_message._y,
                             selectedAggregation: "sum",
+                            selectedSortField: bot_message._order,
+                            selectedSortDirection: bot_message._order_dir,
                             col_def: null,
                             _x: bot_message._x,
                             _y: bot_message._y,
-                            _order: null,
+                            _order: bot_message._order,
                             _agg: null,
                             _sort: bot_message._sort,
+                            _order_dir: bot_message._order_dir,
                             features: {
                                 sorting: true,
                                 filtering: true,
                                 grouping: true,
+                                pagination: false,
+                                multiline_text: false,
+                                floating_filters: false,
                             },
                             openFeatures: false,
                         });
@@ -1640,6 +1796,8 @@ export default {
             selectedChartType: m._sort || "bar",
             selectedXAxis: m._x || null,
             selectedYAxis: m._y || null,
+            selectedSortField: m._order || null,
+            selectedSortDirection: m._order_dir || null,
             selectedAggregation: m._agg || "sum",
             selectedOrder: m._order || "value_desc",
             col_ref: m.col_def || null,
@@ -1648,10 +1806,14 @@ export default {
             _order: m._order,
             _agg: m._agg,
             _sort: m._sort,
+            _order_dir: m._order_dir,
             features: m.features || {
                 sorting: true,
                 filtering: true,
                 grouping: true,
+                pagination: false,
+                multiline_text: false,
+                floating_filters: false,
             },
             openFeatures: false,
         }));
@@ -1671,7 +1833,6 @@ export default {
             }));
 
         this.scrollToBottom();
-
         this.loadSourceSelection();
     },
     watch: {

@@ -15,10 +15,7 @@ use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserGroupController;
 use App\Http\Middleware\HandleInertiaRequests;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Symfony\Component\Mime\MessageConverter;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Illuminate\Http\Request;
@@ -88,6 +85,13 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::get('/studio', [StudioController::class, 'get'])->name('studio.get');
     Route::patch('/studio', [StudioController::class, 'patch'])->name('studio.patch');
 
+    Route::patch('/studio/suggestion', [StudioController::class, 'patch_suggestion'])->name('studio.patch.suggestion');
+    Route::delete('/studio/suggestion/{id}', [StudioController::class, 'delete_suggestion'])->name('studio.delete.suggestion');
+
+    Route::patch('/studio/knowledge', [StudioController::class, 'patch_knowledge'])->name('studio.patch.knowledge');
+    Route::delete('/studio/knowledge/{id}', [StudioController::class, 'delete_knowledge'])->name('studio.delete.knowledge');
+
+
     Route::get('/feedback', [RequestController::class, 'get'])->name('requests.get');
     Route::post('/feedback', [RequestController::class, 'post'])->name('requests.post');
     Route::get('/feedback/admin', [RequestController::class, 'get_admin'])->name('reports.get.admin');
@@ -116,6 +120,7 @@ Route::middleware(['auth', '2fa', HandleInertiaRequests::class])->group(function
     Route::delete('/conversation/pin/{id}', [ConversationController::class, 'unpinItem'])->name('conversation.unpinItem');
     Route::patch('/conversation/chart/{id}/width', [ConversationController::class, 'updateItemWidth'])->name('conversation.updateItemWidth');
     Route::patch('/conversation/chart/{id}/refresh', [ConversationController::class, 'updateItemJson'])->name('conversation.updateItemJson');
+    Route::patch('/conversation/chart/{id}/change', [ConversationController::class, 'changeInput'])->name('conversation.changeInput');
     Route::post('/conversation/chart/{id}/duplicate', [ConversationController::class, 'duplicateItem'])->name('conversation.duplicateItem');
 
     Route::post('/conversation/likemessage', [ConversationController::class, 'likeMessage'])->name('conversation.likeMessage');

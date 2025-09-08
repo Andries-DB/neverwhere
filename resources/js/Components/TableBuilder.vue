@@ -1,6 +1,5 @@
 <template>
     <!-- AG Grid component met chart ondersteuning -->
-
     <div
         v-if="message.json"
         class="w-full bg-white rounded-lg border border-gray-200 overflow-hidden"
@@ -23,15 +22,21 @@
 </template>
 
 <script>
-import { ModuleRegistry } from "ag-grid-community";
+import {
+    iconSetQuartzLight,
+    ModuleRegistry,
+    themeBalham,
+    themeQuartz,
+} from "ag-grid-community";
 import { AgGridVue } from "ag-grid-vue3";
-import "ag-grid-enterprise"; // Dit activeert alle enterprise features
+import "ag-grid-enterprise";
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
 import {
     AllEnterpriseModule,
     LicenseManager,
     IntegratedChartsModule,
 } from "ag-grid-enterprise";
+
 ModuleRegistry.registerModules([
     AllEnterpriseModule,
     IntegratedChartsModule.with(AgChartsEnterpriseModule),
@@ -79,22 +84,40 @@ export default {
                 enablePivot: this.getFeature("grouping", true),
                 chartDataType: "category",
                 autoHeight: true,
-                wrapText: false,
+                floatingFilter: false,
+                wrapText: this.getFeature("multiline_text", false),
             },
             // Maak gridOptions ook dynamisch
             gridOptions: {
                 rowHeight: 45,
                 headerHeight: 45,
                 animateRows: true,
-                pagination: false,
-                paginationPageSize: 1000,
+                pagination: this.getFeature("pagination", false),
+                paginationPageSize: 20,
                 enableCharts: true,
                 enableRangeSelection: true,
                 suppressRowClickSelection: true,
                 enableRowGroup: this.getFeature("grouping", true),
                 enablePivot: this.getFeature("grouping", true),
                 enableValue: this.getFeature("grouping", true),
-                chartThemes: ["ag-default", "ag-material", "ag-pastel"],
+                theme: themeQuartz.withPart(iconSetQuartzLight).withParams({
+                    backgroundColor: "#ffffff",
+                    browserColorScheme: "light",
+                    columnBorder: false,
+                    fontFamily: "Arial",
+                    foregroundColor: "rgb(46, 55, 66)",
+                    headerBackgroundColor: "#F9FAFB",
+                    headerFontSize: 14,
+                    headerFontWeight: 600,
+                    headerTextColor: "#919191",
+                    oddRowBackgroundColor: "#F9FAFB",
+                    rowBorder: false,
+                    sidePanelBorder: true,
+                    spacing: 8,
+                    wrapperBorder: false,
+                    wrapperBorderRadius: 0,
+                }),
+                chartThemes: [],
                 getContextMenuItems: (params) => {
                     const defaultItems = [
                         "copy",
@@ -113,8 +136,11 @@ export default {
                 getMainMenuItems: (params) => {
                     const defaultItems = params.defaultItems;
 
-                    defaultItems.push({
+                    // Voeg "Change column name" als eerste item toe
+                    defaultItems.unshift({
                         name: "Change column name",
+                        icon: '<i class="fas fa-edit"></i>', // Of gebruik een andere icon
+                        cssClasses: ["custom-menu-item-with-border"],
                         action: () => {
                             const currentName =
                                 params.column.getColDef().headerName ||
@@ -160,6 +186,9 @@ export default {
                         },
                     });
 
+                    // Voeg een separator toe na het custom item
+                    defaultItems.splice(1, 0, "separator");
+
                     return defaultItems;
                 },
             },
@@ -169,6 +198,17 @@ export default {
         this.loadGridState();
     },
     methods: {
+        getColdef() {
+            const columnState = this.gridApi.getColumnState().map((c) => {
+                const colDef = this.gridApi.getColumnDef(c.colId);
+                return { ...c, headerName: colDef.headerName };
+            });
+
+            return {
+                columnState,
+                filterModel: this.gridApi.getFilterModel(),
+            };
+        },
         exportTable() {
             this.gridApi.exportDataAsCsv({
                 fileName: `export_${this.message.guid || "table"}.csv`,
@@ -755,6 +795,60 @@ export default {
                 this.columnDefs = this.getTableColumnDefs(newMessage);
             },
         },
+        "message.features.pagination": function (newValue) {
+            if (this.gridApi) {
+                this.gridApi.setGridOption("pagination", newValue);
+            }
+        },
+        "message.features.multiline_text": function (newValue) {
+            if (this.gridApi) {
+                this.defaultColDef.wrapText = newValue;
+                this.defaultColDef.autoHeight = newValue;
+
+                const allColumns = this.gridApi.getColumns();
+                allColumns.forEach((column) => {
+                    const colDef = column.getColDef();
+                    colDef.wrapText = newValue;
+                    colDef.autoHeight = newValue;
+                });
+
+                // Refresh de grid
+                this.gridApi.refreshCells();
+            }
+        },
+        "message.features.floating_filters": function (newValue) {
+            if (this.gridApi && this.getFeature("filtering") === true) {
+                this.defaultColDef.floatingFilter = newValue;
+
+                const allColumns = this.gridApi.getColumns();
+                allColumns.forEach((column) => {
+                    const colDef = column.getColDef();
+                    colDef.floatingFilter = newValue;
+                });
+
+                // Refresh de grid
+                // this.gridApi.refreshHeader();
+                // this.gridApi.resetRowHeights();
+            }
+        },
+        "message.features.filtering": function (newValue) {
+            if (this.gridApi && this.getFeature("floating_filters") === true) {
+                this.defaultColDef.floatingFilter = newValue;
+
+                const allColumns = this.gridApi.getColumns();
+                allColumns.forEach((column) => {
+                    const colDef = column.getColDef();
+                    colDef.floatingFilter = newValue;
+                });
+            }
+        },
     },
 };
 </script>
+
+<style>
+.button-group {
+    padding-bottom: 4px;
+    display: block;
+}
+</style>

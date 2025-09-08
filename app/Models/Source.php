@@ -38,4 +38,9 @@ class Source extends Model
     {
         return $this->hasMany(Suggestion::class);
     }
+
+    public function knowledge()
+    {
+        return $this->hasMany(Knowledge::class);
+    }
 }

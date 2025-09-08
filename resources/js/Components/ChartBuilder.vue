@@ -2,7 +2,7 @@
     <div v-if="message.json">
         <!-- Configuratiepaneel -->
         <div class="p-3 bg-gray-50 rounded-t-lg border border-gray-200">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <!-- Grafiek Type -->
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">
@@ -83,23 +83,49 @@
                     </select>
                 </div>
 
-                <!-- Sortering -->
+                <!-- Sorteer Veld -->
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">
-                        Sortering
+                        Sorteer Op
                     </label>
                     <select
-                        v-model="message.selectedSortOrder"
+                        v-model="message.selectedSortField"
                         class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
+                        <option value="">Automatisch</option>
+
                         <option
-                            v-for="(option, key) in sortOptions"
-                            :key="key"
-                            :value="option.value"
+                            v-for="field in getAllFields(message)"
+                            :key="field.key"
+                            :value="field.key"
                         >
-                            {{ option.label }}
+                            {{ field.display }}
                         </option>
                     </select>
+                </div>
+
+                <!-- Sorteer Richting -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                        Richting
+                    </label>
+                    <button
+                        type="button"
+                        @click="
+                            message.selectedSortDirection =
+                                message.selectedSortDirection === 'asc'
+                                    ? 'desc'
+                                    : 'asc'
+                        "
+                        :disabled="!message.selectedSortField"
+                        class="w-fit px-3 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        {{
+                            message.selectedSortDirection === "asc"
+                                ? "A → Z"
+                                : "Z → A"
+                        }}
+                    </button>
                 </div>
             </div>
         </div>
@@ -172,14 +198,6 @@ export default {
                 { value: "min", label: "Minimum" },
                 { value: "max", label: "Maximum" },
             ],
-            sortOptions: [
-                { value: "value_desc", label: "Waarde (Hoog → Laag)" },
-                { value: "value_asc", label: "Waarde (Laag → Hoog)" },
-                { value: "category_asc", label: "Categorie (A → Z)" },
-                { value: "category_desc", label: "Categorie (Z → A)" },
-                { value: "date_asc", label: "Datum (Oud → Nieuw)" },
-                { value: "date_desc", label: "Datum (Nieuw → Oud)" },
-            ],
         };
     },
     methods: {
@@ -192,7 +210,8 @@ export default {
                         _agg: this.message.selectedAggregation,
                         _x: this.message.selectedXAxis,
                         _y: this.message.selectedYAxis,
-                        _order: this.message.selectedSortOrder,
+                        _order: this.message.selectedSortField,
+                        _order_dir: this.message.selectedSortDirection,
                     },
                 };
 
@@ -200,7 +219,7 @@ export default {
                     method: "POST",
                     headers: {
                         Accept: "application/json",
-                        "Content-Type": "application/json", // <-- voeg deze toe
+                        "Content-Type": "application/json",
                         "X-CSRF-TOKEN": this.getCsrfToken(),
                     },
                     body: JSON.stringify(data),
@@ -229,7 +248,6 @@ export default {
                 .querySelector('meta[name="csrf-token"]')
                 ?.getAttribute("content");
         },
-
         updateCsrfToken(response) {
             const newToken = response.headers.get("X-CSRF-TOKEN");
             if (newToken) {
@@ -273,7 +291,6 @@ export default {
                 date = new Date(parseInt(dateStr) * 1000);
             }
 
-            // Valideer datum
             if (!date || isNaN(date.getTime())) return null;
 
             const year = date.getFullYear();
@@ -281,7 +298,6 @@ export default {
 
             return date;
         },
-
         formatDate(date) {
             if (!date || !(date instanceof Date) || isNaN(date.getTime()))
                 return null;
@@ -318,7 +334,6 @@ export default {
         isDateField(fieldName, data) {
             if (!data || data.length === 0) return false;
 
-            // Check eerste 10 records (of minder als er minder zijn)
             const sampleSize = Math.min(10, data.length);
             let dateCount = 0;
 
@@ -329,7 +344,6 @@ export default {
                 }
             }
 
-            // Als meer dan 70% van de samples geldige datums zijn
             return dateCount / sampleSize > 0.7;
         },
         getCustomChartOptions(message) {
@@ -337,7 +351,8 @@ export default {
             const xAxis = message.selectedXAxis;
             const yAxis = message.selectedYAxis;
             const aggregation = message.selectedAggregation || "sum";
-            const sortOrder = message.selectedSortOrder || "value_desc";
+            const sortField = message.selectedSortField || "";
+            const sortDirection = message.selectedSortDirection || "desc";
 
             if (!xAxis || !yAxis || !message.json) {
                 return {};
@@ -355,11 +370,14 @@ export default {
                 return {};
             }
 
-            // Sorteer data gebaseerd op geselecteerde sortering
-            const sortedData = this.sortChartData(
+            // Sorteer data gebaseerd op geselecteerde veld en richting
+            const sortedData = this.sortChartDataByField(
                 chartData,
+                message.json,
                 xAxis,
-                sortOrder
+                yAxis,
+                sortField,
+                sortDirection
             ).slice(0, 50);
 
             const title = this.generateCustomChartTitle(
@@ -385,7 +403,7 @@ export default {
                     enabled: chartType !== "pie",
                     mask: {
                         fill: "rgba(59, 130, 246, 0.1)",
-                        stroke: "#3B82F6",
+                        stroke: this.message._color,
                         strokeWidth: 1,
                     },
                 },
@@ -416,96 +434,110 @@ export default {
                 display: this.getFieldDisplayName(key),
             }));
         },
-        sortChartData(chartData, xAxis, sortOrder) {
-            // Bepaal of het datums zijn door te kijken naar het eerste item
-            const isDateData =
-                chartData.length > 0 && chartData[0].category instanceof Date;
+        sortChartDataByField(
+            chartData,
+            originalData,
+            xAxis,
+            yAxis,
+            sortField,
+            sortDirection
+        ) {
+            const fieldValueMap = new Map();
 
-            switch (sortOrder) {
-                case "value_desc":
-                    return chartData.sort((a, b) => b.value - a.value);
+            if (originalData && originalData.length > 0) {
+                originalData.forEach((item, index) => {
+                    let category = this.getCategoryValue(
+                        item,
+                        xAxis,
+                        index,
+                        this.isDateField(xAxis, originalData)
+                    );
 
-                case "value_asc":
-                    return chartData.sort((a, b) => a.value - b.value);
+                    if (category !== null) {
+                        const categoryKey =
+                            category instanceof Date
+                                ? category.toISOString()
+                                : String(category);
 
-                case "category_asc":
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => a.category - b.category
-                        );
-                    } else {
-                        return chartData.sort((a, b) =>
-                            String(a.category).localeCompare(
-                                String(b.category),
-                                "nl"
-                            )
-                        );
+                        const fieldValue = item[sortField];
+
+                        // Als we nog geen waarde hebben voor deze categorie, of deze waarde is "beter"
+                        if (!fieldValueMap.has(categoryKey)) {
+                            fieldValueMap.set(categoryKey, fieldValue);
+                        }
                     }
-
-                case "category_desc":
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => b.category - a.category
-                        );
-                    } else {
-                        return chartData.sort((a, b) =>
-                            String(b.category).localeCompare(
-                                String(a.category),
-                                "nl"
-                            )
-                        );
-                    }
-
-                case "date_asc":
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => a.category - b.category
-                        );
-                    } else {
-                        // Probeer alsnog te sorteren op datum als het geen Date object is
-                        return chartData.sort((a, b) => {
-                            const dateA = this.parseDate(a.category);
-                            const dateB = this.parseDate(b.category);
-                            if (dateA && dateB) {
-                                return dateA - dateB;
-                            }
-                            return String(a.category).localeCompare(
-                                String(b.category),
-                                "nl"
-                            );
-                        });
-                    }
-
-                case "date_desc":
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => b.category - a.category
-                        );
-                    } else {
-                        // Probeer alsnog te sorteren op datum als het geen Date object is
-                        return chartData.sort((a, b) => {
-                            const dateA = this.parseDate(a.category);
-                            const dateB = this.parseDate(b.category);
-                            if (dateA && dateB) {
-                                return dateB - dateA;
-                            }
-                            return String(b.category).localeCompare(
-                                String(a.category),
-                                "nl"
-                            );
-                        });
-                    }
-
-                default:
-                    // Fallback naar oude logica
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => a.category - b.category
-                        );
-                    } else {
-                        return chartData.sort((a, b) => b.value - a.value);
-                    }
+                });
             }
+
+            // Helper functie om jaar-maand strings te sorteren
+            const isYearMonthFormat = (str) => {
+                return typeof str === "string" && /^\d{4}-\d{1,2}$/.test(str);
+            };
+
+            const compareYearMonth = (a, b) => {
+                const parseYearMonth = (str) => {
+                    const [year, month] = str.split("-").map(Number);
+                    return year * 100 + month; // 2025-8 wordt 202508, 2024-12 wordt 202412
+                };
+
+                const valueA = parseYearMonth(a);
+                const valueB = parseYearMonth(b);
+
+                return valueA - valueB; // Altijd ascending van laag naar hoog
+            };
+
+            // Nu sorteren we chartData gebaseerd op de veldwaarden
+            return chartData.sort((a, b) => {
+                const categoryKeyA =
+                    a.category instanceof Date
+                        ? a.category.toISOString()
+                        : String(a.category);
+                const categoryKeyB =
+                    b.category instanceof Date
+                        ? b.category.toISOString()
+                        : String(b.category);
+
+                const valueA = fieldValueMap.get(categoryKeyA);
+                const valueB = fieldValueMap.get(categoryKeyB);
+
+                // Check of het jaar-maand formaten zijn
+                if (
+                    isYearMonthFormat(String(valueA)) &&
+                    isYearMonthFormat(String(valueB))
+                ) {
+                    const comparison = compareYearMonth(
+                        String(valueA),
+                        String(valueB)
+                    );
+                    return sortDirection === "asc" ? comparison : -comparison;
+                }
+
+                // Check of het datums zijn
+                const dateA = this.parseDate(valueA);
+                const dateB = this.parseDate(valueB);
+
+                if (dateA && dateB) {
+                    return sortDirection === "asc"
+                        ? dateA - dateB
+                        : dateB - dateA;
+                }
+
+                // Check of het getallen zijn
+                const numA = parseFloat(valueA);
+                const numB = parseFloat(valueB);
+
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return sortDirection === "asc" ? numA - numB : numB - numA;
+                }
+
+                // Anders als tekst behandelen
+                const strA = String(valueA || "");
+                const strB = String(valueB || "");
+
+                return sortDirection === "asc"
+                    ? strA.localeCompare(strB, "nl")
+                    : strB.localeCompare(strA, "nl");
+            });
         },
         prepareCustomChartData(data, xAxis, yAxis, aggregation) {
             if (!data || data.length === 0) {
@@ -785,7 +817,7 @@ export default {
                             {
                                 ...serieConfig,
                                 type: "bar",
-                                fill: "#3B82F6",
+                                fill: this.message._color,
                             },
                         ],
                     };
@@ -798,11 +830,11 @@ export default {
                             {
                                 ...serieConfig,
                                 type: "line",
-                                stroke: "#3B82F6",
+                                stroke: this.message._color,
                                 strokeWidth: 2,
                                 marker: {
                                     enabled: true,
-                                    fill: "#3B82F6",
+                                    fill: this.message._color,
                                     size: 6,
                                 },
                             },
@@ -818,7 +850,7 @@ export default {
                                 ...serieConfig,
                                 type: "area",
                                 fill: "rgba(59, 130, 246, 0.3)",
-                                stroke: "#3B82F6",
+                                stroke: this.message._color,
                                 strokeWidth: 2,
                             },
                         ],
@@ -832,7 +864,7 @@ export default {
                             {
                                 ...serieConfig,
                                 type: "bar",
-                                fill: "#3B82F6",
+                                fill: this.message._color,
                             },
                         ],
                     };
@@ -1041,8 +1073,11 @@ export default {
         if (!this.message) {
             this.message = {};
         }
-        if (!this.message.selectedSortOrder) {
-            this.message.selectedSortOrder = "value_desc";
+        if (!this.message.selectedSortField) {
+            this.message.selectedSortField = "";
+        }
+        if (!this.message.selectedSortDirection) {
+            this.message.selectedSortDirection = "desc";
         }
     },
 };

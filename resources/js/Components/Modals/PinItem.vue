@@ -196,12 +196,14 @@ export default {
         coldefs: Array, // Nieuwe coldefs prop
         sort: String,
         dashboards: Array,
+        pinnedDef: Array,
     },
     setup(props, { emit }) {
         const form = useForm({
             message: "",
             width: "",
             title: "",
+            col_def: "",
             dashboard_id: "", // Nieuwe dashboard_id field
         });
 
@@ -272,6 +274,8 @@ export default {
             if (props.message?.id) {
                 form.message = props.message;
             }
+
+            form.col_def = props.pinnedDef;
 
             const routeName =
                 props.sort === "table"

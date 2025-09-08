@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use App\Models\Dashboard;
 use App\Models\Message;
-use App\Models\PinnedGraph;
 use App\Models\PinnedItem;
-use App\Models\PinnedTable;
 use App\Models\Source;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -21,13 +19,10 @@ class ConversationController extends Controller
     {
         $conversation = Conversation::where('guid', $guid)->with('messages', 'user.sources.suggestions')->where('visible', 1)->first();
 
-
         abort_unless($conversation, 403, 'This conversation does not exist');
 
         return Inertia::render('Conversations/Read', [
             'conversation' => $conversation,
-            'pinned_charts' => PinnedGraph::with('message')->where('user_id', auth()->user()->id)->get(),
-            'pinned_tables' => PinnedTable::with('message')->where('user_id', auth()->user()->id)->get(),
             'pinned_items' => PinnedItem::with('message')->where('user_id', auth()->user()->id)->get(),
             'dashboards' => Dashboard::where('user_id',  auth()->user()->id)->orderBy('default', 'desc')->get(),
         ]);
@@ -114,13 +109,15 @@ class ConversationController extends Controller
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
+                'role' => $user->role,
             ],
             'company' => [
                 'id' => $user->companies[0]->id,
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => $source->id,
+                // 'id' => $source->id,
+                'id' => 5,
                 'name' => $source->name,
             ],
             'query' => '',
@@ -139,18 +136,17 @@ class ConversationController extends Controller
         $type = null;
         $x = null;
         $y = null;
+        $color = "#3B82F6";
 
         if ($graph) {
             $graphData = is_string($graph) ? json_decode($graph, true) : $graph;
-
             if (isset($graphData['series'][0]['type'])) {
-                $type = $graphData['series'][0]['type']; // bv "bar"
+                $type = $graphData['series'][0]['type'];
                 $x = $graphData['series'][0]['xKey'];
                 $y = $graphData['series'][0]['yKey'];
             }
         }
 
-        // dd($type, $x, $y);
         $botMessage = $conversation->messages()->create([
             'guid' => (string) Str::uuid(),
             'user_id' => $user->id,
@@ -167,7 +163,7 @@ class ConversationController extends Controller
             '_sort' => $type,
             '_x' => $x,
             '_y' => $y,
-
+            '_color' => $color,
         ]);
 
 
@@ -240,6 +236,8 @@ class ConversationController extends Controller
         ]);
         $dashboard = Dashboard::where('id', $request->dashboard_id)->first();
 
+
+
         PinnedItem::create([
             'user_id' => auth()->id(),
             'message_id' => $request->message['id'],
@@ -247,11 +245,14 @@ class ConversationController extends Controller
             'type' => 'table',
             'width' => $request->width,
             ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
-            'col_def' => $request->message['col_def'],
+            'col_def' => $request->col_def,
             'display_order' => (PinnedItem::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
             'dashboard_id' => $dashboard->id,
-
         ]);
+
+        $message = Message::where('id', $request->message['id'])->first();
+        $message->col_def = $request->col_def;
+        $message->save();
 
         return;
     }
@@ -301,6 +302,7 @@ class ConversationController extends Controller
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
+                'role' => $user->role,
             ],
             'company' => [
                 'id' => $company->id,
@@ -327,6 +329,61 @@ class ConversationController extends Controller
         ]);
 
         return;
+    }
+
+    public function changeInput($id, Request $request)
+    {
+        $message = Message::with(['source', 'conversation'])->find($id);
+
+        abort_if(!$message, 403, 'This pinned item does not exist');
+
+        $user = auth()->user()->loadMissing('companies');
+        $company = $user->companies->first();
+
+        $response = Http::timeout(60)->post($message->source->webhook, [
+            'chat_id' => $message->conversation->id,
+            'message_id' => $message->question_message,
+            'type' => 'change',
+            'input' => $request->input('feedback'),
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->company,
+            ],
+            'source' => [
+                'id' => $message->source->id,
+                'name' => $message->source->name,
+            ],
+            'query' => $message->sql_query,
+            'settings' => [
+                'x_axis' => $message->selectedXAxis,
+                'y_axis' => $message->selectedYAxis,
+                'series' => $message->selectedChartType,
+                'aggregation' => $message->selectedAggregation,
+                'order' => $message->selectedSortField,
+                'order_direction' => $message->selectedOrderDirection,
+                'color' => $message->_color,
+            ]
+        ]);
+
+
+        if ($response->failed()) {
+            return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
+        }
+
+        $json = $response->json();
+
+        // TESTING PURPOSE ONLY
+        $message->_color = '#00FF00';
+        $message->save();
+
+        return [
+            'message' => $message
+        ];
     }
 
 
@@ -372,6 +429,7 @@ class ConversationController extends Controller
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
+                'role' => $user->role,
             ],
             'company' => [
                 'id' => $user->companies[0]->id,
@@ -421,6 +479,7 @@ class ConversationController extends Controller
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
+                'role' => $user->role,
             ],
             'company' => [
                 'id' => $user->companies[0]->id,
@@ -459,6 +518,7 @@ class ConversationController extends Controller
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
+                'role' => $user->role,
             ],
             'company' => [
                 'id' => $user->companies[0]->id,
@@ -503,6 +563,7 @@ class ConversationController extends Controller
 
     public function saveChartDef(Request $request)
     {
+        // dd($request->all());
         $message = Message::where('guid', $request->input('message_guid'))->first();
 
         if (!$message) {
@@ -514,6 +575,7 @@ class ConversationController extends Controller
         $message->_x = $request->input('data')['_x'];
         $message->_y = $request->input('data')['_y'];
         $message->_order = $request->input('data')['_order'];
+        $message->_order_dir = $request->input('data')['_order_dir'];
         $message->save();
 
         return [

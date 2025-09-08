@@ -109,6 +109,11 @@ class User extends Authenticatable
         return $this->hasMany(Suggestion::class);
     }
 
+    public function knowledge()
+    {
+        return $this->hasMany(Knowledge::class);
+    }
+
 
 
     public function needsTwoFactorVerification(): bool
