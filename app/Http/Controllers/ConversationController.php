@@ -116,8 +116,8 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                // 'id' => $source->id,
-                'id' => 5,
+                'id' => $source->id,
+                // 'id' => 5,
                 'name' => $source->name,
             ],
             'query' => '',
