@@ -61,6 +61,7 @@ export default {
             axios
                 .patch(route("conversation.changeInput", props.message?.id), {
                     message: props.message,
+                    feedback: form.feedback,
                 })
                 .then((response) => {
                     form.reset();
