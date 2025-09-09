@@ -55,10 +55,13 @@ export default {
         const form = useForm({
             feedback: "",
         });
-
         const sendFeedback = () => {
+            // console.log(props.message);
+
             axios
-                .patch(route("conversation.changeInput", props.message?.id))
+                .patch(route("conversation.changeInput", props.message?.id), {
+                    message: props.message,
+                })
                 .then((response) => {
                     form.reset();
                     props.close();

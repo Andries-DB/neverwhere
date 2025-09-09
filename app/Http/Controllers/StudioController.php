@@ -25,9 +25,7 @@ class StudioController extends Controller
 
     public function patch(Request $request)
     {
-        // dd($request->all());
         $user = User::with('companies')->find($request->user()->id);
-
 
         $validated = $request->validate([
             'source_id' => [
@@ -35,7 +33,7 @@ class StudioController extends Controller
                 Rule::exists('user_source', 'source_id')
                     ->where(fn($query) => $query->where('user_id', $user->id)),
             ],
-            'model' => ['string'], // eventueel aanpassen
+            'model' => ['string'],
         ]);
 
         $source = Source::findOrFail($validated['source_id']);
@@ -59,17 +57,17 @@ class StudioController extends Controller
             'source_id' => 'bron',
         ]);
 
-
-        // db_id ophalen
         $db_id = $data['suggestion']['db_id'] ?? null;
         $source = Source::findOrFail($data['source_id']);
-
+        $type = "";
         if (empty($db_id)) {
             $suggestion = Suggestion::create([
                 'question'   => $data['suggestion']['question'],
                 'source_id'  => $data['source_id'],
                 'user_id'    => $user->id,
             ]);
+
+            $type = 'create';
         } else {
 
             $suggestion = Suggestion::where('id', $db_id)
@@ -81,13 +79,15 @@ class StudioController extends Controller
             $suggestion->update([
                 'question' => $data['suggestion']['question'],
             ]);
+
+            $type = 'update';
         }
 
         $response = Http::timeout(60)->post($source->webhook, [
             'type' => 'suggestions',
             'input' => json_encode(array_merge(
                 $data['suggestion'],
-                ['type' => 'update']
+                ['type' => $type]
             )),
             'source' => [
                 'id' => $source->id,
@@ -117,9 +117,7 @@ class StudioController extends Controller
     {
         $user = User::with('companies')->find($request->user()->id);
         $source = Source::findOrFail($request['source_id']);
-
         $suggestion = Suggestion::where('id', $id)->first();
-
 
         $response = Http::timeout(60)->post($source->webhook, [
             'type' => 'suggestions',
@@ -170,10 +168,9 @@ class StudioController extends Controller
             'knowledge.query.required' => 'Het query veld is verplicht.',
         ]);
 
-        // db_id ophalen
         $db_id = $data['knowledge']['db_id'] ?? null;
         $source = Source::findOrFail($data['source_id']);
-
+        $type = "";
 
         if (empty($db_id)) {
             $knowledge = Knowledge::create([
@@ -183,6 +180,8 @@ class StudioController extends Controller
                 'source_id'  => $data['source_id'],
                 'user_id'    => $user->id,
             ]);
+
+            $type = 'create';
         } else {
 
             $knowledge = Knowledge::where('id', $db_id)
@@ -190,20 +189,20 @@ class StudioController extends Controller
                 ->where('user_id', $user->id)
                 ->firstOrFail();
 
-            // Updaten
             $knowledge->update([
                 'key' => $data['knowledge']['key'],
                 'description' => $data['knowledge']['description'],
                 'query' => $data['knowledge']['query'],
             ]);
-        }
 
+            $type = 'update';
+        }
 
         $response = Http::timeout(60)->post($source->webhook, [
             'type' => 'knowledge',
             'input' => json_encode(array_merge(
                 $data['knowledge'],
-                ['type' => 'update']
+                ['type' => $type]
             )),
             'source' => [
                 'id' => $source->id,
@@ -233,7 +232,6 @@ class StudioController extends Controller
     {
         $user = User::with('companies')->find($request->user()->id);
         $source = Source::findOrFail($request['source_id']);
-
         $knowledge = Knowledge::where('id', $id)->first();
 
 

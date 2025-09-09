@@ -339,7 +339,6 @@ class ConversationController extends Controller
 
         $user = auth()->user()->loadMissing('companies');
         $company = $user->companies->first();
-
         $response = Http::timeout(60)->post($message->source->webhook, [
             'chat_id' => $message->conversation->id,
             'message_id' => $message->question_message,
@@ -360,18 +359,19 @@ class ConversationController extends Controller
             ],
             'query' => $message->sql_query,
             'settings' => [
-                'x_axis' => $message->selectedXAxis,
-                'y_axis' => $message->selectedYAxis,
-                'series' => $message->selectedChartType,
-                'aggregation' => $message->selectedAggregation,
-                'order' => $message->selectedSortField,
-                'order_direction' => $message->selectedOrderDirection,
-                'color' => $message->_color,
+                'x_axis' => $request['message']['selectedXAxis'],
+                'y_axis' => $request['message']['selectedYAxis'],
+                'series' => $request['message']['selectedChartType'],
+                'aggregation' => $request['message']['selectedSortField'],
+                'order' => $request['message']['selectedSortField'],
+                'order_direction' => $request['message']['selectedSortDirection'],
+                'color' => $request['message']['_color']
             ]
         ]);
 
 
         if ($response->failed()) {
+            dd('response failed');
             return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
         }
 
