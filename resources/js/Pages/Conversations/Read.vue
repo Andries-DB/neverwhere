@@ -369,6 +369,10 @@
                                         <div
                                             class="relative inline-block"
                                             v-if="message.displayAsTable"
+                                            v-click-outside="
+                                                () =>
+                                                    (message.openFeatures = false)
+                                            "
                                         >
                                             <!-- Button -->
                                             <button
@@ -499,6 +503,22 @@
                                                             v-model="
                                                                 message.features
                                                                     .floating_filters
+                                                            "
+                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                                        />
+                                                    </label>
+                                                    <label
+                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                                    >
+                                                        <span
+                                                            class="text-xs text-gray-700"
+                                                            >Total row
+                                                        </span>
+                                                        <input
+                                                            type="checkbox"
+                                                            v-model="
+                                                                message.features
+                                                                    .total_row
                                                             "
                                                             class="w-3 h-3 text-yellow-500 rounded border-gray-300"
                                                         />
@@ -818,6 +838,7 @@
         :show="changeInput"
         :close="toggleChangeInput"
         :message="changedMessage"
+        :config="this.changedConfig"
         @item-changed="handleItemChanged"
     />
 </template>
@@ -887,12 +908,15 @@ export default {
                 pagination: false,
                 multiline_text: false,
                 floating_filters: false,
+                total_row: false,
             },
             changeInput: false,
             changedMessage: null,
+            changedConfig: null,
         };
     },
     methods: {
+        getAllInformation(message) {},
         handleItemChanged({ message_id, message }) {
             const index = this.messages.findIndex((m) => m.id === message_id);
             if (index !== -1) {
@@ -925,6 +949,24 @@ export default {
         toggleChangeInput(message) {
             this.changeInput = !this.changeInput;
             this.changedMessage = message;
+
+            const refName = `chartBuilder_${message.id}`;
+            const chartBuilderRef = this.$refs[refName];
+            const chartBuilder = Array.isArray(chartBuilderRef)
+                ? chartBuilderRef[0]
+                : chartBuilderRef;
+
+            console.log(chartBuilder);
+
+            if (
+                chartBuilderRef &&
+                typeof chartBuilder.getCustomChartOptions === "function"
+            ) {
+                let result = chartBuilder.getCustomChartOptions(message);
+                result.data = [];
+
+                this.changedConfig = result;
+            }
         },
         manualSaveGridState(message) {
             if (message.displayAsTable) {
@@ -1533,7 +1575,7 @@ export default {
                         selectedXAxis: null,
                         selectedYAxis: null,
                         selectedAggregation: "sum",
-                        col_ref: null,
+                        col_def: null,
                     });
                 }
 
@@ -1648,7 +1690,7 @@ export default {
                         selectedAggregation: "sum",
                         selectedSortField: null,
                         selectedSortDirection: null,
-                        col_ref: null,
+                        col_def: null,
                     });
                 }
 
@@ -1711,6 +1753,7 @@ export default {
                                 pagination: false,
                                 multiline_text: false,
                                 floating_filters: false,
+                                total_row: false,
                             },
                             openFeatures: false,
                         });
@@ -1800,7 +1843,7 @@ export default {
             selectedSortDirection: m._order_dir || null,
             selectedAggregation: m._agg || "sum",
             selectedOrder: m._order || "value_desc",
-            col_ref: m.col_def || null,
+            col_def: m.col_def || null,
             _x: m._x,
             _y: m._y,
             _order: m._order,

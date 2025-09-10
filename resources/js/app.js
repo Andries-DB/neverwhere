@@ -25,12 +25,27 @@ createInertiaApp({
     async setup({ el, App, props, plugin }) {
         const initialLocale = props.initialPage.props.locale || "en";
         await loadLocaleMessages(initialLocale);
-
-        createApp({ render: () => h(App, props) })
+        const vueApp = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
-            .use(i18n)
-            .mount(el);
+            .use(i18n);
+
+        // 👇 Hier registreer je de directive
+        vueApp.directive("click-outside", {
+            beforeMount(el, binding) {
+                el.clickOutsideEvent = (event) => {
+                    if (!(el === event.target || el.contains(event.target))) {
+                        binding.value(event);
+                    }
+                };
+                document.addEventListener("click", el.clickOutsideEvent);
+            },
+            unmounted(el) {
+                document.removeEventListener("click", el.clickOutsideEvent);
+            },
+        });
+
+        vueApp.mount(el);
     },
     progress: {
         color: "#4B5563",

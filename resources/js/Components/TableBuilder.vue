@@ -16,6 +16,7 @@
                 rowSelection="multiple"
                 groupDisplayType="multipleColumns"
                 @grid-ready="onGridReady"
+                :grandTotalRow="grandTotalRow"
             />
         </div>
     </div>
@@ -65,6 +66,7 @@ export default {
     },
     data() {
         return {
+            grandTotalRow: "",
             gridApi: null,
             customHeaders: {},
             savedGridState: {
@@ -100,24 +102,8 @@ export default {
                 enableRowGroup: this.getFeature("grouping", true),
                 enablePivot: this.getFeature("grouping", true),
                 enableValue: this.getFeature("grouping", true),
-                theme: themeQuartz.withPart(iconSetQuartzLight).withParams({
-                    backgroundColor: "#ffffff",
-                    browserColorScheme: "light",
-                    columnBorder: false,
-                    fontFamily: "Arial",
-                    foregroundColor: "rgb(46, 55, 66)",
-                    headerBackgroundColor: "#F9FAFB",
-                    headerFontSize: 14,
-                    headerFontWeight: 600,
-                    headerTextColor: "#919191",
-                    oddRowBackgroundColor: "#F9FAFB",
-                    rowBorder: false,
-                    sidePanelBorder: true,
-                    spacing: 8,
-                    wrapperBorder: false,
-                    wrapperBorderRadius: 0,
-                }),
-                chartThemes: [],
+
+                chartThemes: ["ag-default", "ag-material", "ag-pastel"],
                 getContextMenuItems: (params) => {
                     const defaultItems = [
                         "copy",
@@ -842,13 +828,9 @@ export default {
                 });
             }
         },
+        "message.features.total_row": function (newValue) {
+            this.grandTotalRow = newValue === true ? "bottom" : "";
+        },
     },
 };
 </script>
-
-<style>
-.button-group {
-    padding-bottom: 4px;
-    display: block;
-}
-</style>

@@ -358,15 +358,7 @@ class ConversationController extends Controller
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
-            'settings' => [
-                'x_axis' => $request['message']['selectedXAxis'],
-                'y_axis' => $request['message']['selectedYAxis'],
-                'series' => $request['message']['selectedChartType'],
-                'aggregation' => $request['message']['selectedSortField'],
-                'order' => $request['message']['selectedSortField'],
-                'order_direction' => $request['message']['selectedSortDirection'],
-                'color' => $request['message']['_color']
-            ]
+            'settings' => $request->config
         ]);
 
 

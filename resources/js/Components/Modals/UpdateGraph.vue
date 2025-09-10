@@ -50,19 +50,20 @@ export default {
         show: Boolean,
         close: Function,
         message: Object,
+        config: Array,
     },
     setup(props, { emit }) {
         const form = useForm({
             feedback: "",
         });
         const sendFeedback = () => {
-            // console.log(props.message);
-
             axios
                 .patch(route("conversation.changeInput", props.message?.id), {
                     message: props.message,
                     feedback: form.feedback,
+                    config: props.config,
                 })
+
                 .then((response) => {
                     form.reset();
                     props.close();

@@ -81,14 +81,18 @@
 
                 <!-- Grafiek weergave met AG Charts -->
                 <div v-if="message.displayAsChart" class="relative">
-                    <ChartBuilder :message="message" />
+                    <ChartBuilder :message="message" ref="chartBuilder" />
                 </div>
 
                 <!-- Tabel weergave met AG Grid -->
                 <div v-else-if="message.displayAsTable">
-                    <TableBuilder :message="message" height="full" />
+                    <TableBuilder
+                        :message="message"
+                        height="full"
+                        ref="tableBuilder"
+                    />
 
-                    <div class="text-xs ml-2 text-gray-600 mt-2">
+                    <div class="flex justify-start items-center gap-2 mt-2">
                         <span
                             :style="{
                                 visibility:
@@ -96,10 +100,27 @@
                                         ? 'visible'
                                         : 'hidden',
                             }"
+                            class="text-xs ml-2 text-gray-600"
                         >
                             {{ message.json?.length || 0 }}
                             records
                         </span>
+
+                        <button
+                            @click="manualSaveGridState(message)"
+                            class="px-3 py-1.5 text-xs rounded-md focus:outline-none flex items-center text-gray-600 hover:bg-gray-200"
+                        >
+                            <template v-if="message.displayAsTable">
+                                <span v-if="message.col_def">
+                                    <i class="fas fa-bookmark mr-1"></i>
+                                    Opgeslagen
+                                </span>
+                                <span v-else>
+                                    <i class="far fa-bookmark mr-1"></i>
+                                    Opslaan
+                                </span>
+                            </template>
+                        </button>
                     </div>
                 </div>
 
@@ -156,17 +177,14 @@ export default {
         hasTableData(message) {
             if (message.send_by !== "ai") return false;
 
-            // Controleer eerst of message.json bestaat en niet leeg is
             if (!message.json || Object.keys(message.json).length === 0) {
                 return false;
             }
 
-            // Als json bestaat, controleer of het een array is met data
             if (Array.isArray(message.json) && message.json.length > 0) {
                 return true;
             }
 
-            // Fallback naar de oude parseTableMessage methode
             const parsed = this.parseTableMessage(message.message);
             return parsed.rows.length > 0;
         },
@@ -297,29 +315,21 @@ export default {
             message.displayAsChart = mode === "chart";
             message.displayAsQuery = mode === "sql_query";
 
-            // Stel default axes in als ze nog niet zijn ingesteld
+            // Set default axes if switching to chart mode and not already set
             if (
                 mode === "chart" &&
                 (!message.selectedXAxis || !message.selectedYAxis)
             ) {
                 const fields = this.getAllFields(message);
-                const numericFields = this.getAllFields(message);
-
-                // Probeer slimme defaults te kiezen
-                if (!message.selectedXAxis && fields.length > 0) {
-                    // Zoek een geschikt categorisch veld
-                    const categoricalField = fields.find(
-                        (f) => !numericFields.some((nf) => nf.key === f.key)
+                if (fields.length > 0) {
+                    message.selectedXAxis = fields[0].key;
+                    // Try to find a numeric field for Y-axis, otherwise default to count
+                    const numericField = fields.find((f) =>
+                        this.isNumericField(f.key, message.json)
                     );
-                    message.selectedXAxis = categoricalField
-                        ? categoricalField.key
-                        : fields[0].key;
-                }
-
-                if (!message.selectedYAxis && numericFields.length > 0) {
-                    message.selectedYAxis = numericFields[0].key;
-                } else if (!message.selectedYAxis) {
-                    message.selectedYAxis = "__count";
+                    message.selectedYAxis = numericField
+                        ? numericField.key
+                        : "__count";
                 }
             }
         },
@@ -420,6 +430,84 @@ export default {
                 .join(" ")
                 .trim();
         },
+        manualSaveGridState(message) {
+            if (message.displayAsTable) {
+                const refName = `tableBuilder`;
+                const tableBuilderRef = this.$refs[refName];
+                const tableBuilder = Array.isArray(tableBuilderRef)
+                    ? tableBuilderRef[0]
+                    : tableBuilderRef;
+
+                if (
+                    tableBuilder &&
+                    typeof tableBuilder.SaveGridState === "function"
+                ) {
+                    tableBuilder
+                        .SaveGridState()
+                        .then((result) => {
+                            if (result.success) {
+                                message.col_def = result.data;
+
+                                this.$refs.snackbar.show(
+                                    "Tabel is goed opgeslagen",
+                                    "success"
+                                );
+                            } else {
+                                this.$refs.snackbar.show(
+                                    "Er is een fout opgetreden bij het opslaan van de tabel",
+                                    "error"
+                                );
+                            }
+                        })
+                        .catch((error) => {
+                            this.$refs.snackbar.show(
+                                "Er is een fout opgetreden bij het opslaan van de tabel",
+                                "error"
+                            );
+                        });
+                }
+            } else if (message.displayAsChart) {
+                const refName = `chartBuilder`;
+                const chartBuilderRef = this.$refs[refName];
+                const chartBuilder = Array.isArray(chartBuilderRef)
+                    ? chartBuilderRef[0]
+                    : chartBuilderRef;
+
+                if (
+                    chartBuilderRef &&
+                    typeof chartBuilder.SaveGraphState === "function"
+                ) {
+                    chartBuilder
+                        .SaveGraphState()
+                        .then((result) => {
+                            if (result.success) {
+                                console.log(result.data._x);
+                                message._x = result.data._x;
+                                message._y = result.data._y;
+                                message._sort = result.data._sort;
+                                message._order = result.data._order;
+                                message._agg = result.data._agg;
+
+                                this.$refs.snackbar.show(
+                                    "Grafiek is goed opgeslagen",
+                                    "success"
+                                );
+                            } else {
+                                this.$refs.snackbar.show(
+                                    "Er is een fout opgetreden bij het opslaan van de grafiek",
+                                    "error"
+                                );
+                            }
+                        })
+                        .catch((error) => {
+                            this.$refs.snackbar.show(
+                                "Er is een fout opgetreden bij het opslaan van de grafiek",
+                                "error"
+                            );
+                        });
+                }
+            }
+        },
     },
     computed: {},
     mounted() {
@@ -428,10 +516,14 @@ export default {
             this.message.displayAsTable = this.message.respond_type === "Table";
             this.message.displayAsChart = this.message.respond_type === "Chart";
             this.message.displayAsQuery = this.message.respond_type === "Query";
-            this.message.selectedChartType = "bar";
-            this.message.selectedXAxis = null;
-            this.message.selectedYAxis = null;
-            this.message.selectedAggregation = "sum";
+            this.message.selectedChartType = this.message._sort || "bar";
+            this.message.selectedXAxis = this.message._x || null;
+            this.message.selectedYAxis = this.message._y || null;
+            this.message.selectedAggregation = this.message._agg || "sum";
+            this.message.selectedSortField = this.message._order || null;
+            this.message.selectedSortDirection =
+                this.message._order_dir || null;
+            this.message.col_def = this.message.col_def || null;
         }
     },
 };

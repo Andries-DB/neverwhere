@@ -919,9 +919,9 @@ watch(sidebarCollapsed, (newValue) => {
     </div>
 </template>
 
-<!-- <style>
+<style>
 html,
 body {
     overflow-x: hidden;
 }
-</style> -->
+</style>

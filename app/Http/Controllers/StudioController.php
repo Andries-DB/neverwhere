@@ -46,30 +46,29 @@ class StudioController extends Controller
     {
         $user = User::with('companies')->find($request->user()->id);
         $data = $request->validate([
-            'suggestion.question' => 'required|string',
-            'suggestion.db_id' => 'nullable|integer',
-            'suggestion.id' => 'required|integer',
+            'question' => 'required|string',
+            'id' => 'nullable|integer',
             'source_id' => 'required|integer|exists:sources,id',
         ], [
-            'suggestion.question.required' => 'Het veld vraag is verplicht.',
+            'question.required' => 'Het veld vraag is verplicht.',
         ], [
-            'suggestion.question' => 'vraag',
+            'question' => 'vraag',
             'source_id' => 'bron',
         ]);
 
-        $db_id = $data['suggestion']['db_id'] ?? null;
+        $db_id = $data['id'] ?? null;
         $source = Source::findOrFail($data['source_id']);
         $type = "";
         if (empty($db_id)) {
+            $type = 'create';
+
             $suggestion = Suggestion::create([
-                'question'   => $data['suggestion']['question'],
+                'question'   => $data['question'],
                 'source_id'  => $data['source_id'],
                 'user_id'    => $user->id,
             ]);
-
-            $type = 'create';
         } else {
-
+            $type = 'update';
             $suggestion = Suggestion::where('id', $db_id)
                 ->where('source_id', $data['source_id'])
                 ->where('user_id', $user->id)
@@ -77,18 +76,15 @@ class StudioController extends Controller
 
             // Updaten
             $suggestion->update([
-                'question' => $data['suggestion']['question'],
+                'question' => $data['question'],
             ]);
-
-            $type = 'update';
         }
 
         $response = Http::timeout(60)->post($source->webhook, [
             'type' => 'suggestions',
-            'input' => json_encode(array_merge(
-                $data['suggestion'],
-                ['type' => $type]
-            )),
+            'input' => json_encode(
+                ['type' => $type, 'question' => $suggestion->question, 'created_at' => $suggestion->created_at, 'updated_at' => $suggestion->updated_at, 'id' => $suggestion->id]
+            ),
             'source' => [
                 'id' => $source->id,
                 'name' => $source->name,
@@ -110,7 +106,79 @@ class StudioController extends Controller
             return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
         }
 
-        return $suggestion->id;
+        return $suggestion;
+    }
+
+
+    public function patch_knowledge(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'key' => 'required|string',
+            'description' => 'required|string',
+            'id' => 'nullable|integer',
+            'source_id' => 'required|integer|exists:sources,id',
+        ], [
+            'key.required' => 'Het key veld is verplicht.',
+            'description.required' => 'Het omschrijving veld is verplicht.',
+        ]);
+
+        $db_id = $data['id'] ?? null;
+        $source = Source::findOrFail($data['source_id']);
+        $type = "";
+
+        if (empty($db_id)) {
+            $type = 'create';
+
+            $knowledge = Knowledge::create([
+                'key'   => $data['key'],
+                'description'   => $data['description'],
+                'query' => $request['query'],
+                'source_id'  => $data['source_id'],
+                'user_id'    => $user->id,
+            ]);
+        } else {
+            $type = 'update';
+            $knowledge = Knowledge::where('id', $db_id)
+                ->where('source_id', $data['source_id'])
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
+            $knowledge->update([
+                'key' => $data['key'],
+                'description' => $data['description'],
+                'query' => $request['query']
+            ]);
+        }
+
+        $response = Http::timeout(60)->post($source->webhook, [
+            'type' => 'knowledge',
+            'input' => json_encode(
+                ['type' => $type, 'key' => $knowledge->key, 'description' => $knowledge->description, 'query' => $knowledge->query, 'created_at' => $knowledge->created_at, 'updated_at' => $knowledge->updated_at, 'id' => $knowledge->id]
+            ),
+            'source' => [
+                'id' => $source->id,
+                'name' => $source->name,
+            ],
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
+            'company' => [
+                'id' => $user->companies[0]->id,
+                'name' => $user->companies[0]->company
+            ],
+            'query' => '',
+
+        ]);
+
+        if ($response->failed()) {
+            return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het opslaan van de knowledge.']);
+        }
+
+        return $knowledge;
     }
 
     public function delete_suggestion(Request $request, $id)
@@ -146,86 +214,10 @@ class StudioController extends Controller
             return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
         }
 
+        $id = $suggestion->id;
         $suggestion->delete();
 
-        return;
-    }
-
-    public function patch_knowledge(Request $request)
-    {
-        $user = $request->user();
-
-        $data = $request->validate([
-            'knowledge.key' => 'required|string',
-            'knowledge.description' => 'required|string',
-            'knowledge.query' => 'required|string',
-            'knowledge.db_id' => 'nullable|integer',
-            'knowledge.id' => 'required|integer',
-            'source_id' => 'required|integer|exists:sources,id',
-        ], [
-            'knowledge.key.required' => 'Het key veld is verplicht.',
-            'knowledge.description.required' => 'Het omschrijving veld is verplicht.',
-            'knowledge.query.required' => 'Het query veld is verplicht.',
-        ]);
-
-        $db_id = $data['knowledge']['db_id'] ?? null;
-        $source = Source::findOrFail($data['source_id']);
-        $type = "";
-
-        if (empty($db_id)) {
-            $knowledge = Knowledge::create([
-                'key'   => $data['knowledge']['key'],
-                'description'   => $data['knowledge']['description'],
-                'query'   => $data['knowledge']['query'],
-                'source_id'  => $data['source_id'],
-                'user_id'    => $user->id,
-            ]);
-
-            $type = 'create';
-        } else {
-
-            $knowledge = Knowledge::where('id', $db_id)
-                ->where('source_id', $data['source_id'])
-                ->where('user_id', $user->id)
-                ->firstOrFail();
-
-            $knowledge->update([
-                'key' => $data['knowledge']['key'],
-                'description' => $data['knowledge']['description'],
-                'query' => $data['knowledge']['query'],
-            ]);
-
-            $type = 'update';
-        }
-
-        $response = Http::timeout(60)->post($source->webhook, [
-            'type' => 'knowledge',
-            'input' => json_encode(array_merge(
-                $data['knowledge'],
-                ['type' => $type]
-            )),
-            'source' => [
-                'id' => $source->id,
-                'name' => $source->name,
-            ],
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
-            'company' => [
-                'id' => $user->companies[0]->id,
-                'name' => $user->companies[0]->company
-            ],
-            'query' => '',
-
-        ]);
-
-        if ($response->failed()) {
-            return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
-        }
-
-        return $knowledge->id;
+        return $id;
     }
 
     public function delete_knowledge($id, Request $request)
@@ -234,9 +226,10 @@ class StudioController extends Controller
         $source = Source::findOrFail($request['source_id']);
         $knowledge = Knowledge::where('id', $id)->first();
 
+        $id = $knowledge->id;
 
         $response = Http::timeout(60)->post($source->webhook, [
-            'type' => 'suggestions',
+            'type' => 'knowledge',
             'input' => json_encode(array_merge(
                 $knowledge->toArray(),
                 ['type' => 'delete']
@@ -264,6 +257,6 @@ class StudioController extends Controller
 
         $knowledge->delete();
 
-        return;
+        return $id;
     }
 }
