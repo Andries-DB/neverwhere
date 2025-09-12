@@ -66,6 +66,7 @@ export default {
     },
     data() {
         return {
+            recordCountInterval: null,
             grandTotalRow: "",
             gridApi: null,
             customHeaders: {},
@@ -182,8 +183,22 @@ export default {
     },
     created() {
         this.loadGridState();
+
+        if (this.message._total_row && this.sort !== "pinned") {
+            this.grandTotalRow = "bottom";
+        }
     },
     methods: {
+        getFilteredRecords() {
+            const count = this.gridApi
+                ? this.gridApi.getDisplayedRowCount()
+                : 0;
+            // Update de parent component
+            if (this.message) {
+                this.message.filteredRecordCount = count;
+            }
+            return count;
+        },
         getColdef() {
             const columnState = this.gridApi.getColumnState().map((c) => {
                 const colDef = this.gridApi.getColumnDef(c.colId);
@@ -227,6 +242,7 @@ export default {
                 const data = {
                     message_guid: this.message.guid,
                     data: this.savedGridState,
+                    total_row: this.grandTotalRow,
                 };
 
                 const response = await fetch("/conversation/savecoldef", {
@@ -766,6 +782,20 @@ export default {
         onGridReady(params) {
             this.gridApi = params.api;
 
+            this.$nextTick(() => {
+                this.message.filteredRecordCount = this.getFilteredRecords();
+            });
+
+            // Listen for changes
+            this.gridApi.addEventListener("filterChanged", () => {
+                this.message.filteredRecordCount = this.getFilteredRecords();
+            });
+
+            // Also listen for sort changes
+            this.gridApi.addEventListener("sortChanged", () => {
+                this.message.filteredRecordCount = this.getFilteredRecords();
+            });
+
             setTimeout(() => {
                 this.restoreGridState();
             }, 1);
@@ -813,7 +843,7 @@ export default {
                 });
 
                 // Refresh de grid
-                // this.gridApi.refreshHeader();
+                this.gridApi.refreshCells();
                 // this.gridApi.resetRowHeights();
             }
         },
@@ -826,6 +856,8 @@ export default {
                     const colDef = column.getColDef();
                     colDef.floatingFilter = newValue;
                 });
+
+                this.gridApi.refreshCells();
             }
         },
         "message.features.total_row": function (newValue) {

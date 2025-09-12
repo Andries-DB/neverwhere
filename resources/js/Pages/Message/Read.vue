@@ -82,6 +82,44 @@
                 <!-- Grafiek weergave met AG Charts -->
                 <div v-if="message.displayAsChart" class="relative">
                     <ChartBuilder :message="message" ref="chartBuilder" />
+
+                    <div class="flex justify-start items-center gap-2 mt-2">
+                        <span
+                            :style="{
+                                visibility:
+                                    message.json && message.json.length > 0
+                                        ? 'visible'
+                                        : 'hidden',
+                            }"
+                            class="text-xs ml-2 text-gray-600"
+                        >
+                            {{ message.json?.length || 0 }}
+                            records
+                        </span>
+
+                        <button
+                            @click="manualSaveGridState(message)"
+                            class="px-3 py-1.5 text-xs rounded-md focus:outline-none flex items-center text-gray-600 hover:bg-gray-200"
+                        >
+                            <template v-if="message.displayAsChart">
+                                <span
+                                    v-if="
+                                        this.message._sort &&
+                                        this.message._x &&
+                                        this.message._y &&
+                                        this.message._agg
+                                    "
+                                >
+                                    <i class="fas fa-bookmark mr-1"></i>
+                                    Opgeslagen
+                                </span>
+                                <span v-else>
+                                    <i class="far fa-bookmark mr-1"></i>
+                                    Opslaan
+                                </span>
+                            </template>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Tabel weergave met AG Grid -->
@@ -121,6 +159,149 @@
                                 </span>
                             </template>
                         </button>
+
+                        <div
+                            class="relative inline-block"
+                            v-if="message.displayAsTable"
+                            v-click-outside="
+                                () => (message.openFeatures = false)
+                            "
+                        >
+                            <!-- Button -->
+                            <button
+                                @click="
+                                    message.openFeatures = !message.openFeatures
+                                "
+                                class="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors flex items-center"
+                            >
+                                <i class="fas fa-sliders-h mr-1.5"></i>
+                                Grid Features
+                                <i
+                                    class="fas fa-chevron-down ml-1.5 text-xs transition-transform"
+                                    :class="{
+                                        'rotate-180': message.openFeatures,
+                                    }"
+                                ></i>
+                            </button>
+
+                            <!-- Dropdown -->
+                            <div
+                                v-if="message.openFeatures"
+                                class="absolute bottom-full mb-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                            >
+                                <div class="pace-y-1">
+                                    <!-- Sorting -->
+                                    <label
+                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                    >
+                                        <span class="text-xs text-gray-700"
+                                            >Sorting</span
+                                        >
+                                        <input
+                                            type="checkbox"
+                                            v-model="message.features.sorting"
+                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                        />
+                                    </label>
+
+                                    <!-- Filtering -->
+                                    <label
+                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                    >
+                                        <span class="text-xs text-gray-700"
+                                            >Filtering</span
+                                        >
+                                        <input
+                                            type="checkbox"
+                                            v-model="message.features.filtering"
+                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                        />
+                                    </label>
+
+                                    <!-- Grouping -->
+                                    <label
+                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                    >
+                                        <span class="text-xs text-gray-700"
+                                            >Grouping</span
+                                        >
+                                        <input
+                                            type="checkbox"
+                                            v-model="message.features.grouping"
+                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                        />
+                                    </label>
+
+                                    <label
+                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                    >
+                                        <span class="text-xs text-gray-700"
+                                            >Pagination</span
+                                        >
+                                        <input
+                                            type="checkbox"
+                                            v-model="
+                                                message.features.pagination
+                                            "
+                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                        />
+                                    </label>
+
+                                    <label
+                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                    >
+                                        <span class="text-xs text-gray-700"
+                                            >Multi line text</span
+                                        >
+                                        <input
+                                            type="checkbox"
+                                            v-model="
+                                                message.features.multiline_text
+                                            "
+                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                        />
+                                    </label>
+
+                                    <label
+                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                    >
+                                        <span class="text-xs text-gray-700"
+                                            >Floating filters</span
+                                        >
+                                        <input
+                                            type="checkbox"
+                                            v-model="
+                                                message.features
+                                                    .floating_filters
+                                            "
+                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                        />
+                                    </label>
+                                    <label
+                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                    >
+                                        <span class="text-xs text-gray-700"
+                                            >Total row
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            v-model="message.features.total_row"
+                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            @click="exportTable(message)"
+                            class="px-3 py-1.5 text-xs rounded-md focus:outline-none flex items-center text-gray-600 hover:bg-gray-200"
+                        >
+                            <span>
+                                <i class="fas fa-download"></i>
+                                Exporteer
+                            </span>
+                        </button>
                     </div>
                 </div>
 
@@ -146,6 +327,8 @@
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <Snackbar :ref="'snackbar'" />
 </template>
 
 <script>
@@ -154,6 +337,7 @@ import { Head } from "@inertiajs/vue3";
 import ChartBuilder from "@/Components/ChartBuilder.vue";
 import TableBuilder from "@/Components/TableBuilder.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
+import Snackbar from "@/Components/Snackbar.vue";
 
 export default {
     name: "",
@@ -163,6 +347,7 @@ export default {
         PrimaryButton,
         ChartBuilder,
         TableBuilder,
+        Snackbar,
     },
     props: {
         message: Object,
@@ -172,7 +357,9 @@ export default {
     },
     methods: {
         goBack() {
-            window.history.back();
+            this.$inertia.visit(
+                route("conversation.read", this.message.conversation.guid)
+            );
         },
         hasTableData(message) {
             if (message.send_by !== "ai") return false;
@@ -481,12 +668,11 @@ export default {
                         .SaveGraphState()
                         .then((result) => {
                             if (result.success) {
-                                console.log(result.data._x);
-                                message._x = result.data._x;
-                                message._y = result.data._y;
-                                message._sort = result.data._sort;
-                                message._order = result.data._order;
-                                message._agg = result.data._agg;
+                                this.message._x = result.data._x;
+                                this.message._y = result.data._y;
+                                this.message._sort = result.data._sort;
+                                this.message._order = result.data._order;
+                                this.message._agg = result.data._agg;
 
                                 this.$refs.snackbar.show(
                                     "Grafiek is goed opgeslagen",
@@ -502,6 +688,30 @@ export default {
                         .catch((error) => {
                             this.$refs.snackbar.show(
                                 "Er is een fout opgetreden bij het opslaan van de grafiek",
+                                "error"
+                            );
+                        });
+                }
+            }
+        },
+        exportTable(message) {
+            if (message.displayAsTable) {
+                const refName = `tableBuilder`;
+                const tableBuilderRef = this.$refs[refName];
+                const tableBuilder = Array.isArray(tableBuilderRef)
+                    ? tableBuilderRef[0]
+                    : tableBuilderRef;
+
+                if (
+                    tableBuilder &&
+                    typeof tableBuilder.SaveGridState === "function"
+                ) {
+                    tableBuilder
+                        .exportTable()
+                        .then((result) => {})
+                        .catch((error) => {
+                            this.$refs.snackbar.show(
+                                "Er is een fout opgetreden bij het opslaan van de tabel",
                                 "error"
                             );
                         });
@@ -524,6 +734,22 @@ export default {
             this.message.selectedSortDirection =
                 this.message._order_dir || null;
             this.message.col_def = this.message.col_def || null;
+            this.message.openFeatures = false;
+            this.message.features = {
+                sorting: true,
+                filtering: true,
+                grouping: true,
+                pagination: false,
+                multiline_text: false,
+                floating_filters: false,
+                total_row: false,
+            };
+            this.message._x = this.message._x;
+            this.message._y = this.message._y;
+            this.message._order = this.message._order;
+            this.message._order_dir = this.message._order_dir;
+            this.message._agg = this.message._agg;
+            this.message._sort = this.message._sort;
         }
     },
 };

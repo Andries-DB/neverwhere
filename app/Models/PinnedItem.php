@@ -25,6 +25,7 @@ class PinnedItem extends Model
         'display_order',
         'dashboard_id',
         'col_def',
+        '_order_dir'
     ];
 
     protected $casts = [

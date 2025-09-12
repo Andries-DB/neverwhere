@@ -308,11 +308,13 @@
                                 <div
                                     class="relative"
                                     v-click-outside="
-                                        () => (this.openDropdown = null)
+                                        () => {
+                                            this.openDropdown = null;
+                                        }
                                     "
                                 >
                                     <button
-                                        @click="toggleDropdown(item.id)"
+                                        @click.stop="toggleDropdown(item.id)"
                                         class="text-gray-400 hover:text-gray-600 transition-colors"
                                         title="Acties"
                                     >

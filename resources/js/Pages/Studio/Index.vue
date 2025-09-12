@@ -191,6 +191,36 @@
                                 </button>
                             </td>
                         </tr>
+                        <tr
+                            class="bg-white border-b border-gray-200"
+                            v-if="this.suggestions.length < 1"
+                        >
+                            <td
+                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap text-center"
+                                colspan="6"
+                            >
+                                <div class="py-8">
+                                    <svg
+                                        class="mx-auto h-12 w-12 text-gray-400"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-5m-8 0H4"
+                                        />
+                                    </svg>
+                                    <h3
+                                        class="mt-2 text-sm font-medium text-gray-900"
+                                    >
+                                        Geen suggestievragen gevonden
+                                    </h3>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
 
@@ -270,6 +300,36 @@
                                         />
                                     </svg>
                                 </button>
+                            </td>
+                        </tr>
+                        <tr
+                            class="bg-white border-b border-gray-200"
+                            v-if="this.knowledge.length < 1"
+                        >
+                            <td
+                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap text-center"
+                                colspan="6"
+                            >
+                                <div class="py-8">
+                                    <svg
+                                        class="mx-auto h-12 w-12 text-gray-400"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-5m-8 0H4"
+                                        />
+                                    </svg>
+                                    <h3
+                                        class="mt-2 text-sm font-medium text-gray-900"
+                                    >
+                                        Geen knowledge gevonden
+                                    </h3>
+                                </div>
                             </td>
                         </tr>
                     </tbody>

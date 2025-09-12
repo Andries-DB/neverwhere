@@ -311,7 +311,17 @@
                                             }"
                                             class="text-xs ml-2 text-gray-600"
                                         >
-                                            {{ message.json?.length || 0 }}
+                                            <span
+                                                v-if="!message.displayAsTable"
+                                            >
+                                                {{ message.json?.length || 0 }}
+                                            </span>
+                                            <span v-else>
+                                                {{
+                                                    message.filteredRecordCount ||
+                                                    getFilteredRecords(message)
+                                                }}
+                                            </span>
                                             records
                                         </span>
 
@@ -916,7 +926,22 @@ export default {
         };
     },
     methods: {
-        getAllInformation(message) {},
+        getFilteredRecords(message) {
+            const refName = `tableBuilder_${message.id}`;
+            const tableBuilderRef = this.$refs[refName];
+            const tableBuilder = Array.isArray(tableBuilderRef)
+                ? tableBuilderRef[0]
+                : tableBuilderRef;
+
+            if (
+                tableBuilder &&
+                typeof tableBuilder.getFilteredRecords === "function"
+            ) {
+                let results = tableBuilder.getFilteredRecords();
+
+                return results;
+            }
+        },
         handleItemChanged({ message_id, message }) {
             const index = this.messages.findIndex((m) => m.id === message_id);
             if (index !== -1) {
@@ -1641,7 +1666,7 @@ export default {
                     "There was an error fetching the information. Please try again.";
             }
         },
-        async sendMessage(message = null) {
+        async sendMessage() {
             if (!this.form.message.trim()) return;
 
             this.no_message = false;
@@ -1857,6 +1882,7 @@ export default {
                 pagination: false,
                 multiline_text: false,
                 floating_filters: false,
+                total_row: m._total_row === 1 ? true : false,
             },
             openFeatures: false,
         }));

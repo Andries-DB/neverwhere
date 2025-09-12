@@ -205,10 +205,11 @@ class ConversationController extends Controller
             '_x' => $request->message['selectedXAxis'],
             '_y' => $request->message['selectedYAxis'],
             '_agg' => $request->message['selectedAggregation'],
-            '_order' => $request->message['selectedSortOrder'],
+            '_order' => $request->message['selectedSortField'],
+            '_order_dir' => $request->message['selectedSortDirection'],
+
             'width' => $request->width,
             ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
-
             'display_order' => (PinnedItem::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
             'dashboard_id' => $dashboard->id,
         ]);
@@ -354,6 +355,7 @@ class ConversationController extends Controller
                 'name' => $company->company,
             ],
             'source' => [
+                // 'id' => 5,
                 'id' => $message->source->id,
                 'name' => $message->source->name,
             ],
@@ -368,7 +370,6 @@ class ConversationController extends Controller
         }
 
         $json = $response->json();
-
         // TESTING PURPOSE ONLY
         $message->_color = '#00FF00';
         $message->save();
@@ -538,6 +539,7 @@ class ConversationController extends Controller
 
     public function saveColDef(Request $request)
     {
+
         $message = Message::where('guid', $request->input('message_guid'))->first();
 
         if (!$message) {
@@ -545,6 +547,7 @@ class ConversationController extends Controller
         }
 
         $message->col_def = $request->input('data');
+        $message->_total_row = $request->input('total_row') === 'bottom' ? 1 : 0;
         $message->save();
 
         return [
