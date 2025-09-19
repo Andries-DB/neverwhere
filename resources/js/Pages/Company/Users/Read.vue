@@ -29,13 +29,14 @@
 
             <div class="flex gap-2">
                 <PrimaryButton @click="toggleEdit">
-                    <i class="fas fa-edit mr-2"></i> Pas aan
+                    <i class="fas fa-edit mr-2"></i> {{ $t("buttons.edit") }}
                 </PrimaryButton>
                 <PrimaryButton v-if="editUser" @click="saveUser">
-                    <i class="fas fa-check mr-2"></i>Sla op
+                    <i class="fas fa-check mr-2"></i>{{ $t("buttons.save") }}
                 </PrimaryButton>
                 <SecondaryButton @click="deleteUser">
-                    <i class="fas fa-trash-alt mr-2"></i>Verwijder
+                    <i class="fas fa-trash-alt mr-2"></i
+                    >{{ $t("buttons.delete") }}
                 </SecondaryButton>
             </div>
         </div>
@@ -43,39 +44,42 @@
         <div>
             <div class="py-6 rounded-md">
                 <div class="w-full">
-                    <InputLabel for="firstname" value="Voornaam*" />
+                    <InputLabel
+                        for="firstname"
+                        :value="$t('labels.firstname') + '*'"
+                    />
                     <TextInput
                         id="firstname"
                         type="text"
                         class="mt-1 block w-full"
                         v-model="form.firstname"
                         :disabled="!editUser"
-                        placeholder="Voornaam"
+                        :placeholder="$t('labels.firstname')"
                     />
                     <InputError class="mt-2" :message="form.errors.firstname" />
                 </div>
                 <div class="w-full mt-2">
-                    <InputLabel for="name" value="Naam*" />
+                    <InputLabel for="name" :value="$t('labels.name') + '*'" />
                     <TextInput
                         id="name"
                         type="text"
                         class="mt-1 block w-full"
                         v-model="form.name"
                         :disabled="!editUser"
-                        placeholder="Naam"
+                        :placeholder="$t('labels.name')"
                     />
                     <InputError class="mt-2" :message="form.errors.name" />
                 </div>
 
                 <div class="w-full mt-2">
-                    <InputLabel for="email" value="Email*" />
+                    <InputLabel for="email" :value="$t('labels.email') + '*'" />
                     <TextInput
                         id="email"
                         type="email"
                         class="mt-1 block w-full"
                         v-model="form.email"
                         :disabled="!editUser"
-                        placeholder="Email"
+                        :placeholder="$t('labels.email')"
                     />
                     <InputError class="mt-2" :message="form.errors.email" />
                 </div>
@@ -83,7 +87,7 @@
                 <!-- User Groups Section -->
                 <div class="flex flex-col gap-2 mt-4">
                     <label class="text-sm font-medium text-slate-700">
-                        Gebruikersgroepen
+                        {{ $t("labels.usersources") }}
                     </label>
                     <div class="flex flex-wrap gap-2">
                         <div
@@ -104,25 +108,25 @@
                         >
                             <span>{{ userGroup.name }}</span>
                             <span class="text-xs opacity-75"
-                                >({{ userGroup.sources.length }} bronnen)</span
+                                >({{ userGroup.sources.length }}
+                                {{ $t("labels.sources") }})</span
                             >
                         </div>
                     </div>
                     <p class="text-xs text-gray-500 mt-1" v-if="editUser">
-                        Selecteer een gebruikersgroep om automatisch de
-                        bijbehorende bronnen te laden
+                        {{ $t("descriptions.select_users_to_see_sources") }}
                     </p>
                 </div>
 
                 <!-- Sources Section -->
                 <div class="flex flex-col gap-2 mt-4">
                     <label class="text-sm font-medium text-slate-700">
-                        Koppel bronnen
+                        {{ $t("labels.connectsources") }}
                         <span
                             v-if="selectedUserGroups.length"
                             class="text-xs text-blue-600 font-normal"
                         >
-                            (Geladen van:
+                            ({{ $t("labels.loadedfrom") }}:
                             {{
                                 selectedUserGroups
                                     .map((g) => g.name)
@@ -160,19 +164,23 @@
 
         <div class="mt-6">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="font-medium">Rapporten</h2>
+                <h2 class="font-medium">{{ $t("labels.reports") }}</h2>
 
                 <PrimaryButton @click="toggleAddReport">
-                    + Voeg nieuw rapport toe
+                    + {{ $t("buttons.add") }}
                 </PrimaryButton>
             </div>
             <table class="w-full text-sm text-left rtl:text-right">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3">Naam</th>
-                        <th scope="col" class="px-6 py-3">Link</th>
                         <th scope="col" class="px-6 py-3">
-                            <span class="sr-only">Aanpassen</span>
+                            {{ $t("labels.name") }}
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            {{ $t("labels.link") }}
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            <span class="sr-only">{{ $t("labels.edit") }}</span>
                         </th>
                     </tr>
                 </thead>
@@ -200,7 +208,7 @@
                                     })
                                 "
                                 class="font-medium text-blue-600 hover:underline"
-                                >Pas aan</a
+                                >{{ $t("buttons.edit") }}</a
                             >
                         </td>
                     </tr>
@@ -213,7 +221,7 @@
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                             colspan="3"
                         >
-                            Geen resultaten gevonden
+                            {{ $t("labels.noresults") }}
                         </th>
                     </tr>
                 </tbody>

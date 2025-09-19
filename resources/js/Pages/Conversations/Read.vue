@@ -42,13 +42,13 @@
                                     v-if="message.send_by === 'user'"
                                     class="text-xs text-gray-600 mb-1 font-semibold"
                                 >
-                                    Jij:
+                                    {{ $t("conversations.you") }}:
                                 </p>
                                 <p
                                     v-else
                                     class="text-xs text-gray-700 mb-1 font-semibold"
                                 >
-                                    Neverwhere bot
+                                    {{ $t("conversations.bot") }}
                                 </p>
 
                                 <!-- Toggle tussen tekst, tabel en grafiek -->
@@ -68,7 +68,7 @@
                                         ]"
                                         v-if="message.respond_type !== 'Table'"
                                     >
-                                        Tekst
+                                        {{ $t("conversations.text") }}
                                     </button>
                                     <button
                                         v-if="hasTableData(message)"
@@ -82,7 +82,7 @@
                                                 : 'bg-white text-blue-600 hover:bg-gray-100',
                                         ]"
                                     >
-                                        Tabel
+                                        {{ $t("conversations.table") }}
                                     </button>
                                     <button
                                         v-if="hasChartData(message)"
@@ -96,7 +96,7 @@
                                                 : 'bg-white text-blue-600 hover:bg-gray-100',
                                         ]"
                                     >
-                                        Grafiek
+                                        {{ $t("conversations.graph") }}
                                     </button>
                                     <button
                                         v-if="message.sql_query"
@@ -122,43 +122,55 @@
                                     <div class="mb-3 flex justify-end">
                                         <!-- Change graph button -->
                                         <button
+                                            class="absolute -top-10 right-14 z-10 transition-all duration-200 ease-in-out w-9 h-9 rounded-full shadow-md flex items-center justify-center border bg-blue-400 text-blue-800 border-blue-500 hover:bg-blue-500"
+                                            @click="toggleChangeInput(message)"
+                                            title="Verande grafiek layout"
+                                        >
+                                            <i
+                                                class="text-base fas fa-comment"
+                                            ></i>
+                                        </button>
+
+                                        <button
                                             :class="[
-                                                'absolute -top-10 right-14 z-10 transition-all duration-200 ease-in-out',
+                                                'absolute -top-10 right-[6.25rem] z-10 transition-all duration-200 ease-in-out',
                                                 'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
-                                                'bg-blue-400 text-blue-800 border-blue-500 hover:bg-blue-500',
-                                                changingInput &&
-                                                changingInput.id === message.id
+                                                'bg-yellow-400 text-yellow-800 border-yellow-500 hover:bg-yellow-500',
+                                                loadingSummary &&
+                                                loadingSummary.id === message.id
                                                     ? 'animate-pulse'
                                                     : '',
                                             ]"
-                                            @click="toggleChangeInput(message)"
-                                            title="Verande grafiek layout"
+                                            @click="
+                                                generateSummary(
+                                                    message,
+                                                    'chart'
+                                                )
+                                            "
+                                            title="Dr. Itchy Samenvatting"
                                             :disabled="
-                                                changingInput &&
-                                                changingInput.id === message.id
+                                                loadingSummary &&
+                                                loadingSummary.id === message.id
                                             "
                                         >
                                             <i
                                                 :class="[
                                                     'text-base',
-                                                    changingInput &&
-                                                    changingInput.id ===
+                                                    loadingSummary &&
+                                                    loadingSummary.id ===
                                                         message.id
                                                         ? 'fas fa-spinner fa-spin'
-                                                        : 'fas fa-comment',
+                                                        : 'fas fa-user-md',
                                                 ]"
                                             ></i>
                                         </button>
 
                                         <!-- Pin button-->
                                         <button
-                                            v-if="!isChartPinned(message)"
                                             :class="[
                                                 'absolute -top-10 right-3 z-10 transition-all duration-200 ease-in-out',
                                                 'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
-                                                isChartPinned(message)
-                                                    ? 'bg-slate-200 text-slate-700 border-slate-300 hover:bg-slate-300'
-                                                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200',
+                                                'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300',
                                                 clickedMessageId === message.id
                                                     ? 'animate-pop'
                                                     : '',
@@ -166,11 +178,7 @@
                                             @click="
                                                 togglePinModal(message, 'chart')
                                             "
-                                            :title="
-                                                isChartPinned(message)
-                                                    ? 'Loskoppelen van Dashboard'
-                                                    : 'Vastzetten op Dashboard'
-                                            "
+                                            :title="'Vastzetten op Dashboard'"
                                             :disabled="
                                                 !message.selectedXAxis ||
                                                 !message.selectedYAxis
@@ -179,9 +187,7 @@
                                             <i
                                                 :class="[
                                                     'text-base',
-                                                    isChartPinned(message)
-                                                        ? 'fas fa-times'
-                                                        : 'fas fa-thumbtack',
+                                                    'fas fa-thumbtack',
                                                 ]"
                                             ></i>
                                         </button>
@@ -212,7 +218,11 @@
                                                     'table'
                                                 )
                                             "
-                                            title="Dr. Itchy Samenvatting"
+                                            :title="
+                                                $t(
+                                                    'conversations.dritchysummary'
+                                                )
+                                            "
                                             :disabled="
                                                 loadingSummary &&
                                                 loadingSummary.id === message.id
@@ -232,13 +242,11 @@
 
                                         <!-- Pin button-->
                                         <button
-                                            v-if="!isTablePinned(message)"
                                             :class="[
                                                 'absolute -top-10 right-3 z-10 transition-all duration-200 ease-in-out',
                                                 'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
-                                                isTablePinned(message)
-                                                    ? 'bg-slate-200 text-slate-700 border-slate-300 hover:bg-slate-300'
-                                                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200',
+
+                                                'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300',
                                                 clickedMessageId === message.id
                                                     ? 'animate-pop'
                                                     : '',
@@ -246,18 +254,13 @@
                                             @click="
                                                 togglePinModal(message, 'table')
                                             "
-                                            :title="
-                                                isTablePinned(message)
-                                                    ? 'Loskoppelen van Dashboard'
-                                                    : 'Vastzetten op Dashboard'
-                                            "
+                                            :title="$t('conversations.pin')"
                                         >
                                             <i
                                                 :class="[
                                                     'text-base',
-                                                    isTablePinned(message)
-                                                        ? 'fas fa-times'
-                                                        : 'fas fa-thumbtack',
+
+                                                    'fas fa-thumbtack',
                                                 ]"
                                             ></i>
                                         </button>
@@ -276,7 +279,7 @@
                                     <p
                                         class="text-[10px] text-slate-600 mb-1 uppercase tracking-wide"
                                     >
-                                        SQL Query
+                                        {{ $t("conversations.sql") }}
                                     </p>
                                     <pre
                                         class="whitespace-pre-wrap break-words"
@@ -291,9 +294,52 @@
                                         !message.displayAsTable &&
                                         !message.displayAsQuery
                                     "
-                                    v-html="formatMessage(message)"
-                                    class="whitespace-pre-wrap"
-                                ></div>
+                                >
+                                    <div
+                                        class="mb-3 flex justify-end relative"
+                                        v-if="message.send_by == 'ai'"
+                                    >
+                                        <button
+                                            :class="[
+                                                'absolute -top-10 right-3 z-10 transition-all duration-200 ease-in-out',
+                                                'w-9 h-9 rounded-full shadow-md flex items-center justify-center border',
+                                                'bg-yellow-400 text-yellow-800 border-yellow-500 hover:bg-yellow-500',
+                                                loadingSummary &&
+                                                loadingSummary.id === message.id
+                                                    ? 'animate-pulse'
+                                                    : '',
+                                            ]"
+                                            @click="
+                                                generateSummary(message, 'text')
+                                            "
+                                            :title="
+                                                $t(
+                                                    'conversations.dritchysummary'
+                                                )
+                                            "
+                                            :disabled="
+                                                loadingSummary &&
+                                                loadingSummary.id === message.id
+                                            "
+                                        >
+                                            <i
+                                                :class="[
+                                                    'text-base',
+                                                    loadingSummary &&
+                                                    loadingSummary.id ===
+                                                        message.id
+                                                        ? 'fas fa-spinner fa-spin'
+                                                        : 'fas fa-user-md',
+                                                ]"
+                                            ></i>
+                                        </button>
+                                    </div>
+
+                                    <div
+                                        v-html="formatMessage(message)"
+                                        class="whitespace-pre-wrap"
+                                    ></div>
+                                </div>
 
                                 <div
                                     class="flex justify-between items-center mt-2"
@@ -322,7 +368,7 @@
                                                     getFilteredRecords(message)
                                                 }}
                                             </span>
-                                            records
+                                            {{ $t("conversations.records") }}
                                         </span>
 
                                         <button
@@ -342,13 +388,19 @@
                                                     <i
                                                         class="fas fa-bookmark mr-1"
                                                     ></i>
-                                                    Opgeslagen
+                                                    {{
+                                                        $t(
+                                                            "conversations.saved"
+                                                        )
+                                                    }}
                                                 </span>
                                                 <span v-else>
                                                     <i
                                                         class="far fa-bookmark mr-1"
                                                     ></i>
-                                                    Opslaan
+                                                    {{
+                                                        $t("conversations.save")
+                                                    }}
                                                 </span>
                                             </template>
                                             <template
@@ -356,23 +408,29 @@
                                             >
                                                 <span
                                                     v-if="
-                                                        message._sort &&
-                                                        message._x &&
-                                                        message._y &&
-                                                        message._agg &&
-                                                        message._order
+                                                        (message._sort &&
+                                                            message._x &&
+                                                            message._y &&
+                                                            message._agg) ||
+                                                        message.config
                                                     "
                                                 >
                                                     <i
                                                         class="fas fa-bookmark mr-1"
                                                     ></i>
-                                                    Opgeslagen
+                                                    {{
+                                                        $t(
+                                                            "conversations.saved"
+                                                        )
+                                                    }}
                                                 </span>
                                                 <span v-else>
                                                     <i
                                                         class="far fa-bookmark mr-1"
                                                     ></i>
-                                                    Opslaan
+                                                    {{
+                                                        $t("conversations.save")
+                                                    }}
                                                 </span>
                                             </template>
                                         </button>
@@ -395,7 +453,9 @@
                                                 <i
                                                     class="fas fa-sliders-h mr-1.5"
                                                 ></i>
-                                                Grid Features
+                                                {{
+                                                    $t("conversations.features")
+                                                }}
                                                 <i
                                                     class="fas fa-chevron-down ml-1.5 text-xs transition-transform"
                                                     :class="{
@@ -417,7 +477,11 @@
                                                     >
                                                         <span
                                                             class="text-xs text-gray-700"
-                                                            >Sorting</span
+                                                            >{{
+                                                                $t(
+                                                                    "conversations.sorting"
+                                                                )
+                                                            }}</span
                                                         >
                                                         <input
                                                             type="checkbox"
@@ -435,7 +499,11 @@
                                                     >
                                                         <span
                                                             class="text-xs text-gray-700"
-                                                            >Filtering</span
+                                                            >{{
+                                                                $t(
+                                                                    "conversations.filtering"
+                                                                )
+                                                            }}</span
                                                         >
                                                         <input
                                                             type="checkbox"
@@ -453,7 +521,11 @@
                                                     >
                                                         <span
                                                             class="text-xs text-gray-700"
-                                                            >Grouping</span
+                                                            >{{
+                                                                $t(
+                                                                    "conversations.grouping"
+                                                                )
+                                                            }}</span
                                                         >
                                                         <input
                                                             type="checkbox"
@@ -470,7 +542,11 @@
                                                     >
                                                         <span
                                                             class="text-xs text-gray-700"
-                                                            >Pagination</span
+                                                            >{{
+                                                                $t(
+                                                                    "conversations.pagination"
+                                                                )
+                                                            }}</span
                                                         >
                                                         <input
                                                             type="checkbox"
@@ -487,8 +563,11 @@
                                                     >
                                                         <span
                                                             class="text-xs text-gray-700"
-                                                            >Multi line
-                                                            text</span
+                                                            >{{
+                                                                $t(
+                                                                    "conversations.multiline"
+                                                                )
+                                                            }}</span
                                                         >
                                                         <input
                                                             type="checkbox"
@@ -505,8 +584,11 @@
                                                     >
                                                         <span
                                                             class="text-xs text-gray-700"
-                                                            >Floating
-                                                            filters</span
+                                                            >{{
+                                                                $t(
+                                                                    "conversations.floatingfilters"
+                                                                )
+                                                            }}</span
                                                         >
                                                         <input
                                                             type="checkbox"
@@ -517,12 +599,38 @@
                                                             class="w-3 h-3 text-yellow-500 rounded border-gray-300"
                                                         />
                                                     </label>
+
                                                     <label
                                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                                     >
                                                         <span
                                                             class="text-xs text-gray-700"
-                                                            >Total row
+                                                            >{{
+                                                                $t(
+                                                                    "conversations.column_panel"
+                                                                )
+                                                            }}</span
+                                                        >
+                                                        <input
+                                                            type="checkbox"
+                                                            v-model="
+                                                                message.features
+                                                                    .tools_panel
+                                                            "
+                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                                        />
+                                                    </label>
+
+                                                    <label
+                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                                    >
+                                                        <span
+                                                            class="text-xs text-gray-700"
+                                                            >{{
+                                                                $t(
+                                                                    "conversations.total_row"
+                                                                )
+                                                            }}
                                                         </span>
                                                         <input
                                                             type="checkbox"
@@ -544,7 +652,7 @@
                                         >
                                             <span>
                                                 <i class="fas fa-download"></i>
-                                                Exporteer
+                                                {{ $t("conversations.export") }}
                                             </span>
                                         </button>
                                     </div>
@@ -561,7 +669,7 @@
                                                     message.thumbs_up !== 1,
                                             }"
                                             @click="onThumbsUp(message)"
-                                            title="Vind ik goed"
+                                            :title="$t('conversations.like')"
                                             v-if="message.send_by === 'ai'"
                                         >
                                             <i class="fas fa-thumbs-up"></i>
@@ -576,7 +684,7 @@
                                                     message.thumbs_down !== 1,
                                             }"
                                             @click="onThumbsDown(message)"
-                                            title="Vind ik niet goed"
+                                            :title="$t('conversations.dislike')"
                                             v-if="message.send_by === 'ai'"
                                         >
                                             <i class="fas fa-thumbs-down"></i>
@@ -611,7 +719,7 @@
                             v-if="this.loading"
                         >
                             <p class="text-xs font-semibold mb-3 select-none">
-                                Neverwhere bot
+                                {{ $t("conversations.bot") }}
                             </p>
                             <div class="flex space-x-1">
                                 <span
@@ -635,17 +743,26 @@
                     </div>
                 </div>
 
-                <div v-if="suggestions.length" class="w-full px-2 hidden">
+                <div v-if="suggestions.length" class="w-full px-2">
                     <div class="flex flex-wrap gap-2">
                         <button
                             v-for="s in suggestions"
                             :key="s.id"
                             type="button"
-                            @click="useSuggestion(s.question)"
+                            @click="useSuggestion(s)"
                             class="px-3 py-1.5 rounded-full bg-slate-200 text-xs text-gray-700 hover:bg-slate-300 transition-colors"
                         >
-                            {{ s.question }}
+                            {{ s }}
                         </button>
+                    </div>
+                </div>
+                <div v-if="summary && summary.length" class="w-full px-2">
+                    <div class="bg-white rounded-lg p-3 border border-gray-200">
+                        <p
+                            class="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap"
+                        >
+                            {{ summary }}
+                        </p>
                     </div>
                 </div>
 
@@ -656,9 +773,9 @@
                     <div class="flex flex-col-reverse gap-3 items-start w-full">
                         <!-- Source selector -->
                         <div class="w-full flex items-center gap-2">
-                            <label class="block text-xs text-gray-600"
-                                >Bron</label
-                            >
+                            <label class="block text-xs text-gray-600">{{
+                                $t("conversations.source")
+                            }}</label>
                             <select
                                 v-model="form.source"
                                 class="w-full text-sm border-none rounded-md bg-transparent focus:ring-none focus:ring-blue-500 focus:border-none transition-colors"
@@ -688,7 +805,9 @@
                                     @keydown.enter.exact.prevent="sendMessage"
                                     ref="messageTextarea"
                                     class="flex-1 resize-none bg-transparent border-none focus:ring-0 focus:outline-none placeholder:text-gray-500 px-3 py-2 text-sm leading-snug max-h-40 overflow-y-auto"
-                                    placeholder="Stuur een bericht..."
+                                    :placeholder="
+                                        $t('conversations.message') + '...'
+                                    "
                                 ></textarea>
 
                                 <!-- Send button -->
@@ -716,9 +835,9 @@
                                 <i
                                     class="fas fa-exclamation-circle text-red-500 text-sm"
                                 ></i>
-                                <span class="text-red-700 text-sm"
-                                    >Please fill in a message</span
-                                >
+                                <span class="text-red-700 text-sm">{{
+                                    $t("conversations.message_error")
+                                }}</span>
                             </div>
                         </div>
                     </transition>
@@ -736,92 +855,55 @@
             <div
                 class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
             >
-                <!-- Header -->
-                <div
-                    class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 flex items-center justify-between"
-                >
-                    <div class="flex items-center space-x-3">
-                        <div
-                            class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
+                <div class="p-6">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800">
+                        {{ $t("conversations.whatdoesdritchy") }}
+                    </h4>
+                    <div class="flex space-x-4" v-if="!summaryLoading">
+                        <button
+                            @click="this.selectAction('summarize')"
+                            class="flex-1 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all"
                         >
-                            <i class="fas fa-user-md text-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold">
-                                Dr. Itchy zegt:
-                            </h3>
-                            <p class="text-sm opacity-90">
-                                AI-gegenereerde samenvatting
-                            </p>
-                        </div>
+                            <div class="text-center">
+                                <i
+                                    class="fas fa-chart-bar text-blue-500 text-2xl mb-2"
+                                ></i>
+                                <h5 class="font-semibold text-gray-800">
+                                    {{ $t("conversations.summary") }}
+                                </h5>
+                                <p class="text-sm text-gray-600">
+                                    {{ $t("conversations.getsummary") }}
+                                </p>
+                            </div>
+                        </button>
+                        <button
+                            @click="this.selectAction('suggestion')"
+                            class="flex-1 p-4 bg-green-50 border-2 border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-all"
+                        >
+                            <div class="text-center">
+                                <i
+                                    class="fas fa-lightbulb text-green-500 text-2xl mb-2"
+                                ></i>
+                                <h5 class="font-semibold text-gray-800">
+                                    {{ $t("conversations.suggestion") }}
+                                </h5>
+                                <p class="text-sm text-gray-600">
+                                    {{ $t("conversations.getsuggestion") }}
+                                </p>
+                            </div>
+                        </button>
                     </div>
-                    <button
-                        @click="closeSummaryModal"
-                        class="text-white hover:text-gray-200 transition-colors"
-                    >
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-
-                <!-- Content -->
-                <div class="p-6 overflow-y-auto max-h-[60vh]">
                     <div
-                        v-if="summaryLoading"
-                        class="flex items-center justify-center py-8"
+                        v-else
+                        class="flex flex-col items-center justify-center py-8"
                     >
                         <div
                             class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
                         ></div>
-                        <span class="ml-3 text-gray-600"
-                            >Dr. Itchy analyseert de data...</span
+                        <span class="mt-3 text-gray-600">
+                            {{ $t("conversations.analysing") }}...</span
                         >
                     </div>
-
-                    <div
-                        v-else-if="summaryContent"
-                        class="prose prose-sm max-w-none"
-                    >
-                        <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                            <p class="text-sm text-gray-600 mb-2">
-                                <i class="fas fa-chart-bar mr-2"></i>
-                                Analyse van
-                                {{
-                                    summaryType === "chart"
-                                        ? "grafiek"
-                                        : "tabel"
-                                }}
-                            </p>
-                        </div>
-
-                        <div
-                            class="text-gray-800 leading-relaxed whitespace-pre-wrap"
-                        >
-                            {{ summaryContent }}
-                        </div>
-                    </div>
-
-                    <div v-else-if="summaryError" class="text-center py-8">
-                        <i
-                            class="fas fa-exclamation-triangle text-red-500 text-3xl mb-3"
-                        ></i>
-                        <p class="text-red-600 mb-4">
-                            Er ging iets mis bij het genereren van de
-                            samenvatting
-                        </p>
-                        <p class="text-sm text-gray-600">{{ summaryError }}</p>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-                    <button
-                        v-if="summaryContent"
-                        @click="copySummary"
-                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
-                    >
-                        <i class="fas fa-copy"></i>
-                        <span>Kopiëren</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -846,7 +928,7 @@
 
     <UpdateGraph
         :show="changeInput"
-        :close="toggleChangeInput"
+        :close="closeChangeInput"
         :message="changedMessage"
         :config="this.changedConfig"
         @item-changed="handleItemChanged"
@@ -877,16 +959,15 @@ export default {
     },
     props: {
         conversation: Object,
-        pinned_charts: Array,
-        pinned_tables: Array,
-        pinned_items: Array,
         dashboards: Array,
     },
     data() {
         return {
+            selectedAction: null,
             loading: false,
             showSummaryModal: false,
             summaryContent: null,
+            summaryMessage: null,
             summaryError: null,
             summaryLoading: false,
             summaryType: null,
@@ -910,6 +991,7 @@ export default {
             pinnedDef: null,
             pinModal: false,
             suggestions: [],
+            summary: "",
             openFeatures: false,
             features: {
                 sorting: true,
@@ -918,6 +1000,7 @@ export default {
                 pagination: false,
                 multiline_text: false,
                 floating_filters: false,
+                tools_panel: false,
                 total_row: false,
             },
             changeInput: false,
@@ -926,6 +1009,12 @@ export default {
         };
     },
     methods: {
+        selectAction(action) {
+            this.summaryLoading = true; // start loading
+            this.suggestions = [];
+            this.summary = "";
+            this.generateContent(action);
+        },
         getFilteredRecords(message) {
             const refName = `tableBuilder_${message.id}`;
             const tableBuilderRef = this.$refs[refName];
@@ -944,32 +1033,32 @@ export default {
         },
         handleItemChanged({ message_id, message }) {
             const index = this.messages.findIndex((m) => m.id === message_id);
-            if (index !== -1) {
-                // Bewaar de lokale props
-                const {
-                    selectedXAxis,
-                    selectedYAxis,
-                    selectedChartType,
-                    selectedOrder,
-                    selectedAggregation,
-                    selectedOrderDirection,
-                    selectedSortField,
-                } = this.messages[index];
 
-                // Overschrijf de message met de nieuwe van backend
+            if (index !== -1) {
+                const msg = this.messages[index];
+
+                if (message.config) {
+                    try {
+                        msg.config = message.config;
+                    } catch (e) {
+                        console.error(
+                            "Kon message.config niet parsen:",
+                            e,
+                            message.config
+                        );
+                    }
+                }
+
                 this.messages[index] = {
+                    ...msg,
                     ...message,
-                    selectedXAxis,
-                    selectedYAxis,
-                    selectedChartType,
-                    selectedOrder,
-                    selectedAggregation,
-                    selectedSortField,
-                    selectedOrderDirection,
                 };
 
                 this.setDisplayMode(this.messages[index], "chart");
             }
+        },
+        closeChangeInput() {
+            this.changeInput = !this.changeInput;
         },
         toggleChangeInput(message) {
             this.changeInput = !this.changeInput;
@@ -980,8 +1069,6 @@ export default {
             const chartBuilder = Array.isArray(chartBuilderRef)
                 ? chartBuilderRef[0]
                 : chartBuilderRef;
-
-            console.log(chartBuilder);
 
             if (
                 chartBuilderRef &&
@@ -1100,17 +1187,14 @@ export default {
             this.dislikedSort = sort;
             this.dislikeModal = !this.dislikeModal;
         },
-        async generateSummary(message, type) {
-            this.loadingSummary = { id: message.id, type };
-            this.summaryType = type;
-            this.showSummaryModal = true;
-            this.summaryLoading = true;
-            this.summaryContent = null;
-            this.summaryError = null;
+        async generateContent(action) {
+            let message = this.summaryMessage;
+            this.suggestions = [];
 
             try {
                 const data = {
-                    type: type,
+                    action: action,
+                    type: this.summaryType,
                     message_id: message.id,
                     data: message.json,
                     context: {
@@ -1134,16 +1218,33 @@ export default {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
+                let result = await response.json();
+                console.log(result);
+
                 this.updateCsrfToken(response);
 
-                const result = await response.json();
-                this.summaryContent = result.summary;
+                if (result.type === "ask_suggestion") {
+                    // Add suggestion questions to array
+                    this.suggestions = result.summary.flat();
+                } else {
+                    this.summary = result.summary;
+                }
+
+                console.log(result);
             } catch (error) {
+                console.log(error);
                 this.summaryError = error.message;
             } finally {
                 this.summaryLoading = false;
+                this.showSummaryModal = false;
                 this.loadingSummary = null;
             }
+        },
+        generateSummary(message, type) {
+            this.loadingSummary = { id: message.id, type };
+            this.summaryType = type;
+            this.showSummaryModal = true;
+            this.summaryMessage = message;
         },
         closeSummaryModal() {
             this.showSummaryModal = false;
@@ -1151,6 +1252,7 @@ export default {
             this.summaryError = null;
             this.summaryLoading = false;
             this.summaryType = null;
+            this.loadingSummary = null;
         },
         async copySummary() {
             try {
@@ -1235,7 +1337,8 @@ export default {
             // Set default axes if switching to chart mode and not already set
             if (
                 mode === "chart" &&
-                (!message.selectedXAxis || !message.selectedYAxis)
+                (!message.selectedXAxis || !message.selectedYAxis) &&
+                !message.config
             ) {
                 const fields = this.getAllFields(message);
                 if (fields.length > 0) {
@@ -1249,6 +1352,11 @@ export default {
                         : "__count";
                 }
             }
+
+            this.loadingSummary = null;
+            this.summaryType = null;
+            this.showSummaryModal = false;
+            this.summaryLoading = false;
         },
         getAllFields(message) {
             if (
@@ -1491,21 +1599,11 @@ export default {
                 below: belowLines.join("\n").trim(),
             };
         },
-        isChartPinned(message) {
-            return this.pinnedCharts.some(
-                (chart) => chart.messageId === message.id
-            );
-        },
-        isTablePinned(message) {
-            return this.pinnedTables.some(
-                (table) => table.messageId === message.id
-            );
-        },
         saveSourceSelection() {
             const storageKey = `selected_source_${this.conversation.guid}`;
             localStorage.setItem(storageKey, this.form.source.id);
 
-            this.suggestions = this.form.source.suggestions || [];
+            // this.suggestions = this.form.source.suggestions || [];
         },
         loadSourceSelection() {
             const storageKey = `selected_source_${this.conversation.guid}`;
@@ -1520,7 +1618,7 @@ export default {
 
                     if (sourceExists) {
                         this.form.source = sourceExists;
-                        this.suggestions = sourceExists.suggestions || [];
+                        // this.suggestions = sourceExists.suggestions || [];
                     }
                 } catch (error) {
                     localStorage.removeItem(storageKey);
@@ -1552,7 +1650,6 @@ export default {
                     .setAttribute("content", newToken);
             }
         },
-
         async useSuggestion(message) {
             if (!message.trim()) return;
 
@@ -1609,6 +1706,7 @@ export default {
                     this.autoResize(); // Reset hoogte correct na DOM-update
                 });
                 this.loading = true;
+                this.suggestions = [];
 
                 try {
                     const botresponse = await fetch(
@@ -1724,6 +1822,8 @@ export default {
                     this.autoResize(); // Reset hoogte correct na DOM-update
                 });
                 this.loading = true;
+                this.summary = "";
+                this.suggestions = [];
 
                 try {
                     const botresponse = await fetch(
@@ -1778,6 +1878,7 @@ export default {
                                 pagination: false,
                                 multiline_text: false,
                                 floating_filters: false,
+                                tools_panel: false,
                                 total_row: false,
                             },
                             openFeatures: false,
@@ -1875,33 +1976,22 @@ export default {
             _agg: m._agg,
             _sort: m._sort,
             _order_dir: m._order_dir,
+            openFeatures: false,
             features: m.features || {
                 sorting: true,
                 filtering: true,
                 grouping: true,
                 pagination: false,
                 multiline_text: false,
+                tools_panel: false,
                 floating_filters: false,
                 total_row: m._total_row === 1 ? true : false,
             },
-            openFeatures: false,
         }));
 
         this.form.source ??= this.conversation.user.sources?.[0] ?? null;
 
-        this.pinnedCharts = this.pinned_items
-            .filter((item) => item.type === "graph")
-            .map((chart) => ({
-                messageId: chart.message_id,
-            }));
-
-        this.pinnedTables = this.pinned_items
-            .filter((item) => item.type === "table")
-            .map((table) => ({
-                messageId: table.message_id,
-            }));
-
-        this.scrollToBottom();
+        // this.scrollToBottom();
         this.loadSourceSelection();
     },
     watch: {

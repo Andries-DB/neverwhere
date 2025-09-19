@@ -8,10 +8,10 @@
                     <h1
                         class="text-2xl font-semibold tracking-tight text-gray-900"
                     >
-                        Feedback Beheer
+                        {{ $t("reports.feedback_overview_title") }}
                     </h1>
                     <p class="text-sm text-gray-600">
-                        Beheer alle feature requests en bug reports
+                        {{ $t("reports.feedback_overview_description") }}
                     </p>
                 </div>
             </div>
@@ -21,16 +21,18 @@
                 <div class="flex flex-wrap gap-4 items-center">
                     <!-- Type Filter -->
                     <div class="flex items-center gap-2 min-w-[200px]">
-                        <label class="text-sm font-medium text-gray-700"
-                            >Type</label
-                        >
+                        <label class="text-sm font-medium text-gray-700">{{
+                            $t("labels.type")
+                        }}</label>
                         <select
                             v-model="filters.type"
                             class="h-9 px-3 py-2 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full"
                         >
-                            <option value="">Alle</option>
-                            <option value="feature">Features</option>
-                            <option value="bug">Bugs</option>
+                            <option value="">{{ $t("labels.all") }}</option>
+                            <option value="feature">
+                                {{ $t("labels.features") }}
+                            </option>
+                            <option value="bug">{{ $t("labels.bugs") }}</option>
                         </select>
                     </div>
 
@@ -43,22 +45,26 @@
                             v-model="filters.priority"
                             class="h-9 px-3 py-2 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full"
                         >
-                            <option value="">Alle</option>
-                            <option value="low">Laag</option>
-                            <option value="medium">Normaal</option>
-                            <option value="high">Hoog</option>
+                            <option value="">{{ $t("labels.all") }}</option>
+                            <option value="low">{{ $t("labels.low") }}</option>
+                            <option value="medium">
+                                {{ $t("labels.medium") }}
+                            </option>
+                            <option value="high">
+                                {{ $t("labels.high") }}
+                            </option>
                         </select>
                     </div>
 
                     <!-- Search -->
                     <div class="flex items-center gap-2 flex-1 min-w-[100px]">
-                        <label class="text-sm font-medium text-gray-700"
-                            >Zoeken</label
-                        >
+                        <label class="text-sm font-medium text-gray-700">{{
+                            $t("labels.search")
+                        }}</label>
                         <input
                             v-model="filters.search"
                             type="text"
-                            placeholder="Zoek in titel of beschrijving..."
+                            :placeholder="$t('labels.textarea')"
                             class="h-9 flex-1 px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                         />
                     </div>
@@ -68,7 +74,7 @@
                         @click="clearFilters"
                         class="h-9 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                     >
-                        Wissen
+                        {{ $t("buttons.delete") }}
                     </button>
                 </div>
             </div>
@@ -81,12 +87,24 @@
                             class="text-xs text-gray-700 uppercase bg-gray-50"
                         >
                             <tr>
-                                <th class="px-6 py-3">Type</th>
-                                <th class="px-6 py-3">Titel</th>
-                                <th class="px-6 py-3">Prioriteit</th>
-                                <th class="px-6 py-3">Datum</th>
-                                <th class="px-6 py-3">Gebruiker</th>
-                                <th class="px-6 py-3">Acties</th>
+                                <th class="px-6 py-3">
+                                    {{ $t("labels.type") }}
+                                </th>
+                                <th class="px-6 py-3">
+                                    {{ $t("labels.title") }}
+                                </th>
+                                <th class="px-6 py-3">
+                                    {{ $t("labels.prio") }}
+                                </th>
+                                <th class="px-6 py-3">
+                                    {{ $t("labels.date") }}
+                                </th>
+                                <th class="px-6 py-3">
+                                    {{ $t("labels.user") }}
+                                </th>
+                                <th class="px-6 py-3">
+                                    {{ $t("labels.actions") }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
@@ -115,8 +133,8 @@
                                         ></div>
                                         {{
                                             request.type === "feature"
-                                                ? "Feature"
-                                                : "Bug"
+                                                ? $t("labels.feature")
+                                                : $t("labels.bug")
                                         }}
                                     </span>
                                 </td>
@@ -279,12 +297,8 @@
                         </svg>
                     </div>
                     <h3 class="text-lg font-medium text-gray-900 mb-2">
-                        Geen feedback gevonden
+                        {{ $t("labels.noresults") }}
                     </h3>
-                    <p class="text-gray-500 text-sm">
-                        Er zijn geen feedback items die voldoen aan de huidige
-                        filters.
-                    </p>
                 </div>
             </div>
 
@@ -368,7 +382,7 @@
                         <!-- Description -->
                         <div class="mb-6">
                             <h3 class="text-sm font-medium text-gray-700 mb-2">
-                                Beschrijving
+                                {{ $t("labels.description") }}
                             </h3>
                             <p
                                 class="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap"
@@ -386,7 +400,7 @@
                             class="mb-6"
                         >
                             <h3 class="text-sm font-medium text-gray-700 mb-2">
-                                Stappen om te reproduceren
+                                {{ $t("reports.steps") }}
                             </h3>
                             <p
                                 class="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap"
@@ -398,7 +412,7 @@
                         <!-- Environment -->
                         <div v-if="selectedRequest.environment" class="mb-6">
                             <h3 class="text-sm font-medium text-gray-700 mb-2">
-                                Omgeving
+                                {{ $t("labels.environment") }}
                             </h3>
                             <p class="text-gray-600 text-sm">
                                 {{ selectedRequest.environment }}
@@ -413,7 +427,7 @@
                                 <h3
                                     class="text-sm font-medium text-gray-700 mb-1"
                                 >
-                                    Ingediend door
+                                    {{ $t("reports.submitted_by") }}
                                 </h3>
                                 <p class="text-gray-900 text-sm">
                                     {{
@@ -424,8 +438,8 @@
                                               } ${
                                                   selectedRequest.user.name ??
                                                   ""
-                                              }`.trim() || "Onbekend"
-                                            : "Onbekend"
+                                              }`.trim() || $t("reports.unknown")
+                                            : $t("reports.unknown")
                                     }}
                                 </p>
                                 <p class="text-xs text-gray-500">
@@ -436,7 +450,7 @@
                                 <h3
                                     class="text-sm font-medium text-gray-700 mb-1"
                                 >
-                                    Datum
+                                    {{ $t("labels.date") }}
                                 </h3>
                                 <p class="text-gray-900 text-sm">
                                     {{ formatDate(selectedRequest.created_at) }}

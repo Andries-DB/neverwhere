@@ -4,10 +4,11 @@
     <AuthenticatedLayout>
         <div class="p-6 text-gray-900">
             <div v-if="!is_enabled" class="mb-6">
-                <h3 class="text-lg font-medium mb-4">2FA Activeren</h3>
+                <h3 class="text-lg font-medium mb-4">
+                    {{ $t("two_factor.activate") }}
+                </h3>
                 <p class="text-gray-600 mb-4">
-                    Scan de QR-code met je Google Authenticator app en voer de
-                    6-cijferige code in om 2FA te activeren.
+                    {{ $t("two_factor.activate_description") }}
                 </p>
 
                 <!-- QR Code weergave -->
@@ -18,7 +19,7 @@
                 <!-- Handmatige invoer secret -->
                 <div class="mb-4 p-4 bg-gray-50 rounded">
                     <p class="text-sm text-gray-600 mb-2">
-                        Of voer handmatig in:
+                        {{ $t("two_factor.manual") }}
                     </p>
                     <code
                         class="text-sm font-mono bg-gray-200 px-2 py-1 rounded"
@@ -57,8 +58,12 @@
                         :disabled="form.processing"
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
                     >
-                        <span v-if="form.processing">Activeren...</span>
-                        <span v-else>2FA Activeren</span>
+                        <span v-if="form.processing">{{
+                            $t("two_factor.activate_button_loading")
+                        }}</span>
+                        <span v-else>{{
+                            $t("two_factor.activate_button")
+                        }}</span>
                     </button>
                 </form>
             </div>
@@ -78,43 +83,36 @@
                                 clip-rule="evenodd"
                             />
                         </svg>
-                        <span class="text-green-600 font-medium"
-                            >Tweestapsverificatie is actief</span
-                        >
+                        <span class="text-green-600 font-medium">{{
+                            $t("two_factor.active")
+                        }}</span>
                     </div>
 
                     <div
                         class="bg-green-50 border border-green-200 rounded-md p-4 mb-4"
                     >
                         <p class="text-sm text-green-700">
-                            Tweestapsverificatie is ingeschakeld voor je account
-                            en werkt correct.
+                            {{ $t("two_factor.active_description") }}
                         </p>
                         <p
                             class="text-sm text-green-600 mt-1"
                             v-if="$page.props.last_verified"
                         >
-                            Laatste verificatie: {{ $page.props.last_verified }}
+                            {{ $t("two_factor.last_verified") }}:
+                            {{ $page.props.last_verified }}
                         </p>
                     </div>
                 </div>
 
                 <!-- Informatie -->
                 <div class="mb-6">
-                    <h3 class="text-lg font-medium mb-2">Hoe werkt het?</h3>
+                    <h3 class="text-lg font-medium mb-2">
+                        {{ $t("two_factor.how") }}?
+                    </h3>
                     <ul class="text-sm text-gray-600 space-y-1">
-                        <li>
-                            • Je wordt om de 14 dagen gevraagd om een
-                            verificatiecode in te voeren
-                        </li>
-                        <li>
-                            • Gebruik je Google Authenticator app om de code te
-                            genereren
-                        </li>
-                        <li>
-                            • Zorg ervoor dat je altijd toegang hebt tot je
-                            authenticator app
-                        </li>
+                        <li>• {{ $t("two_factor.steps.1") }}</li>
+                        <li>• {{ $t("two_factor.steps.2") }}</li>
+                        <li>• {{ $t("two_factor.steps.3") }}</li>
                     </ul>
                 </div>
 
@@ -126,8 +124,7 @@
                                 for="disable_code"
                                 class="block text-sm font-medium text-gray-700 mb-2"
                             >
-                                Voer je huidige verificatiecode in om 2FA uit te
-                                schakelen:
+                                {{ $t("two_factor.disable_title") }}
                             </label>
                             <input
                                 id="disable_code"
@@ -151,10 +148,12 @@
                             :disabled="disableForm.processing"
                             class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
                         >
-                            <span v-if="disableForm.processing"
-                                >Uitschakelen...</span
-                            >
-                            <span v-else>2FA Uitschakelen</span>
+                            <span v-if="disableForm.processing">{{
+                                $t("two_factor.disable_button_loading")
+                            }}</span>
+                            <span v-else>{{
+                                $t("two_factor.disable_button")
+                            }}</span>
                         </button>
                     </form>
                 </div>

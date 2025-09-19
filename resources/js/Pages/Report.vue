@@ -4,11 +4,10 @@
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-xl font-bold text-slate-900 mb-2">
-                Feedback verzenden
+                {{ $t("reports.title") }}
             </h1>
             <p class="text-slate-600 text-sm">
-                Help ons de applicatie te verbeteren door features voor te
-                stellen of bugs te melden.
+                {{ $t("reports.description") }}
             </p>
         </div>
 
@@ -32,7 +31,7 @@
                     />
                 </svg>
                 <span class="text-green-800 font-medium">
-                    Bedankt voor je feedback! We hebben je melding ontvangen.
+                    {{ $t("reports.thanks") }}
                 </span>
             </div>
         </div>
@@ -42,7 +41,7 @@
             <!-- Type Selection -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-3">
-                    Type melding
+                    {{ $t("reports.type") }}
                 </label>
                 <div class="grid grid-cols-2 gap-3">
                     <button
@@ -69,10 +68,12 @@
                                     d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                                 />
                             </svg>
-                            <span class="font-medium">Feature Request</span>
+                            <span class="font-medium">
+                                {{ $t("reports.feature") }}</span
+                            >
                         </div>
                         <p class="text-xs text-slate-600">
-                            Stel een nieuwe functionaliteit voor
+                            {{ $t("reports.feature_description") }}
                         </p>
                     </button>
 
@@ -100,10 +101,12 @@
                                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z"
                                 />
                             </svg>
-                            <span class="font-medium">Bug Report</span>
+                            <span class="font-medium">
+                                {{ $t("reports.bug") }}</span
+                            >
                         </div>
                         <p class="text-xs text-slate-600">
-                            Meld een probleem of fout
+                            {{ $t("reports.bug_description") }}
                         </p>
                     </button>
                 </div>
@@ -115,7 +118,7 @@
             <!-- Priority (only for bugs) -->
             <div v-if="form.type === 'bug'">
                 <label class="block text-sm font-medium text-slate-700 mb-3">
-                    Prioriteit
+                    {{ $t("reports.prio") }}
                 </label>
                 <div class="grid grid-cols-3 gap-3">
                     <button
@@ -128,8 +131,12 @@
                                 : 'border-slate-200 hover:border-slate-300',
                         ]"
                     >
-                        <div class="text-sm font-medium">Laag</div>
-                        <div class="text-xs text-slate-600">Klein probleem</div>
+                        <div class="text-sm font-medium">
+                            {{ $t("reports.low.title") }}
+                        </div>
+                        <div class="text-xs text-slate-600">
+                            {{ $t("reports.low.description") }}
+                        </div>
                     </button>
 
                     <button
@@ -142,9 +149,11 @@
                                 : 'border-slate-200 hover:border-slate-300',
                         ]"
                     >
-                        <div class="text-sm font-medium">Normaal</div>
+                        <div class="text-sm font-medium">
+                            {{ $t("reports.medium.title") }}
+                        </div>
                         <div class="text-xs text-slate-600">
-                            Gemiddeld probleem
+                            {{ $t("reports.medium.description") }}
                         </div>
                     </button>
 
@@ -158,9 +167,11 @@
                                 : 'border-slate-200 hover:border-slate-300',
                         ]"
                     >
-                        <div class="text-sm font-medium">Hoog</div>
+                        <div class="text-sm font-medium">
+                            {{ $t("reports.high.title") }}
+                        </div>
                         <div class="text-xs text-slate-600">
-                            Urgent probleem
+                            {{ $t("reports.high.description") }}
                         </div>
                     </button>
                 </div>
@@ -174,14 +185,14 @@
                 >
                     {{
                         form.type === "feature"
-                            ? "Feature titel"
-                            : "Bug omschrijving"
+                            ? $t("reports.feature_title")
+                            : $t("reports.detail_description")
                     }}
                 </label>
                 <TextInput
                     v-model="form.title"
-                    label="Titel"
-                    placeholder="Titel"
+                    :label="$t('reports.title')"
+                    :placeholder="$t('reports.title')"
                     class="w-full"
                 />
 
@@ -196,7 +207,7 @@
                     for="description"
                     class="block text-sm font-medium text-slate-700 mb-2"
                 >
-                    Gedetailleerde beschrijving
+                    {{ $t("reports.detail_description") }}
                 </label>
                 <textarea
                     id="description"
@@ -204,8 +215,8 @@
                     rows="6"
                     :placeholder="
                         form.type === 'feature'
-                            ? 'Beschrijf de gewenste functionaliteit, waarom het nuttig zou zijn, en hoe het zou moeten werken...'
-                            : 'Beschrijf wat er mis gaat, wanneer het gebeurt, wat je verwachtte, en alle relevante details...'
+                            ? $t('reports.feature_detail_description')
+                            : $t('reports.bug_detail_description')
                     "
                     class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
@@ -223,13 +234,13 @@
                     for="steps"
                     class="block text-sm font-medium text-slate-700 mb-2"
                 >
-                    Stappen om te reproduceren
+                    {{ $t("reports.steps") }}
                 </label>
                 <textarea
                     id="steps"
                     v-model="form.steps"
                     rows="4"
-                    placeholder="1. Ga naar...&#10;2. Klik op...&#10;3. Verwachte resultaat: ...&#10;4. Werkelijk resultaat: ..."
+                    :placeholder="$t('reports.stepsplaceholder')"
                     class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
             </div>
@@ -240,7 +251,7 @@
                     for="environment"
                     class="block text-sm font-medium text-slate-700 mb-2"
                 >
-                    Omgeving (optioneel)
+                    {{ $t("reports.environment") }}
                 </label>
                 <TextInput
                     v-model="form.environment"
@@ -249,7 +260,7 @@
                 />
 
                 <p class="mt-1 text-xs text-slate-500">
-                    Browser, besturingssysteem, schermresolutie, etc.
+                    {{ $t("reports.environment_sublabel") }}
                 </p>
             </div>
 
@@ -260,7 +271,7 @@
                     @click="resetForm"
                     class="px-4 py-2 text-sm bg-slate-100 rounded-md text-slate-600 hover:text-slate-800 hover:bg-slate-200 transition-colors duration-200"
                 >
-                    Wissen
+                    {{ $t("reports.delete") }}
                 </button>
 
                 <button
@@ -296,13 +307,13 @@
                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                             />
                         </svg>
-                        Verzenden...
+                        {{ $t("reports.submitting") }}...
                     </span>
                     <span v-else>
                         {{
                             form.type === "feature"
-                                ? "Feature Voorstellen"
-                                : "Bug Melden"
+                                ? $t("reports.feature_submit")
+                                : $t("reports.bug_submit")
                         }}
                     </span>
                 </button>

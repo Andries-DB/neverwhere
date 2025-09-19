@@ -42,7 +42,7 @@
                     ]"
                     @click="changeSort('settings')"
                 >
-                    Instellingen
+                    {{ $t("labels.settings") }}
                 </button>
                 <button
                     :class="[
@@ -53,7 +53,7 @@
                     ]"
                     @click="changeSort('usergroups')"
                 >
-                    Gebruikers groepen
+                    {{ $t("labels.usersources") }}
                 </button>
                 <button
                     :class="[
@@ -62,7 +62,10 @@
                     ]"
                     @click="changeSort('sources')"
                 >
-                    Bronnen
+                    {{
+                        $t("labels.sources").charAt(0).toUpperCase() +
+                        $t("labels.sources").slice(1)
+                    }}
                 </button>
                 <button
                     :class="[
@@ -71,7 +74,7 @@
                     ]"
                     @click="changeSort('reports')"
                 >
-                    Rapporten
+                    {{ $t("labels.reports") }}
                 </button>
                 <button
                     :class="[
@@ -80,7 +83,7 @@
                     ]"
                     @click="changeSort('users')"
                 >
-                    Gebruikers
+                    {{ $t("labels.users") }}
                 </button>
             </div>
         </div>
@@ -89,14 +92,14 @@
             <!-- Default settings -->
             <div class="py-6 rounded-md">
                 <div class="w-full">
-                    <InputLabel for="name" value="Naam*" />
+                    <InputLabel for="name" :value="$t('labels.name') + '*'" />
                     <TextInput
                         id="name"
                         type="text"
                         class="mt-1 block w-full"
                         v-model="form.company"
                         :disabled="!editCompany"
-                        placeholder="Naam"
+                        :placeholder="$t('labels.name')"
                     />
                     <InputError class="mt-2" :message="form.errors.company" />
                 </div>
@@ -107,11 +110,15 @@
             <table class="w-full text-sm text-left rtl:text-right">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3">Naam</th>
-                        <th scope="col" class="px-6 py-3">Webhook</th>
+                        <th scope="col" class="px-6 py-3">
+                            {{ $t("labels.name") }}
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            {{ $t("labels.webhook") }}
+                        </th>
 
                         <th scope="col" class="px-6 py-3">
-                            <span class="sr-only">Aanpassen</span>
+                            <span class="sr-only">{{ $t("labels.edit") }}</span>
                         </th>
                     </tr>
                 </thead>
@@ -143,7 +150,7 @@
                                     })
                                 "
                                 class="font-medium text-blue-600 hover:underline"
-                                >Pas aan</a
+                                >{{ $t("buttons.edit") }}</a
                             >
                         </td>
                     </tr>
@@ -156,7 +163,7 @@
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                             colspan="3"
                         >
-                            Geen resutaten gevonden
+                            {{ $t("labels.noresults") }}
                         </th>
                     </tr>
                 </tbody>
@@ -167,11 +174,15 @@
             <table class="w-full text-sm text-left rtl:text-right">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3">Naam</th>
-                        <th scope="col" class="px-6 py-3">Link</th>
+                        <th scope="col" class="px-6 py-3">
+                            {{ $t("labels.name") }}
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            {{ $t("labels.link") }}
+                        </th>
 
                         <th scope="col" class="px-6 py-3">
-                            <span class="sr-only">Aanpassen</span>
+                            <span class="sr-only">{{ $t("labels.edit") }}</span>
                         </th>
                     </tr>
                 </thead>
@@ -199,7 +210,7 @@
                                     })
                                 "
                                 class="font-medium text-blue-600 hover:underline"
-                                >Pas aan</a
+                                >{{ $t("buttons.edit") }}</a
                             >
                         </td>
                     </tr>
@@ -212,7 +223,7 @@
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                             colspan="3"
                         >
-                            Geen resutaten gevonden
+                            {{ $t("labels.noresults") }}
                         </th>
                     </tr>
                 </tbody>
@@ -224,12 +235,25 @@
                 <table class="w-full text-sm text-left rtl:text-right">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3">Naam</th>
-                            <th scope="col" class="px-6 py-3">Email</th>
-                            <th scope="col" class="px-6 py-3">Bronnen</th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.name") }}
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.email") }}
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                {{
+                                    $t("labels.sources")
+                                        .charAt(0)
+                                        .toUpperCase() +
+                                    $t("labels.sources").slice(1)
+                                }}
+                            </th>
 
                             <th scope="col" class="px-6 py-3">
-                                <span class="sr-only">Aanpassen</span>
+                                <span class="sr-only">{{
+                                    $t("labels.edit")
+                                }}</span>
                             </th>
                         </tr>
                     </thead>
@@ -269,7 +293,7 @@
                                         })
                                     "
                                     class="font-medium text-blue-600 hover:underline"
-                                    >Pas aan</a
+                                    >{{ $t("buttons.edit") }}</a
                                 >
                             </td>
                         </tr>
@@ -282,7 +306,7 @@
                                 class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                                 colspan="4"
                             >
-                                Geen resultaten gevonden
+                                {{ $t("labels.noresults") }}
                             </th>
                         </tr>
                     </tbody>
@@ -295,11 +319,22 @@
                 <table class="w-full text-sm text-left rtl:text-right">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3">Naam</th>
-                            <th scope="col" class="px-6 py-3">Bronnen</th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.name") }}
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                {{
+                                    $t("labels.sources")
+                                        .charAt(0)
+                                        .toUpperCase() +
+                                    $t("labels.sources").slice(1)
+                                }}
+                            </th>
 
                             <th scope="col" class="px-6 py-3">
-                                <span class="sr-only">Aanpassen</span>
+                                <span class="sr-only">{{
+                                    $t("labels.edit")
+                                }}</span>
                             </th>
                         </tr>
                     </thead>
@@ -338,7 +373,7 @@
                                         })
                                     "
                                     class="font-medium text-blue-600 hover:underline"
-                                    >Pas aan</a
+                                    >{{ $t("buttons.edit") }}</a
                                 >
                             </td>
                         </tr>
@@ -351,7 +386,7 @@
                                 class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                                 colspan="4"
                             >
-                                Geen resultaten gevonden
+                                {{ $t("buttons.delete") }}
                             </th>
                         </tr>
                     </tbody>

@@ -1,0 +1,43 @@
+<?php
+
+return [
+    'title' => 'Envoyer un retour',
+    'description' => 'Aidez-nous à améliorer l’application en proposant des fonctionnalités ou en signalant des bugs.',
+    'thanks' => 'Merci pour votre retour ! Nous avons bien reçu votre signalement.',
+    'type' => 'Type de signalement',
+    'feature' => 'Demande de fonctionnalité',
+    'feature_description' => 'Proposez une nouvelle fonctionnalité',
+    'bug' => 'Rapport de bug',
+    'bug_description' => 'Signalez un problème ou une erreur',
+    'prio' => 'Priorité',
+    'low' => [
+        'title' => 'Faible',
+        'description' => 'Petit problème',
+    ],
+    'medium' => [
+        'title' => 'Normal',
+        'description' => 'Problème moyen',
+    ],
+    'high' => [
+        'title' => 'Élevé',
+        'description' => 'Problème urgent',
+    ],
+    'feature_title' => 'Titre de la fonctionnalité',
+    'bug_description' => 'Description du bug',
+    'detail_description' => 'Description détaillée',
+    'titel' => 'Titre',
+    'feature_detail_description' => 'Décrivez la fonctionnalité souhaitée, pourquoi elle serait utile et comment elle devrait fonctionner...',
+    'bug_detail_description' => 'Décrivez ce qui ne va pas, quand cela se produit, ce que vous attendiez et tout détail pertinent...',
+    'steps' => 'Étapes pour reproduire',
+    'stepsplaceholder' => "1. Allez à...\n2. Cliquez sur...\n3. Résultat attendu : ...\n4. Résultat réel : ...",
+    'environment' => 'Environnement (optionnel)',
+    'environment_sublabel' => 'Navigateur, système d’exploitation, résolution d’écran, etc.',
+    'delete' => 'Supprimer',
+    'feature_submit' => 'Proposer une fonctionnalité',
+    'bug_submit' => 'Signaler un bug',
+    'submitting' => 'Envoi en cours',
+    'feedback_overview_title' => 'Gestion des retours',
+    'feedback_overview_description' => 'Gérez toutes les demandes de fonctionnalités et les rapports de bugs',
+    'submitted_by' => 'Soumis par',
+    'unknown' => 'Inconnu',
+];

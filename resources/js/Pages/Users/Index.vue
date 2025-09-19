@@ -6,10 +6,10 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-900">
-                        Gebruikers
+                        {{ $t("labels.users") }}
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">
-                        Beheer gebruikers en hun toegang tot het platform
+                        {{ $t("descriptions.users") }}
                     </p>
                 </div>
             </div>
@@ -124,7 +124,7 @@
                             type="text"
                             v-model="searchQuery"
                             @input="handleSearch"
-                            placeholder="Zoek gebruikers..."
+                            :placeholder="$t('labels.textarea')"
                             class="h-10 w-full rounded-md border border-gray-200 bg-white pl-10 pr-3 text-sm placeholder:text-gray-500 focus:border-gray-900 focus:outline-none focus:ring-0 focus:ring-gray-900"
                         />
                     </div>
@@ -136,7 +136,7 @@
                     @change="handleRoleFilter"
                     class="h-10 w-full sm:w-[180px] rounded-md border border-gray-200 bg-white px-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-0 focus:ring-gray-900"
                 >
-                    <option value="">Alle rollen</option>
+                    <option value="">{{ $t("labels.all") }}</option>
                     <option value="admin">Admin</option>
                     <option value="user">User</option>
                     <option value="cdo">CDO</option>
@@ -171,7 +171,7 @@
             <!-- Table -->
             <div class="relative overflow-x-auto sm:rounded-lg">
                 <table class="w-full text-sm text-left rtl:text-right">
-                    <caption
+                    <!-- <caption
                         class="p-5 text-lg font-semibold text-left rtl:text-right bg-white"
                     >
                         Gebruikersoverzicht
@@ -187,16 +187,26 @@
                                 {{ users.length }} gebruikers getoond)
                             </span>
                         </p>
-                    </caption>
+                    </caption> -->
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3">ID</th>
-                            <th scope="col" class="px-6 py-3">Naam</th>
-                            <th scope="col" class="px-6 py-3">Email</th>
-                            <th scope="col" class="px-6 py-3">Bedrijf</th>
-                            <th scope="col" class="px-6 py-3">Rol</th>
                             <th scope="col" class="px-6 py-3">
-                                <span class="sr-only">Aanpassen</span>
+                                {{ $t("labels.name") }}
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.email") }}
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.company") }}
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.role") }}
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <span class="sr-only">{{
+                                    $t("labels.edit")
+                                }}</span>
                             </th>
                         </tr>
                     </thead>
@@ -250,7 +260,7 @@
                                     :href="route('user.read', user.guid)"
                                     class="font-medium text-blue-600 hover:underline"
                                 >
-                                    Pas aan
+                                    {{ $t("buttons.edit") }}
                                 </a>
                             </td>
                         </tr>
@@ -279,15 +289,8 @@
                                     <h3
                                         class="mt-2 text-sm font-medium text-gray-900"
                                     >
-                                        Geen gebruikers gevonden
+                                        {{ $t("labels.noresults") }}
                                     </h3>
-                                    <p class="mt-1 text-sm text-gray-500">
-                                        {{
-                                            hasActiveFilters
-                                                ? "Probeer andere zoektermen of filters."
-                                                : "Er zijn nog geen gebruikers toegevoegd."
-                                        }}
-                                    </p>
                                 </div>
                             </td>
                         </tr>

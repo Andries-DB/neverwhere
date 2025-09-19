@@ -17,40 +17,32 @@
                             clip-rule="evenodd"
                         />
                     </svg>
-                    <span class="text-green-600 font-medium"
-                        >Tweestapsverificatie is actief</span
-                    >
+                    <span class="text-green-600 font-medium">{{
+                        $t("two_factor.active")
+                    }}</span>
                 </div>
 
                 <div
                     class="bg-green-50 border border-green-200 rounded-md p-4 mb-4"
                 >
                     <p class="text-sm text-green-700">
-                        Tweestapsverificatie is ingeschakeld voor je account en
-                        werkt correct.
+                        {{ $t("two_factor.active_description") }}
                     </p>
                     <p class="text-sm text-green-600 mt-1" v-if="lastVerified">
-                        Laatste verificatie: {{ lastVerified }}
+                        {{ $t("two_factor.last_verified") }}: {{ lastVerified }}
                     </p>
                 </div>
             </div>
 
             <!-- Informatie -->
             <div class="mb-6">
-                <h3 class="text-lg font-medium mb-2">Hoe werkt het?</h3>
+                <h3 class="text-lg font-medium mb-2">
+                    {{ $t("two_factor.how") }}
+                </h3>
                 <ul class="text-sm text-gray-600 space-y-1">
-                    <li>
-                        • Je wordt om de 14 dagen gevraagd om een
-                        verificatiecode in te voeren
-                    </li>
-                    <li>
-                        • Gebruik je Google Authenticator app om de code te
-                        genereren
-                    </li>
-                    <li>
-                        • Zorg ervoor dat je altijd toegang hebt tot je
-                        authenticator app
-                    </li>
+                    <li>• {{ $t("two_factor.steps.1") }}</li>
+                    <li>• {{ $t("two_factor.steps.2") }}</li>
+                    <li>• {{ $t("two_factor.steps.3") }}</li>
                 </ul>
             </div>
 
@@ -60,13 +52,11 @@
                     class="bg-red-50 border border-red-200 rounded-md p-4 mb-4"
                 >
                     <p class="text-sm text-red-700 mb-2">
-                        <strong>Waarschuwing:</strong> Als je 2FA uitschakelt,
-                        moet je het opnieuw instellen voordat je verder kunt
-                        werken.
+                        <strong>{{ $t("two_factor.danger") }}:</strong>
+                        {{ $t("two_factor.danger_title") }}
                     </p>
                     <p class="text-sm text-red-600">
-                        Zorg ervoor dat je toegang hebt tot je authenticator app
-                        voordat je 2FA uitschakelt.
+                        {{ $t("two_factor.danger_description") }}
                     </p>
                 </div>
 
@@ -77,8 +67,7 @@
                             for="disable_code"
                             class="block text-sm font-medium text-gray-700 mb-2"
                         >
-                            Voer je huidige verificatiecode in om 2FA uit te
-                            schakelen:
+                            {{ $t("two_factor.disable_title") }}
                         </label>
                         <input
                             id="disable_code"
@@ -103,7 +92,7 @@
                         class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150"
                         :disabled="disableForm.processing"
                     >
-                        Uitschakelen
+                        {{ $t("two_factor.disable_button") }}
                     </button>
                 </form>
             </div>

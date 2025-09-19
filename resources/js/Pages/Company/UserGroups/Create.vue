@@ -8,15 +8,15 @@
         >
             <TextInput
                 v-model="form.name"
-                label="Naam"
-                placeholder="Naam"
+                :label="$t('labels.name')"
+                :placeholder="$t('labels.name')"
                 :class="{ 'border-red-500': form.errors.name }"
             />
 
             <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-slate-700"
-                    >Koppel bronnen</label
-                >
+                <label class="text-sm font-medium text-slate-700">{{
+                    $t("labels.connectsources")
+                }}</label>
                 <div class="flex flex-wrap gap-2">
                     <div
                         v-for="source in this.sources"
@@ -42,7 +42,9 @@
                 <div class="flex flex-col flex-wrap gap-2">
                     <InputError v-for="error in errors" :message="error" />
                 </div>
-                <PrimaryButton type="submit">Voeg toe</PrimaryButton>
+                <PrimaryButton type="submit">{{
+                    $t("buttons.add")
+                }}</PrimaryButton>
             </div>
         </form>
     </Modal>

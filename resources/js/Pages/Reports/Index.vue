@@ -63,7 +63,7 @@
                 class="bg-gray-50 rounded border-2 border-dashed border-gray-300 p-8 text-center h-32"
             >
                 <p class="text-sm text-gray-600">
-                    Selecteer een rapport om te bekijken
+                    {{ $t("descriptions.reports") }}
                 </p>
             </div>
         </div>

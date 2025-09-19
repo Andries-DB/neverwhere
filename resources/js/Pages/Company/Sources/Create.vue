@@ -8,21 +8,21 @@
         >
             <TextInput
                 v-model="form.name"
-                label="Naam"
-                placeholder="Naam"
+                :label="$t('labels.name')"
+                :placeholder="$t('labels.name')"
                 :class="{ 'border-red-500': form.errors.name }"
             />
 
             <TextInput
                 v-model="form.webhook"
-                label="Webhook"
-                placeholder="Webhook"
+                :label="$t('labels.webhook')"
+                :placeholder="$t('labels.webhook')"
                 :class="{ 'border-red-500': form.errors.webhook }"
             />
 
             <textarea
                 class="w-full h-48 resize-none overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
-                placeholder="Typ hier je tekst..."
+                :placeholder="$t('labels.textarea')"
                 v-model="form.model"
             ></textarea>
 
@@ -30,7 +30,9 @@
                 <div class="flex flex-col flex-wrap gap-2">
                     <InputError v-for="error in errors" :message="error" />
                 </div>
-                <PrimaryButton type="submit">Voeg toe</PrimaryButton>
+                <PrimaryButton type="submit">{{
+                    $t("buttons.add")
+                }}</PrimaryButton>
             </div>
         </form>
     </Modal>

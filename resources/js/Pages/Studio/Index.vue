@@ -2,10 +2,12 @@
     <Head title="Studio" />
     <AuthenticatedLayout>
         <div class="space-y-6">
-            <div class="flex justify-between items-end w-full">
-                <div class="w-[90%]">
-                    <label class="block mb-2 text-sm font-medium text-gray-700"
-                        >Dashboard</label
+            <div
+                class="flex justify-between flex-col md:flex-row gap-2 items-end w-full"
+            >
+                <div class="md:w-[90%] w-full">
+                    <label class="block mb-2 text-sm font-medium text-gray-700">
+                        {{ $t("labels.dashboard") }}</label
                     >
                     <div class="relative" v-click-outside="closeSourceDropdown">
                         <button
@@ -17,7 +19,7 @@
                             <span class="truncate">{{
                                 selectedSource
                                     ? selectedSource.name
-                                    : "Selecteer bron"
+                                    : $t("studio.select")
                             }}</span>
                             <div class="ml-2 flex flex-col">
                                 <svg
@@ -92,31 +94,34 @@
                                     "
                                     class="px-3 py-2 text-sm text-gray-500"
                                 >
-                                    Geen sources beschikbaar
+                                    {{ $t("labels.noresult") }}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <PrimaryButton type="submit" :disabled="this.form.processing"
-                    >Sla op</PrimaryButton
+                <PrimaryButton type="submit" :disabled="this.form.processing">
+                    {{ $t("buttons.save") }}</PrimaryButton
                 >
             </div>
 
             <div v-if="selectedSource" class="w-full">
                 <form @submit.prevent="updateSource" class="w-full">
-                    <InputLabel for="model" value="Model*" />
+                    <InputLabel for="model" :value="$t('labels.model') + '*'" />
                     <textarea
-                        class="w-full h-96 resize-vertical overflow-y-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm py-2"
-                        placeholder="Typ hier je tekst..."
+                        class="w-full h-96 resize-vertical p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm py-2"
+                        :placeholder="$t('labels.textarea') + '...'"
                         v-model="this.form.model"
                     ></textarea>
                     <InputError class="mt-2" :message="form.errors.model" />
                 </form>
 
                 <div class="flex justify-between mt-4">
-                    <InputLabel for="model" value="Suggestie vragen" />
+                    <InputLabel
+                        for="model"
+                        :value="$t('studio.suggestion_questions')"
+                    />
 
                     <button
                         @click.prevent="toggleOpenSugModal('add')"
@@ -141,7 +146,9 @@
                 <table class="w-full text-sm text-left rtl:text-right">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3">Question</th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.question") }}
+                            </th>
                             <th
                                 scope="col"
                                 class="px-6 py-3"
@@ -216,7 +223,7 @@
                                     <h3
                                         class="mt-2 text-sm font-medium text-gray-900"
                                     >
-                                        Geen suggestievragen gevonden
+                                        {{ $t("labels.noresults") }}
                                     </h3>
                                 </div>
                             </td>
@@ -250,90 +257,68 @@
                         </svg>
                     </button>
                 </div>
-                <table class="w-full text-sm text-left rtl:text-right">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3">Key</th>
-                            <th class="px-6 py-3">Description</th>
-                            <th class="px-6 py-3">Query</th>
-                            <th class="px-6 py-3" title="Aanpassen"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            class="bg-white border-b border-gray-200"
-                            v-for="k in this.knowledge"
-                            :key="k.id"
-                        >
-                            <td
-                                scope="row"
-                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                <div class="overflow-x-auto">
+                    <div class="max-h-96 overflow-y-auto">
+                        <table class="w-full text-sm text-left rtl:text-right">
+                            <thead
+                                class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0"
                             >
-                                {{ k.key }}
-                            </td>
-                            <td class="px-6 py-4 truncate">
-                                {{ k.description }}
-                            </td>
-                            <td class="px-6 py-4 truncate">{{ k.query }}</td>
-                            <td class="px-6 py-4 flex justify-end">
-                                <button
-                                    @click.prevent="toggleOpenModal('edit', k)"
-                                    class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+                                <tr>
+                                    <th class="px-6 py-3">
+                                        {{ $t("labels.key") }}
+                                    </th>
+                                    <th class="px-6 py-3">
+                                        {{ $t("labels.description") }}
+                                    </th>
+                                    <th class="px-6 py-3">
+                                        {{ $t("labels.query") }}
+                                    </th>
+                                    <th
+                                        class="px-6 py-3"
+                                        title="Aanpassen"
+                                    ></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    class="bg-white border-b border-gray-200"
+                                    v-for="k in this.knowledge"
+                                    :key="k.id"
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke-width="1.5"
-                                        stroke="currentColor"
-                                        class="w-5 h-5"
+                                    <td
+                                        class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M16.5 3.75h-9A2.25 2.25 0 005.25 6v12A2.25 2.25 0 007.5 20.25h9a2.25 2.25 0 002.25-2.25V6A2.25 2.25 0 0016.5 3.75z"
-                                        />
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M9 3.75v4.5h6v-4.5M9 12h6"
-                                        />
-                                    </svg>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr
-                            class="bg-white border-b border-gray-200"
-                            v-if="this.knowledge.length < 1"
-                        >
-                            <td
-                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap text-center"
-                                colspan="6"
-                            >
-                                <div class="py-8">
-                                    <svg
-                                        class="mx-auto h-12 w-12 text-gray-400"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
+                                        {{ k.key }}
+                                    </td>
+                                    <td class="px-6 py-4 truncate">
+                                        {{ k.description }}
+                                    </td>
+                                    <td class="px-6 py-4 truncate">
+                                        {{ k.query }}
+                                    </td>
+                                    <td class="px-6 py-4 flex justify-end">
+                                        <!-- button code hier -->
+                                    </td>
+                                </tr>
+                                <tr v-if="this.knowledge.length < 1">
+                                    <td
+                                        class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap text-center"
+                                        colspan="6"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-5m-8 0H4"
-                                        />
-                                    </svg>
-                                    <h3
-                                        class="mt-2 text-sm font-medium text-gray-900"
-                                    >
-                                        Geen knowledge gevonden
-                                    </h3>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                        <div class="py-8">
+                                            <!-- empty state SVG en tekst -->
+                                            <h3
+                                                class="mt-2 text-sm font-medium text-gray-900"
+                                            >
+                                                {{ $t("labels.noresults") }}
+                                            </h3>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>

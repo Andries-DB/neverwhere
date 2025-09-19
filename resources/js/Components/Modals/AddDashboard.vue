@@ -4,12 +4,12 @@
             @submit.prevent="sendFeedback"
             class="flex flex-col gap-6 w-full mt-8"
         >
-            <h2 class="text-xl font-semibold">Geef je instellingen door</h2>
+            <h2 class="text-xl font-semibold">{{ $t("modals.settings") }}</h2>
 
             <TextInput
                 v-model="form.name"
-                label="Naam"
-                placeholder="Naam"
+                :label="$t('labels.name')"
+                :placeholder="$t('labels.name')"
                 :class="{ 'border-red-500': form.errors.name }"
             />
 
@@ -25,7 +25,9 @@
             </div>
 
             <div class="flex justify-end mt-4">
-                <PrimaryButton type="submit">Verstuur</PrimaryButton>
+                <PrimaryButton type="submit">{{
+                    $t("modals.button")
+                }}</PrimaryButton>
             </div>
         </form>
     </Modal>

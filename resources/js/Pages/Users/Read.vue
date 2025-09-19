@@ -1,8 +1,6 @@
 <template>
     <Head :title="user.firstname + ' ' + user.name" />
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
-        <template #title>Sources</template>
-
         <div
             class="flex md:flex-row gap-4 md:gap-0 flex-col items-start justify-between"
         >
@@ -31,13 +29,14 @@
 
             <div class="flex gap-2">
                 <PrimaryButton @click="toggleEdit">
-                    <i class="fas fa-edit mr-2"></i> Pas aan
+                    <i class="fas fa-edit mr-2"></i> {{ $t("buttons.edit") }}
                 </PrimaryButton>
                 <PrimaryButton v-if="editUser" @click="saveUser">
-                    <i class="fas fa-check mr-2"></i>Sla op
+                    <i class="fas fa-check mr-2"></i>{{ $t("buttons.save") }}
                 </PrimaryButton>
                 <SecondaryButton @click="deleteUser">
-                    <i class="fas fa-trash-alt mr-2"></i>Verwijder
+                    <i class="fas fa-trash-alt mr-2"></i
+                    >{{ $t("buttons.delete") }}
                 </SecondaryButton>
             </div>
         </div>
@@ -45,39 +44,42 @@
         <div>
             <div class="py-6 rounded-md">
                 <div class="w-full">
-                    <InputLabel for="firstname" value="Voornaam*" />
+                    <InputLabel
+                        for="firstname"
+                        :value="$t('labels.firstname') + '*'"
+                    />
                     <TextInput
                         id="firstname"
                         type="text"
                         class="mt-1 block w-full"
                         v-model="form.firstname"
                         :disabled="!editUser"
-                        placeholder="Voornaam"
+                        :placeholder="$t('labels.firstname')"
                     />
                     <InputError class="mt-2" :message="form.errors.firstname" />
                 </div>
                 <div class="w-full mt-2">
-                    <InputLabel for="name" value="Naam*" />
+                    <InputLabel for="name" :value="$t('labels.name') + '*'" />
                     <TextInput
                         id="name"
                         type="text"
                         class="mt-1 block w-full"
                         v-model="form.name"
                         :disabled="!editUser"
-                        placeholder="Naam"
+                        :placeholder="$t('labels.name')"
                     />
                     <InputError class="mt-2" :message="form.errors.name" />
                 </div>
 
                 <div class="w-full mt-2">
-                    <InputLabel for="email" value="Email*" />
+                    <InputLabel for="email" :value="$t('labels.email') + '*'" />
                     <TextInput
                         id="email"
                         type="email"
                         class="mt-1 block w-full"
                         v-model="form.email"
                         :disabled="!editUser"
-                        placeholder="Color"
+                        :placeholder="$t('labels.email')"
                     />
                     <InputError class="mt-2" :message="form.errors.email" />
                 </div>

@@ -6,9 +6,11 @@
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-900">Logs</h1>
+                    <h1 class="text-2xl font-semibold text-gray-900">
+                        {{ $t("labels.logs") }}
+                    </h1>
                     <p class="text-sm text-gray-600 mt-1">
-                        Beheer de logs van de applicatie
+                        {{ $t("descriptions.logs") }}
                     </p>
                 </div>
             </div>
@@ -18,7 +20,9 @@
             <div class="flex flex-col sm:flex-row gap-4">
                 <!-- Search Input -->
                 <div class="flex-1">
-                    <label for="search" class="sr-only">Zoeken</label>
+                    <label for="search" class="sr-only">
+                        {{ $t("labels.search") }}</label
+                    >
                     <div class="relative">
                         <div
                             class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
@@ -41,7 +45,7 @@
                             id="search"
                             v-model="searchQuery"
                             type="text"
-                            placeholder="Zoek in berichten, gebruikers..."
+                            :placeholder="$t('labels.textarea') + '...'"
                             class="block w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-md leading-5"
                         />
                     </div>
@@ -55,8 +59,8 @@
                             type="checkbox"
                             class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
                         />
-                        <span class="ml-2 text-sm text-gray-700"
-                            >Groepeer op gebruiker</span
+                        <span class="ml-2 text-sm text-gray-700">
+                            {{ $t("labels.group_by_user") }}</span
                         >
                     </label>
                 </div>
@@ -116,8 +120,8 @@
                                     <span class="text-xs text-gray-500">
                                         {{
                                             expandedGroups[userName]
-                                                ? "Inklappen"
-                                                : "Uitklappen"
+                                                ? $t("labels.indent")
+                                                : $t("labels.expand")
                                         }}
                                     </span>
                                 </div>
@@ -167,7 +171,7 @@
                             />
                         </svg>
                         <h3 class="mt-2 text-sm font-medium text-gray-900">
-                            Geen logs gevonden
+                            {{ $t("labels.noresults") }}
                         </h3>
                         <p class="mt-1 text-sm text-gray-500">
                             {{
@@ -183,9 +187,15 @@
                 <table v-else class="w-full text-sm text-left rtl:text-right">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3">Datum</th>
-                            <th scope="col" class="px-6 py-3">Gebruiker</th>
-                            <th scope="col" class="px-6 py-3">Bericht</th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.date") }}
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.user") }}
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("labels.message") }}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -232,15 +242,8 @@
                                     <h3
                                         class="mt-2 text-sm font-medium text-gray-900"
                                     >
-                                        Geen logs gevonden
+                                        {{ $t("labels.noresults") }}
                                     </h3>
-                                    <p class="mt-1 text-sm text-gray-500">
-                                        {{
-                                            hasActiveFilters
-                                                ? "Probeer andere zoektermen."
-                                                : "Er zijn nog geen logs beschikbaar."
-                                        }}
-                                    </p>
                                 </div>
                             </td>
                         </tr>

@@ -3,10 +3,9 @@
         <!-- Configuratiepaneel -->
         <div class="p-3 bg-gray-50 rounded-t-lg border border-gray-200">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                <!-- Grafiek Type -->
-                <div>
+                <div v-if="!message.config">
                     <label class="block text-xs font-medium text-gray-700 mb-1">
-                        Grafiek Type
+                        {{ $t("chart.type") }}
                     </label>
                     <select
                         v-model="message.selectedChartType"
@@ -22,10 +21,9 @@
                     </select>
                 </div>
 
-                <!-- Aggregatie -->
-                <div>
+                <div v-if="!message.config">
                     <label class="block text-xs font-medium text-gray-700 mb-1">
-                        Aggregatie
+                        {{ $t("chart.agg") }}
                     </label>
                     <select
                         v-model="message.selectedAggregation"
@@ -41,16 +39,15 @@
                     </select>
                 </div>
 
-                <!-- X-as -->
-                <div>
+                <div v-if="!message.config">
                     <label class="block text-xs font-medium text-gray-700 mb-1">
-                        X-as (Categorie)
+                        {{ $t("chart.xAxis") }}
                     </label>
                     <select
                         v-model="message.selectedXAxis"
                         class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
-                        <option value="">Kies X-as veld</option>
+                        <option value="">{{ $t("chart.choose_x") }}</option>
                         <option
                             v-for="field in getAllFields(message)"
                             :key="field.key"
@@ -58,20 +55,18 @@
                         >
                             {{ field.display }}
                         </option>
-                        <option value="__index">Rij Nummer</option>
                     </select>
                 </div>
 
-                <!-- Y-as -->
-                <div>
+                <div v-if="!message.config">
                     <label class="block text-xs font-medium text-gray-700 mb-1">
-                        Y-as (Waarde)
+                        {{ $t("chart.yAxis") }}
                     </label>
                     <select
                         v-model="message.selectedYAxis"
                         class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
-                        <option value="">Kies Y-as veld</option>
+                        <option value="">{{ $t("chart.choose_y") }}</option>
                         <option
                             v-for="field in getAllFields(message)"
                             :key="field.key"
@@ -79,21 +74,17 @@
                         >
                             {{ field.display }}
                         </option>
-                        <option value="__count">Aantal (Tel Records)</option>
                     </select>
                 </div>
 
-                <!-- Sorteer Veld -->
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">
-                        Sorteer Op
+                        {{ $t("chart.sort") }}
                     </label>
                     <select
                         v-model="message.selectedSortField"
                         class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
-                        <option value="">Automatisch</option>
-
                         <option
                             v-for="field in getAllFields(message)"
                             :key="field.key"
@@ -104,10 +95,9 @@
                     </select>
                 </div>
 
-                <!-- Sorteer Richting -->
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">
-                        Richting
+                        {{ $t("chart.order") }}
                     </label>
                     <button
                         type="button"
@@ -131,27 +121,11 @@
         </div>
 
         <!-- Chart Preview -->
-        <div
-            v-if="message.selectedXAxis && message.selectedYAxis"
-            class="w-full h-96 bg-white rounded-lg border border-gray-200"
-        >
+        <div class="w-full h-96 bg-white rounded-lg border-0">
             <ag-charts
                 class="w-full h-full"
                 :options="getCustomChartOptions(message)"
             />
-        </div>
-
-        <!-- Placeholder -->
-        <div
-            v-else
-            class="w-full h-96 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center"
-        >
-            <div class="text-center text-gray-500">
-                <i class="fas fa-chart-bar text-3xl mb-2"></i>
-                <p class="text-sm">
-                    Selecteer X-as en Y-as om de grafiek te bekijken
-                </p>
-            </div>
         </div>
     </div>
 </template>
@@ -179,6 +153,13 @@ export default {
             type: Object,
             required: true,
         },
+        sort: {
+            type: String,
+            default: "normal",
+        },
+        config: {
+            required: false,
+        },
     },
     components: {
         AgCharts,
@@ -186,17 +167,17 @@ export default {
     data() {
         return {
             chartTypes: [
-                { value: "bar", label: "Balk" },
-                { value: "line", label: "Lijn" },
-                { value: "area", label: "Vlak" },
-                { value: "pie", label: "Taart" },
+                { value: "bar", label: this.$t("chart.charttypes.bar") },
+                { value: "line", label: this.$t("chart.charttypes.line") },
+                { value: "area", label: this.$t("chart.charttypes.area") },
+                { value: "pie", label: this.$t("chart.charttypes.pie") },
             ],
             aggregationTypes: [
-                { value: "sum", label: "Som" },
-                { value: "avg", label: "Gemiddelde" },
-                { value: "count", label: "Aantal" },
-                { value: "min", label: "Minimum" },
-                { value: "max", label: "Maximum" },
+                { value: "sum", label: this.$t("chart.aggtypes.sum") },
+                { value: "avg", label: this.$t("chart.aggtypes.avg") },
+                { value: "count", label: this.$t("chart.aggtypes.count") },
+                { value: "min", label: this.$t("chart.aggtypes.min") },
+                { value: "max", label: this.$t("chart.aggtypes.max") },
             ],
         };
     },
@@ -334,6 +315,9 @@ export default {
         isDateField(fieldName, data) {
             if (!data || data.length === 0) return false;
 
+            // If fieldName is an array, it's not a date field
+            if (Array.isArray(fieldName)) return false;
+
             const sampleSize = Math.min(10, data.length);
             let dateCount = 0;
 
@@ -348,75 +332,165 @@ export default {
         },
         getCustomChartOptions(message) {
             const chartType = message.selectedChartType || "column";
-            const xAxis = message.selectedXAxis;
-            const yAxis = message.selectedYAxis;
+            let xAxis = message.selectedXAxis;
+            let yAxis = message.selectedYAxis;
             const aggregation = message.selectedAggregation || "sum";
             const sortField = message.selectedSortField || "";
             const sortDirection = message.selectedSortDirection || "desc";
 
-            if (!xAxis || !yAxis || !message.json) {
-                return {};
+            // Parse existing config if available
+            let existingConfig = null;
+
+            const parseConfig = (configString) => {
+                try {
+                    const parsed = JSON.parse(configString);
+
+                    // Normaliseer de structuur - pak de echte config uit de geneste structuur
+                    if (
+                        parsed.Graph &&
+                        Array.isArray(parsed.Graph) &&
+                        parsed.Graph[0]
+                    ) {
+                        // Als het de oude geneste structuur is: {"Graph":[{"0": {...}}]}
+                        if (parsed.Graph[0]["0"]) {
+                            return parsed.Graph[0]["0"];
+                        }
+                        // Of als het direct in Graph[0] staat
+                        return parsed.Graph[0];
+                    }
+                    // Als het direct de config is
+                    if (parsed.data || parsed.series) {
+                        return parsed;
+                    }
+                    return null;
+                } catch (e) {
+                    console.error("Kon config niet parsen:", e);
+                    return null;
+                }
+            };
+
+            if (this.config) {
+                existingConfig = parseConfig(this.config);
+            } else if (message.config) {
+                existingConfig = parseConfig(message.config);
             }
 
-            // Prepareer data gebaseerd op selecties
+            // Extract axes from existing config
+            if (existingConfig) {
+                // Voor pie charts
+                if (existingConfig.series?.[0]?.type === "pie") {
+                    xAxis =
+                        existingConfig.series[0].calloutLabelKey ||
+                        existingConfig.series[0].labelKey;
+                    yAxis = existingConfig.series[0].angleKey;
+                }
+                // Voor normale charts
+                else if (existingConfig.series?.[0]) {
+                    const firstSeries = existingConfig.series[0];
+
+                    if (Array.isArray(firstSeries.xKey)) {
+                        xAxis = firstSeries.xKey;
+                    } else {
+                        xAxis = firstSeries.xKey;
+                    }
+
+                    if (existingConfig.series.length > 1) {
+                        yAxis = existingConfig.series.map((s) => s.yKey);
+                    } else {
+                        yAxis = firstSeries.yKey;
+                    }
+                }
+            }
+
+            // Prepareer data
             const chartData = this.prepareCustomChartData(
                 message.json,
                 xAxis,
                 yAxis,
-                aggregation
+                aggregation,
+                existingConfig
             );
 
             if (!chartData || chartData.length === 0) {
                 return {};
             }
 
-            // Sorteer data gebaseerd op geselecteerde veld en richting
-            const sortedData = this.sortChartDataByField(
-                chartData,
-                message.json,
-                xAxis,
-                yAxis,
+            // Sorteer data
+            let sortedData = this.sortChartData(
+                chartData.data,
                 sortField,
-                sortDirection
-            ).slice(0, 50);
-
-            const title = this.generateCustomChartTitle(
-                xAxis,
-                yAxis,
-                aggregation
-            );
-
-            const baseOptions = {
-                data: sortedData,
-                title: {
-                    text: title,
-                    fontSize: 16,
-                    fontWeight: "bold",
-                },
-                padding: {
-                    top: 20,
-                    right: 20,
-                    bottom: 20,
-                    left: 20,
-                },
-                navigator: {
-                    enabled: chartType !== "pie",
-                    mask: {
-                        fill: "rgba(59, 130, 246, 0.1)",
-                        stroke: this.message._color,
-                        strokeWidth: 1,
-                    },
-                },
-            };
-
-            const config = this.generateCustomChartConfig(
-                baseOptions,
-                chartType,
+                sortDirection,
                 xAxis,
                 yAxis
             );
 
-            return config;
+            sortedData = this.transformDataToOutputKeys(
+                sortedData,
+                chartData.keys
+            );
+
+            // Als we een bestaande config hebben, gebruik die met nieuwe data
+            if (existingConfig) {
+                console.log("Using existing config:", existingConfig);
+                return {
+                    ...existingConfig,
+                    data: sortedData,
+                };
+            }
+
+            // Genereer nieuwe config
+            return this.generateNewChartConfig(
+                sortedData,
+                chartType,
+                xAxis,
+                yAxis,
+                aggregation
+            );
+        },
+        sortChartData(data, sortField, sortDirection, xAxis, yAxis) {
+            if (!sortField) {
+                return data;
+            }
+
+            console.log(data, sortField, sortDirection, xAxis, yAxis);
+
+            const getFieldValue = (item, field) => {
+                const value = item[field];
+                return value;
+            };
+
+            return [...data].sort((a, b) => {
+                const aVal = getFieldValue(a, sortField);
+                const bVal = getFieldValue(b, sortField);
+
+                if (typeof aVal === "number" && typeof bVal === "number") {
+                    const result =
+                        sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+
+                    // Tiebreaker: gebruik originele index
+                    return result !== 0
+                        ? result
+                        : a._originalIndex - b._originalIndex;
+                }
+
+                console.log("we hebben strings nondeju");
+
+                if (aVal instanceof Date && bVal instanceof Date) {
+                    return sortDirection === "asc"
+                        ? aVal.getTime() - bVal.getTime()
+                        : bVal.getTime() - aVal.getTime();
+                }
+
+                // String comparison
+                const aStr = String(aVal).toLowerCase();
+                const bStr = String(bVal).toLowerCase();
+
+                if (sortDirection === "asc") {
+                    return aStr.localeCompare(bStr);
+                } else {
+                    return bStr.localeCompare(aStr);
+                }
+            });
         },
         getAllFields(message) {
             if (
@@ -539,18 +613,255 @@ export default {
                     : strB.localeCompare(strA, "nl");
             });
         },
-        prepareCustomChartData(data, xAxis, yAxis, aggregation) {
+        generateNewChartConfig(data, chartType, xAxis, yAxis, aggregation) {
+            const title = this.generateCustomChartTitle(
+                xAxis,
+                yAxis,
+                aggregation
+            );
+
+            // Bepaal de keys uit de data
+            const sampleItem = data[0] || {};
+            const keys = Object.keys(sampleItem);
+            const xKey = keys[0] || "category";
+            const yKey = keys[1] || "value";
+
+            // Create baseOptions equivalent
+            const baseOptions = {
+                data: data.map((item) => ({
+                    category: item[xKey],
+                    value: item[yKey],
+                })),
+                title: {
+                    text: title,
+                    fontSize: 16,
+                    fontWeight: "bold",
+                },
+                padding: {
+                    top: 20,
+                    right: 20,
+                    bottom: 20,
+                    left: 20,
+                },
+                navigator: {
+                    enabled: chartType !== "pie",
+                    mask: {
+                        fill: "rgba(59, 130, 246, 0.1)",
+                        stroke: "#3B82F6",
+                        strokeWidth: 1,
+                    },
+                },
+            };
+
+            const xAxisTitle = this.getFieldDisplayName
+                ? this.getFieldDisplayName(xAxis)
+                : xAxis;
+            const yAxisTitle = this.getFieldDisplayName
+                ? this.getFieldDisplayName(
+                      yAxis === "__count" ? "Count" : yAxis
+                  )
+                : yAxis === "__count"
+                ? "Count"
+                : yAxis;
+
+            // Check of x-as datum bevat
+            const isXAxisDate =
+                baseOptions.data.length > 0 &&
+                baseOptions.data[0].category instanceof Date;
+
+            // Pie chart heeft andere configuratie
+            if (chartType === "pie") {
+                return this.generatePieChartConfig(
+                    baseOptions,
+                    xAxisTitle,
+                    yAxisTitle
+                );
+            }
+
+            const maxLabelChars = 15;
+
+            const xAxisConfig = {
+                type: isXAxisDate ? "time" : "category",
+                position: "bottom",
+                title: { text: xAxisTitle },
+                label: {
+                    rotation:
+                        !isXAxisDate && baseOptions.data.length > 10 ? -45 : 0,
+                    fontSize: 9,
+                    formatter: (params) => {
+                        let val = params.value;
+
+                        // Voor datum formatting
+                        if (isXAxisDate) {
+                            // params.value is al een Date object bij time axis
+                            return this.formatDate ? this.formatDate(val) : val;
+                        }
+
+                        // Anders gewoon tekst afkappen
+                        if (
+                            typeof val === "string" &&
+                            val.length > maxLabelChars
+                        ) {
+                            return val.slice(0, maxLabelChars) + "…";
+                        }
+                        return val;
+                    },
+                },
+            };
+
+            const yAxisConfig = {
+                type: "number",
+                position: "left",
+                title: { text: yAxisTitle },
+                label: {
+                    fontSize: 11,
+                },
+            };
+
+            const commonAxes = [xAxisConfig, yAxisConfig];
+
+            // Verbeterde tooltip renderer
+            const tooltipRenderer = ({ datum }) => {
+                let xValue;
+
+                // Zorg ervoor dat datum correct wordt getoond in tooltip
+                if (isXAxisDate && datum.category instanceof Date) {
+                    xValue = this.formatDate
+                        ? this.formatDate(datum.category)
+                        : datum.category;
+                } else {
+                    xValue = this.formatDisplayValue
+                        ? this.formatDisplayValue(datum.category)
+                        : datum.category;
+                }
+
+                const yValue =
+                    typeof datum.value === "number"
+                        ? datum.value.toLocaleString("nl-NL")
+                        : datum.value;
+
+                return {
+                    content: `${xAxisTitle}: ${xValue}<br/>${yAxisTitle}: ${yValue}`,
+                };
+            };
+
+            // Basis serie configuratie
+            const serieConfig = {
+                xKey: "category",
+                yKey: "value",
+                tooltip: { renderer: tooltipRenderer },
+            };
+
+            switch (chartType) {
+                case "bar":
+                case "column":
+                    return {
+                        ...baseOptions,
+                        axes: commonAxes,
+                        series: [
+                            {
+                                ...serieConfig,
+                                type: "bar",
+                                fill: this.message?._color || "#3B82F6",
+                            },
+                        ],
+                    };
+
+                case "line":
+                    return {
+                        ...baseOptions,
+                        axes: commonAxes,
+                        series: [
+                            {
+                                ...serieConfig,
+                                type: "line",
+                                stroke: this.message?._color || "#3B82F6",
+                                strokeWidth: 2,
+                                marker: {
+                                    enabled: true,
+                                    fill: this.message?._color || "#3B82F6",
+                                    size: 6,
+                                },
+                            },
+                        ],
+                    };
+
+                case "area":
+                    return {
+                        ...baseOptions,
+                        axes: commonAxes,
+                        series: [
+                            {
+                                ...serieConfig,
+                                type: "area",
+                                fill: "rgba(59, 130, 246, 0.3)",
+                                stroke: this.message?._color || "#3B82F6",
+                                strokeWidth: 2,
+                            },
+                        ],
+                    };
+
+                default:
+                    return {
+                        ...baseOptions,
+                        axes: commonAxes,
+                        series: [
+                            {
+                                ...serieConfig,
+                                type: "bar",
+                                fill: this.message?._color || "#3B82F6",
+                            },
+                        ],
+                    };
+            }
+        },
+        prepareCustomChartData(data, xAxis, yAxis, aggregation, config = null) {
             if (!data || data.length === 0) {
                 console.warn("Geen data beschikbaar voor chart");
                 return [];
             }
 
+            // Check if this is a pie chart from config
+            const isPieChart =
+                config?.type === "pie" || config?.series?.[0]?.type === "pie";
+
+            if (isPieChart) {
+                return this.preparePieChartData(
+                    data,
+                    xAxis,
+                    yAxis,
+                    aggregation,
+                    config
+                );
+            }
+
+            // Bepaal de gewenste output keys op basis van config of gebruik defaults
+            const outputKeys = this.getOutputKeysFromConfig(
+                config,
+                xAxis,
+                yAxis
+            );
+
+            return {
+                keys: outputKeys,
+                data: data,
+            };
+            // Transformeer data naar de gewenste key structuur
+            // return this.transformDataToOutputKeys(data, outputKeys);
+        },
+        preparePieChartData(data, xAxis, yAxis, aggregation, config) {
             const isXAxisDate = this.isDateField(xAxis, data);
 
+            // Voor pie charts aggregeren we altijd
+            let processedData;
             if (yAxis === "__count") {
-                return this.prepareCountData(data, xAxis, isXAxisDate);
+                processedData = this.prepareCountDataNew(
+                    data,
+                    xAxis,
+                    isXAxisDate
+                );
             } else {
-                return this.prepareAggregatedData(
+                processedData = this.prepareAggregatedDataNew(
                     data,
                     xAxis,
                     yAxis,
@@ -558,6 +869,194 @@ export default {
                     isXAxisDate
                 );
             }
+
+            const angleKey = config?.series?.[0]?.angleKey || "value";
+            const labelKey = config?.series?.[0]?.labelKey || "category";
+
+            return processedData.map((item) => ({
+                [labelKey]: item.categoryValue,
+                [angleKey]: item.aggregatedValue,
+            }));
+        },
+        getOutputKeysFromConfig(config, xAxis, yAxis) {
+            // Check for pie chart
+            const isPieChart =
+                config?.type === "pie" || config?.series?.[0]?.type === "pie";
+
+            if (isPieChart && config?.series?.[0]) {
+                return {
+                    labelKey: config.series[0].labelKey,
+                    angleKey: config.series[0].angleKey,
+                };
+            }
+
+            if (config?.series && config.series.length > 0) {
+                return {
+                    xKey: config.series[0].xKey,
+                    yKey: config.series.map((s) => s.yKey),
+                };
+            }
+
+            return {
+                xKey: Array.isArray(xAxis)
+                    ? xAxis
+                          .map((field) => this.sanitizeKeyName(field))
+                          .filter(Boolean)
+                    : this.sanitizeKeyName(xAxis) || "category",
+                yKey: Array.isArray(yAxis)
+                    ? yAxis
+                          .map((field) => this.sanitizeKeyName(field))
+                          .filter(Boolean)
+                    : this.sanitizeKeyName(yAxis) || "value",
+            };
+        },
+        sanitizeKeyName(fieldName) {
+            if (!fieldName || fieldName === "__count") return null;
+
+            return fieldName
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "_")
+                .replace(/^_+|_+$/g, "")
+                .replace(/_+/g, "_");
+        },
+        prepareCountDataNew(data, xAxis, isXAxisDate) {
+            const counts = new Map();
+
+            data.forEach((item, index) => {
+                const category = this.getCategoryValue(
+                    item,
+                    xAxis,
+                    index,
+                    isXAxisDate
+                );
+
+                if (category !== null) {
+                    const categoryKey = this.getCategoryKey(category);
+                    counts.set(categoryKey, (counts.get(categoryKey) || 0) + 1);
+                }
+            });
+
+            return Array.from(counts.entries()).map(([categoryKey, count]) => ({
+                categoryValue: this.parseCategoryKey(categoryKey, isXAxisDate),
+                aggregatedValue: count,
+            }));
+        },
+        prepareAggregatedDataNew(data, xAxis, yAxis, aggregation, isXAxisDate) {
+            const groups = new Map();
+
+            data.forEach((item, index) => {
+                const category = this.getCategoryValue(
+                    item,
+                    xAxis,
+                    index,
+                    isXAxisDate
+                );
+                const numericValue = this.parseNumericValue(item[yAxis]);
+
+                if (category !== null && numericValue !== null) {
+                    const categoryKey = this.getCategoryKey(category);
+
+                    if (!groups.has(categoryKey)) {
+                        groups.set(categoryKey, []);
+                    }
+                    groups.get(categoryKey).push(numericValue);
+                }
+            });
+
+            return Array.from(groups.entries())
+                .map(([categoryKey, values]) => ({
+                    categoryValue: this.parseCategoryKey(
+                        categoryKey,
+                        isXAxisDate
+                    ),
+                    aggregatedValue: this.aggregateValues(values, aggregation),
+                }))
+                .filter(
+                    (item) =>
+                        item.aggregatedValue !== null &&
+                        !isNaN(item.aggregatedValue) &&
+                        isFinite(item.aggregatedValue)
+                );
+        },
+        getCategoryValue(item, xAxis, index, isXAxisDate) {
+            if (xAxis === "__index") {
+                return `Item ${index + 1}`;
+            }
+
+            // Handle array of fields for multi-field categories
+            if (Array.isArray(xAxis)) {
+                const values = xAxis.map((field) => {
+                    const rawValue = item[field];
+                    if (
+                        rawValue === null ||
+                        rawValue === undefined ||
+                        rawValue === ""
+                    ) {
+                        return "Onbekend";
+                    }
+                    return String(rawValue);
+                });
+                return values.join(", ");
+            }
+
+            const rawValue = item[xAxis];
+
+            // Rest of existing logic...
+            if (
+                rawValue === null ||
+                rawValue === undefined ||
+                rawValue === ""
+            ) {
+                return "Onbekend";
+            }
+
+            if (isXAxisDate) {
+                const dateValue = this.parseDate(rawValue);
+                if (dateValue) {
+                    return dateValue;
+                } else {
+                    console.warn("Kon datum niet parsen:", rawValue);
+                    return null;
+                }
+            } else {
+                return String(rawValue);
+            }
+        },
+        parseCategoryKey(categoryKey, isXAxisDate) {
+            return isXAxisDate ? new Date(categoryKey) : categoryKey;
+        },
+        transformDataToOutputKeys(processedData, outputKeys) {
+            return processedData.map((item) => {
+                const result = {};
+
+                // Handle array xKey (multiple fields)
+                if (Array.isArray(outputKeys.xKey)) {
+                    outputKeys.xKey.forEach((field) => {
+                        result[field] = item.categoryValue
+                            ? item.categoryValue.split(", ")[
+                                  outputKeys.xKey.indexOf(field)
+                              ] || item.categoryValue
+                            : item[field];
+                    });
+                } else {
+                    result[outputKeys.xKey] =
+                        item.categoryValue || item[outputKeys.xKey];
+                }
+
+                // Handle array yKey (multiple y fields)
+                if (Array.isArray(outputKeys.yKey)) {
+                    outputKeys.yKey.forEach((field) => {
+                        result[field] = item.aggregatedValues
+                            ? item.aggregatedValues[field] || 0
+                            : item[field] || 0;
+                    });
+                } else {
+                    result[outputKeys.yKey] =
+                        item.aggregatedValue || item[outputKeys.yKey];
+                }
+
+                return result;
+            });
         },
         prepareCountData(data, xAxis, isXAxisDate) {
             const counts = {};
@@ -584,6 +1083,11 @@ export default {
                 category: isXAxisDate ? new Date(categoryKey) : categoryKey,
                 value: count,
             }));
+        },
+        getCategoryKey(category) {
+            return category instanceof Date
+                ? category.toISOString()
+                : String(category);
         },
         prepareAggregatedData(data, xAxis, yAxis, aggregation, isXAxisDate) {
             const groups = {};
@@ -720,156 +1224,6 @@ export default {
 
             return `${aggLabel} ${yName} per ${xName}`;
         },
-        generateCustomChartConfig(baseOptions, chartType, xAxis, yAxis) {
-            const xAxisTitle = this.getFieldDisplayName(xAxis);
-            const yAxisTitle = this.getFieldDisplayName(yAxis);
-
-            // Check of x-as datum bevat
-            const isXAxisDate =
-                baseOptions.data.length > 0 &&
-                baseOptions.data[0].category instanceof Date;
-
-            // Pie chart heeft andere configuratie
-            if (chartType === "pie") {
-                return this.generatePieChartConfig(
-                    baseOptions,
-                    xAxisTitle,
-                    yAxisTitle
-                );
-            }
-
-            const maxLabelChars = 15;
-
-            const xAxisConfig = {
-                type: isXAxisDate ? "time" : "category",
-                position: "bottom",
-                title: { text: xAxisTitle },
-                label: {
-                    rotation:
-                        !isXAxisDate && baseOptions.data.length > 10 ? -45 : 0,
-                    fontSize: 9,
-                    formatter: (params) => {
-                        let val = params.value;
-
-                        // Voor datum formatting
-                        if (isXAxisDate) {
-                            // params.value is al een Date object bij time axis
-                            return this.formatDate(val);
-                        }
-
-                        // Anders gewoon tekst afkappen
-                        if (
-                            typeof val === "string" &&
-                            val.length > maxLabelChars
-                        ) {
-                            return val.slice(0, maxLabelChars) + "…";
-                        }
-                        return val;
-                    },
-                },
-            };
-
-            const yAxisConfig = {
-                type: "number",
-                position: "left",
-                title: { text: yAxisTitle },
-                label: {
-                    fontSize: 11,
-                },
-            };
-
-            const commonAxes = [xAxisConfig, yAxisConfig];
-
-            // Verbeterde tooltip renderer
-            const tooltipRenderer = ({ datum }) => {
-                let xValue;
-
-                // Zorg ervoor dat datum correct wordt getoond in tooltip
-                if (isXAxisDate && datum.category instanceof Date) {
-                    xValue = this.formatDate(datum.category);
-                } else {
-                    xValue = this.formatDisplayValue(datum.category);
-                }
-
-                const yValue =
-                    typeof datum.value === "number"
-                        ? datum.value.toLocaleString("nl-NL")
-                        : datum.value;
-
-                return {
-                    content: `${xAxisTitle}: ${xValue}<br/>${yAxisTitle}: ${yValue}`,
-                };
-            };
-
-            // Basis serie configuratie
-            const serieConfig = {
-                xKey: "category",
-                yKey: "value",
-                tooltip: { renderer: tooltipRenderer },
-            };
-
-            switch (chartType) {
-                case "bar":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "bar",
-                                fill: this.message._color,
-                            },
-                        ],
-                    };
-
-                case "line":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "line",
-                                stroke: this.message._color,
-                                strokeWidth: 2,
-                                marker: {
-                                    enabled: true,
-                                    fill: this.message._color,
-                                    size: 6,
-                                },
-                            },
-                        ],
-                    };
-
-                case "area":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "area",
-                                fill: "rgba(59, 130, 246, 0.3)",
-                                stroke: this.message._color,
-                                strokeWidth: 2,
-                            },
-                        ],
-                    };
-
-                default:
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "bar",
-                                fill: this.message._color,
-                            },
-                        ],
-                    };
-            }
-        },
         generatePieChartConfig(baseOptions, xAxisTitle, yAxisTitle) {
             // Colorschema voor pie chart
             const colors = [
@@ -975,18 +1329,6 @@ export default {
                     },
                 ],
             };
-        },
-        generateChartTitle(categoryField, valueField) {
-            const categoryName = this.getFieldDisplayName(categoryField);
-            const valueName = this.getFieldDisplayName(valueField);
-
-            if (valueField === "__count") {
-                return `Aantal per ${categoryName}`;
-            } else if (categoryField === "__index") {
-                return `${valueName} per Item`;
-            } else {
-                return `${valueName} per ${categoryName}`;
-            }
         },
         getFieldDisplayName(fieldName) {
             const displayNames = {

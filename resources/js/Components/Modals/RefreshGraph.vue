@@ -4,11 +4,11 @@
             @submit.prevent="sendFeedback"
             class="flex flex-col gap-6 w-full mt-8"
         >
-            <h2 class="text-xl font-semibold">Geef je aanpassingen door</h2>
+            <h2 class="text-xl font-semibold">{{ $t("modals.refresh") }}</h2>
 
             <textarea
                 class="w-full h-48 resize-none overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
-                placeholder="Typ hier je tekst..."
+                :placeholder="$t('labels.textarea')"
                 v-model="form.feedback"
             ></textarea>
 
@@ -24,7 +24,9 @@
             </div>
 
             <div class="flex justify-end mt-4">
-                <PrimaryButton type="submit">Verstuur</PrimaryButton>
+                <PrimaryButton type="submit">{{
+                    $t("modals.button")
+                }}</PrimaryButton>
             </div>
         </form>
     </Modal>

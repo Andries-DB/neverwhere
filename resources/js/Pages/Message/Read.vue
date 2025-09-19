@@ -39,7 +39,7 @@
                         ]"
                         v-if="message.respond_type !== 'Table'"
                     >
-                        Tekst
+                        {{ $t("conversations.text") }}
                     </button>
                     <button
                         v-if="hasTableData(message)"
@@ -51,7 +51,7 @@
                                 : 'bg-white text-blue-600 hover:bg-gray-100',
                         ]"
                     >
-                        Tabel
+                        {{ $t("conversations.table") }}
                     </button>
                     <button
                         v-if="hasChartData(message)"
@@ -63,7 +63,7 @@
                                 : 'bg-white text-blue-600 hover:bg-gray-100',
                         ]"
                     >
-                        Grafiek
+                        {{ $t("conversations.graph") }}
                     </button>
                     <button
                         v-if="message.sql_query"
@@ -94,7 +94,7 @@
                             class="text-xs ml-2 text-gray-600"
                         >
                             {{ message.json?.length || 0 }}
-                            records
+                            {{ $t("conversations.records") }}
                         </span>
 
                         <button
@@ -111,11 +111,11 @@
                                     "
                                 >
                                     <i class="fas fa-bookmark mr-1"></i>
-                                    Opgeslagen
+                                    {{ $t("conversations.saved") }}
                                 </span>
                                 <span v-else>
                                     <i class="far fa-bookmark mr-1"></i>
-                                    Opslaan
+                                    {{ $t("conversations.save") }}
                                 </span>
                             </template>
                         </button>
@@ -141,7 +141,7 @@
                             class="text-xs ml-2 text-gray-600"
                         >
                             {{ message.json?.length || 0 }}
-                            records
+                            {{ $t("conversations.records") }}
                         </span>
 
                         <button
@@ -151,11 +151,11 @@
                             <template v-if="message.displayAsTable">
                                 <span v-if="message.col_def">
                                     <i class="fas fa-bookmark mr-1"></i>
-                                    Opgeslagen
+                                    {{ $t("conversations.saved") }}
                                 </span>
                                 <span v-else>
                                     <i class="far fa-bookmark mr-1"></i>
-                                    Opslaan
+                                    {{ $t("conversations.save") }}
                                 </span>
                             </template>
                         </button>
@@ -175,7 +175,7 @@
                                 class="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors flex items-center"
                             >
                                 <i class="fas fa-sliders-h mr-1.5"></i>
-                                Grid Features
+                                {{ $t("conversations.features") }}
                                 <i
                                     class="fas fa-chevron-down ml-1.5 text-xs transition-transform"
                                     :class="{
@@ -194,8 +194,10 @@
                                     <label
                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                     >
-                                        <span class="text-xs text-gray-700"
-                                            >Sorting</span
+                                        <span class="text-xs text-gray-700">
+                                            {{
+                                                $t("conversations.sorting")
+                                            }}</span
                                         >
                                         <input
                                             type="checkbox"
@@ -208,8 +210,10 @@
                                     <label
                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                     >
-                                        <span class="text-xs text-gray-700"
-                                            >Filtering</span
+                                        <span class="text-xs text-gray-700">
+                                            {{
+                                                $t("conversations.filtering")
+                                            }}</span
                                         >
                                         <input
                                             type="checkbox"
@@ -222,8 +226,10 @@
                                     <label
                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                     >
-                                        <span class="text-xs text-gray-700"
-                                            >Grouping</span
+                                        <span class="text-xs text-gray-700">
+                                            {{
+                                                $t("conversations.grouping")
+                                            }}</span
                                         >
                                         <input
                                             type="checkbox"
@@ -235,8 +241,10 @@
                                     <label
                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                     >
-                                        <span class="text-xs text-gray-700"
-                                            >Pagination</span
+                                        <span class="text-xs text-gray-700">
+                                            {{
+                                                $t("conversations.pagination")
+                                            }}</span
                                         >
                                         <input
                                             type="checkbox"
@@ -250,8 +258,10 @@
                                     <label
                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                     >
-                                        <span class="text-xs text-gray-700"
-                                            >Multi line text</span
+                                        <span class="text-xs text-gray-700">
+                                            {{
+                                                $t("conversations.multiline")
+                                            }}</span
                                         >
                                         <input
                                             type="checkbox"
@@ -265,8 +275,12 @@
                                     <label
                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                     >
-                                        <span class="text-xs text-gray-700"
-                                            >Floating filters</span
+                                        <span class="text-xs text-gray-700">
+                                            {{
+                                                $t(
+                                                    "conversations.floatingfilters"
+                                                )
+                                            }}</span
                                         >
                                         <input
                                             type="checkbox"
@@ -280,8 +294,8 @@
                                     <label
                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                     >
-                                        <span class="text-xs text-gray-700"
-                                            >Total row
+                                        <span class="text-xs text-gray-700">
+                                            {{ $t("conversations.total_row") }}
                                         </span>
                                         <input
                                             type="checkbox"
@@ -299,7 +313,7 @@
                         >
                             <span>
                                 <i class="fas fa-download"></i>
-                                Exporteer
+                                {{ $t("conversations.export") }}
                             </span>
                         </button>
                     </div>
@@ -312,7 +326,7 @@
                     <p
                         class="text-[10px] text-slate-600 mb-1 uppercase tracking-wide"
                     >
-                        SQL Query
+                        {{ $t("conversations.sql") }}
                     </p>
                     <pre class="whitespace-pre-wrap break-words">{{
                         message.sql_query

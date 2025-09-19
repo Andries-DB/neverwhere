@@ -4,9 +4,11 @@
     <AuthenticatedLayout>
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-2xl font-bold text-gray-900">Instellingen</h1>
+            <h1 class="text-2xl font-bold text-gray-900">
+                {{ $t("settings.settings") }}
+            </h1>
             <p class="text-gray-600 mt-1">
-                Beheer je persoonlijke voorkeuren en account instellingen
+                {{ $t("settings.settings_description") }}
             </p>
         </div>
 
@@ -17,7 +19,7 @@
                     <!-- Language Section -->
                     <div>
                         <h2 class="text-lg font-semibold text-gray-900 mb-4">
-                            Taal & Regio
+                            {{ $t("settings.langandreg") }}
                         </h2>
 
                         <!-- Language Selector -->
@@ -117,7 +119,7 @@
                             <label
                                 class="block mb-2 text-sm font-medium text-gray-700"
                             >
-                                Decimaal scheidingsteken
+                                {{ $t("settings.decimal") }}
                             </label>
                             <div
                                 class="flex rounded-md overflow-hidden border border-gray-300 w-fit"
@@ -132,7 +134,7 @@
                                             : 'bg-white text-gray-700 hover:bg-gray-100',
                                     ]"
                                 >
-                                    Komma (,)
+                                    {{ $t("settings.comma") }} (,)
                                 </button>
                                 <button
                                     type="button"
@@ -144,11 +146,11 @@
                                             : 'bg-white text-gray-700 hover:bg-gray-100',
                                     ]"
                                 >
-                                    Punt (.)
+                                    {{ $t("settings.point") }} (.)
                                 </button>
                             </div>
                             <p class="mt-1 text-xs text-gray-500">
-                                Voorbeeld:
+                                {{ $t("settings.example") }}:
                                 {{
                                     form.number_format === "comma"
                                         ? "1" +
@@ -184,7 +186,7 @@
                             <label
                                 class="block mb-2 text-sm font-medium text-gray-700"
                             >
-                                Duizend scheidingsteken
+                                {{ $t("settings.thousand") }}
                             </label>
                             <div
                                 class="flex rounded-md overflow-hidden border border-gray-300 w-fit"
@@ -199,7 +201,7 @@
                                             : 'bg-white text-gray-700 hover:bg-gray-100',
                                     ]"
                                 >
-                                    Komma (,)
+                                    {{ $t("settings.comma") }} (,)
                                 </button>
                                 <button
                                     type="button"
@@ -211,7 +213,7 @@
                                             : 'bg-white text-gray-700 hover:bg-gray-100',
                                     ]"
                                 >
-                                    Punt (.)
+                                    {{ $t("settings.point") }} (.)
                                 </button>
                                 <button
                                     type="button"
@@ -223,7 +225,7 @@
                                             : 'bg-white text-gray-700 hover:bg-gray-100',
                                     ]"
                                 >
-                                    Spatie ( )
+                                    {{ $t("settings.space") }} ( )
                                 </button>
                                 <button
                                     type="button"
@@ -235,11 +237,11 @@
                                             : 'bg-white text-gray-700 hover:bg-gray-100',
                                     ]"
                                 >
-                                    Geen
+                                    {{ $t("settings.none") }}
                                 </button>
                             </div>
                             <p class="mt-1 text-xs text-gray-500">
-                                Voorbeeld:
+                                {{ $t("settings.example") }}:
                                 {{
                                     form.number_format === "comma"
                                         ? "1" +
@@ -280,7 +282,7 @@
                             class="bg-red-50 border border-red-200 rounded-md p-3"
                         >
                             <h3 class="font-medium text-red-800 mb-2">
-                                Er zijn fouten opgetreden:
+                                {{ $t("settings.errors") }}
                             </h3>
                             <ul class="list-disc list-inside space-y-1">
                                 <li
@@ -299,7 +301,7 @@
                         v-if="showSuccessMessage"
                         class="bg-green-50 border border-green-200 rounded-md p-3 text-sm text-green-700"
                     >
-                        Instellingen succesvol opgeslagen!
+                        {{ $t("settings.success") }}
                     </div>
 
                     <!-- Save Button -->
@@ -309,7 +311,7 @@
                             :disabled="form.processing"
                             class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                            Opslaan
+                            {{ $t("buttons.save") }}
                         </button>
                     </div>
                 </div>
@@ -355,9 +357,9 @@ export default {
         return {
             isLanguageDropdownOpen: false,
             availableLanguages: [
-                { code: "nl", name: "Nederlands", flag: "🇳🇱" },
-                { code: "fr", name: "Frans", flag: "🇫🇷" },
-                { code: "en", name: "Engels", flag: "🇬🇧" },
+                { code: "nl", name: this.$t("settings.nl"), flag: "🇳🇱" },
+                { code: "fr", name: this.$t("settings.fr"), flag: "🇫🇷" },
+                { code: "en", name: this.$t("settings.en"), flag: "🇬🇧" },
             ],
             selectedLanguage: {},
 

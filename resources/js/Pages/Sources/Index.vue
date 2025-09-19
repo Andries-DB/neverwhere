@@ -2,15 +2,20 @@
     <Head title="Bronnen" />
     <AuthenticatedLayout :breadcrumbs="breadcrumbs">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold">Bronnen</h2>
+            <h2 class="text-xl font-semibold">
+                {{
+                    $t("labels.sources").charAt(0).toUpperCase() +
+                    $t("labels.sources").slice(1)
+                }}
+            </h2>
             <PrimaryButton @click="toggleAddSource">
-                + Voeg bron toe
+                + {{ $t("buttons.add") }}
             </PrimaryButton>
         </div>
 
         <div class="relative overflow-x-auto sm:rounded-lg">
             <table class="w-full text-sm text-left rtl:text-right">
-                <caption
+                <!-- <caption
                     class="p-5 text-lg font-semibold text-left rtl:text-right bg-white"
                 >
                     Onze bronnen
@@ -19,14 +24,20 @@
                         om hem te ondersteunen, informeren en begeleiden bij het
                         behalen van zijn doelen.
                     </p>
-                </caption>
+                </caption> -->
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3">Naam</th>
-                        <th scope="col" class="px-6 py-3">Hex kleur</th>
+                        <th scope="col" class="px-6 py-3">
+                            {{ $t("labels.name") }}
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            {{ $t("labels.color") }}
+                        </th>
 
                         <th scope="col" class="px-6 py-3">
-                            <span class="sr-only">Aanpassen</span>
+                            <span class="sr-only">
+                                {{ $t("labels.edit") }}</span
+                            >
                         </th>
                     </tr>
                 </thead>
@@ -54,7 +65,8 @@
                             <a
                                 :href="route('source.read', source.id)"
                                 class="font-medium text-blue-600 hover:underline"
-                                >Pas aan</a
+                            >
+                                {{ $t("buttons.edit") }}</a
                             >
                         </td>
                     </tr>
@@ -67,7 +79,7 @@
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                             colspan="3"
                         >
-                            Geen resutaten gevonden
+                            {{ $t("labels.noresults") }}
                         </th>
                     </tr>
                 </tbody>

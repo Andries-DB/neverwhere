@@ -1,0 +1,43 @@
+<?php
+
+return [
+    'title' => 'Submit Feedback',
+    'description' => 'Help us improve the application by suggesting features or reporting bugs.',
+    'thanks' => 'Thanks for your feedback! We have received your submission.',
+    'type' => 'Type of report',
+    'feature' => 'Feature request',
+    'feature_description' => 'Suggest a new feature',
+    'bug' => 'Bug report',
+    'bug_description' => 'Report a problem or error',
+    'prio' => 'Priority',
+    'low' => [
+        'title' => 'Low',
+        'description' => 'Minor issue',
+    ],
+    'medium' => [
+        'title' => 'Normal',
+        'description' => 'Moderate issue',
+    ],
+    'high' => [
+        'title' => 'High',
+        'description' => 'Urgent issue',
+    ],
+    'feature_title' => 'Feature title',
+    'bug_description' => 'Bug description',
+    'detail_description' => 'Detailed description',
+    'titel' => 'Title',
+    'feature_detail_description' => 'Describe the desired feature, why it would be useful, and how it should work...',
+    'bug_detail_description' => 'Describe what goes wrong, when it happens, what you expected, and any relevant details...',
+    'steps' => 'Steps to reproduce',
+    'stepsplaceholder' => "1. Go to...\n2. Click on...\n3. Expected result: ...\n4. Actual result: ...",
+    'environment' => 'Environment (optional)',
+    'environment_sublabel' => 'Browser, operating system, screen resolution, etc.',
+    'delete' => 'Delete',
+    'feature_submit' => 'Submit feature',
+    'bug_submit' => 'Submit bug',
+    'submitting' => 'Submitting',
+    'feedback_overview_title' => 'Feedback management',
+    'feedback_overview_description' => 'Manage all feature requests and bug reports',
+    'submitted_by' => 'Submitted by',
+    'unknown' => 'Unknown',
+];

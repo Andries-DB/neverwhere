@@ -85,7 +85,6 @@ const sidebarItems = [
         route: "logs.get",
         routes: ["logs.get"],
         icon: "M15 12h4.5M19.5 12l-2-2m2 2l-2 2M16 6a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 18a6 6 0 0 1 12 0v1H4v-1z",
-
         role: "admin",
     },
     {
@@ -335,7 +334,7 @@ watch(sidebarCollapsed, (newValue) => {
                         class="text-xs font-semibold text-slate-400 uppercase tracking-wide px-3 mt-4"
                         v-if="!sidebarCollapsed"
                     >
-                        Mijn conversaties
+                        {{ $t("menu.myconversations") }}
                     </div>
                     <div
                         class="text-xs font-semibold text-slate-400 uppercase tracking-wide flex justify-center mt-4"
@@ -367,7 +366,7 @@ watch(sidebarCollapsed, (newValue) => {
                                 v-if="!sidebarCollapsed"
                                 class="ml-3 truncate"
                             >
-                                Nieuwe conversatie
+                                {{ $t("menu.newconversations") }}
                             </span>
                         </button>
 
@@ -423,7 +422,10 @@ watch(sidebarCollapsed, (newValue) => {
                                                 : ''
                                         "
                                     >
-                                        {{ conv.title || "Nieuwe conversatie" }}
+                                        {{
+                                            conv.title ||
+                                            $t("menu.newconversations")
+                                        }}
                                     </span>
                                 </Link>
 
@@ -529,7 +531,7 @@ watch(sidebarCollapsed, (newValue) => {
                                             "
                                             class="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-slate-50 rounded-md transition-colors duration-150"
                                         >
-                                            Pas naam aan
+                                            {{ $t("menu.changename") }}
                                         </button>
                                         <button
                                             @click="
@@ -537,7 +539,7 @@ watch(sidebarCollapsed, (newValue) => {
                                             "
                                             class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150"
                                         >
-                                            Verwijderen
+                                            {{ $t("menu.delete") }}
                                         </button>
                                     </div>
                                 </div>
@@ -547,45 +549,13 @@ watch(sidebarCollapsed, (newValue) => {
                             v-else-if="!sidebarCollapsed"
                             class="px-3 py-2 text-sm text-slate-400 italic"
                         >
-                            Geen conversaties
+                            {{ $t("menu.noconversations") }}
                         </div>
                     </div>
                 </div>
             </nav>
             <!-- Sidebar Footer -->
             <div class="flex flex-col">
-                <!-- Mooie Logout knop -->
-                <!-- <div class="p-4">
-                    <button
-                        @click="$inertia.post(route('logout'))"
-                        class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-gray-100 transition-all duration-150 rounded-md group"
-                    >
-                        <svg
-                            class="w-5 h-5 transition"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
-                            />
-                        </svg>
-                        <span v-if="!sidebarCollapsed">Uitloggen</span>
-
-                        <div
-                            v-if="sidebarCollapsed"
-                            class="absolute left-full ml-6 px-2 py-1 bg-slate-900 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 whitespace-nowrap"
-                        >
-                            Uitloggen
-                            <div
-                                class="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-900"
-                            ></div>
-                        </div>
-                    </button>
-                </div> -->
                 <div class="relative">
                     <button
                         @click="toggleSettingsDropdown"
@@ -786,7 +756,7 @@ watch(sidebarCollapsed, (newValue) => {
                             }"
                             class="px-4 py-2 rounded-md transition-colors duration-200"
                         >
-                            Pinboard
+                            {{ $t("menu.pinboard") }}
                         </a>
 
                         <a
@@ -803,7 +773,7 @@ watch(sidebarCollapsed, (newValue) => {
                                 $page.props.auth.user.role === 'cdo '
                             "
                         >
-                            Rapporten
+                            {{ $t("menu.reports") }}
                         </a>
 
                         <a
@@ -816,38 +786,9 @@ watch(sidebarCollapsed, (newValue) => {
                             }"
                             class="px-4 py-2 rounded-md transition-colors duration-200"
                         >
-                            Studio
+                            {{ $t("menu.studio") }}
                         </a>
                     </div>
-                </div>
-
-                <!-- Right side -->
-                <div class="flex items-center gap-3">
-                    <!-- Search
-                    <div class="relative hidden md:block">
-                        <div
-                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                        >
-                            <svg
-                                class="h-4 w-4 text-slate-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                />
-                            </svg>
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            class="block w-80 pl-10 pr-3 py-2 border border-slate-200 rounded-md text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        />
-                    </div> -->
                 </div>
             </header>
 
@@ -883,23 +824,6 @@ watch(sidebarCollapsed, (newValue) => {
                             }}
                         </div>
                     </div>
-
-                    <!-- <div class="mt-3 space-y-1 px-4">
-                        <ResponsiveNavLink
-                            :href="route('profile.edit')"
-                            class="text-slate-700 hover:bg-slate-100"
-                        >
-                            Profile
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            :href="route('logout')"
-                            method="post"
-                            as="button"
-                            class="text-slate-700 hover:bg-slate-100"
-                        >
-                            Log Out
-                        </ResponsiveNavLink>
-                    </div> -->
                 </div>
             </div>
 

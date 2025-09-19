@@ -1,4 +1,5 @@
 <?php
+// fr
 return [
     'companies' => 'Entreprises',
     'logs' => 'Journaux',
@@ -8,5 +9,12 @@ return [
     'feedback' => 'Retour',
     'settings' => 'Paramètres',
     '2fauth' => 'Authentification à deux facteurs',
-    'logout' => 'Déconnexion',
+    'logout' => 'Se déconnecter',
+    'myconversations' => 'Mes conversations',
+    'newconversations' => 'Nouvelle conversation',
+    'changename' => 'Modifier le nom',
+    'delete' => 'Supprimer',
+    'noconversations' => 'Aucune conversation',
+    'pinboard' => 'Tableau',
+    'studio' => 'Studio'
 ];

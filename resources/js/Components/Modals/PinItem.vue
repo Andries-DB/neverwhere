@@ -4,20 +4,20 @@
             @submit.prevent="sendFeedback"
             class="flex flex-col gap-6 w-full mt-8"
         >
-            <h2 class="text-xl font-semibold">Geef je instellingen door</h2>
+            <h2 class="text-xl font-semibold">{{ $t("modals.settings") }}</h2>
 
             <TextInput
                 v-model="form.title"
-                label="Titel"
-                placeholder="Titel"
+                :label="$t('labels.title')"
+                :placeholder="$t('labels.title')"
                 :class="{ 'border-red-500': form.errors.title }"
             />
 
             <!-- Dashboard Selector -->
             <div>
-                <label class="block mb-2 text-sm font-medium text-gray-700"
-                    >Dashboard</label
-                >
+                <label class="block mb-2 text-sm font-medium text-gray-700">{{
+                    $t("labels.dasboard")
+                }}</label>
                 <div class="relative" v-click-outside="closeDashboardDropdown">
                     <button
                         type="button"
@@ -26,9 +26,7 @@
                         :class="{ 'border-red-500': form.errors.dashboard_id }"
                     >
                         <span class="truncate">{{
-                            selectedDashboard
-                                ? selectedDashboard.name
-                                : "Selecteer dashboard"
+                            selectedDashboard ? selectedDashboard.name : "..."
                         }}</span>
                         <div class="ml-2 flex flex-col">
                             <svg
@@ -82,7 +80,7 @@
                                         v-if="dashboard.default === 1"
                                         class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
                                     >
-                                        Default
+                                        {{ $t("modals.default") }}
                                     </span>
                                 </div>
                                 <svg
@@ -108,7 +106,7 @@
                                 v-if="!dashboards || dashboards.length === 0"
                                 class="px-3 py-2 text-sm text-gray-500"
                             >
-                                Geen dashboards beschikbaar
+                                {{ $t("labels.noresults") }}
                             </div>
                         </div>
                     </div>
@@ -116,9 +114,9 @@
             </div>
 
             <div>
-                <label class="block mb-2 text-sm font-medium text-gray-700"
-                    >Breedte</label
-                >
+                <label class="block mb-2 text-sm font-medium text-gray-700">{{
+                    $t("modals.width")
+                }}</label>
                 <div
                     class="flex rounded-md overflow-hidden border border-gray-300 w-fit"
                 >
@@ -132,7 +130,7 @@
                                 : 'bg-white text-gray-700 hover:bg-gray-100',
                         ]"
                     >
-                        Halve
+                        {{ $t("modals.half") }}
                     </button>
                     <button
                         type="button"
@@ -144,7 +142,7 @@
                                 : 'bg-white text-gray-700 hover:bg-gray-100',
                         ]"
                     >
-                        Volle
+                        {{ $t("modals.full") }}
                     </button>
                 </div>
             </div>
@@ -166,7 +164,11 @@
                     type="submit"
                     :class="{ 'opacity-50': form.processing }"
                 >
-                    {{ form.processing ? "Aan het pinnen ..." : "Pin" }}
+                    {{
+                        form.processing
+                            ? $t("modals.pinning")
+                            : $t("modals.pin")
+                    }}
                 </PrimaryButton>
             </div>
         </form>

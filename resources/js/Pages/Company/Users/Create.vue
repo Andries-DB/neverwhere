@@ -199,7 +199,9 @@
                 <div class="flex flex-col flex-wrap gap-2">
                     <InputError v-for="error in errors" :message="error" />
                 </div>
-                <PrimaryButton type="submit">Voeg toe</PrimaryButton>
+                <PrimaryButton type="submit">{{
+                    $t("buttons.add")
+                }}</PrimaryButton>
             </div>
         </form>
     </Modal>

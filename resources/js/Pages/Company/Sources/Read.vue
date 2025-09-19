@@ -1,6 +1,6 @@
 <template>
     <Head :title="source.name" />
-    <AuthenticatedLayout :breadcrumbs="breadcrumbs">
+    <AuthenticatedLayout>
         <template #title>Sources</template>
 
         <div
@@ -10,13 +10,14 @@
 
             <div class="flex gap-2">
                 <PrimaryButton @click="toggleEdit">
-                    <i class="fas fa-edit mr-2"></i> Pas aan
+                    <i class="fas fa-edit mr-2"></i> {{ $t("buttons.edit") }}
                 </PrimaryButton>
                 <PrimaryButton v-if="editSource" @click="saveSource">
-                    <i class="fas fa-check mr-2"></i>Sla op
+                    <i class="fas fa-check mr-2"></i>{{ $t("buttons.save") }}
                 </PrimaryButton>
                 <SecondaryButton @click="deleteSource">
-                    <i class="fas fa-trash-alt mr-2"></i>Verwijder
+                    <i class="fas fa-trash-alt mr-2"></i
+                    >{{ $t("buttons.delete") }}
                 </SecondaryButton>
             </div>
         </div>
@@ -24,36 +25,44 @@
         <div>
             <div class="py-6 rounded-md">
                 <div class="w-full">
-                    <InputLabel for="name" value="Naam*" />
+                    <InputLabel for="name" :value="$t('labels.name') + '*'" />
                     <TextInput
                         id="name"
                         type="text"
                         class="mt-1 block w-full"
                         v-model="form.name"
                         :disabled="!editSource"
-                        placeholder="Naam"
+                        :placeholder="$t('labels.name')"
                     />
                     <InputError class="mt-2" :message="form.errors.name" />
                 </div>
 
                 <div class="w-full mt-2">
-                    <InputLabel for="webhook" value="Webhook*" />
+                    <InputLabel
+                        for="webhook"
+                        :value="$t('labels.webhook') + '*'"
+                    />
                     <TextInput
                         id="webhook"
                         type="text"
                         class="mt-1 block w-full"
                         v-model="form.webhook"
                         :disabled="!editSource"
-                        placeholder="Webhook"
+                        :placeholder="$t('labels.webhook')"
                     />
                     <InputError class="mt-2" :message="form.errors.webhook" />
                 </div>
 
                 <div class="w-full mt-2">
-                    <InputLabel for="model" value="Model*" />
+                    <InputLabel for="model" :value="$t('labels.model') + '*'" />
                     <textarea
                         class="w-full h-[500px] resize-vertical overflow-y-auto overflow-x-hidden p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
-                        placeholder="Typ hier je tekst..."
+                        :placeholder="
+                            $t('labels.textarea') +
+                            ' ' +
+                            $t('labels.model') +
+                            '...'
+                        "
                         v-model="form.model"
                         :disabled="!editSource"
                     ></textarea>
@@ -97,26 +106,6 @@ export default {
                 model: this.source.model,
             }),
             editSource: false,
-            breadcrumbs: [
-                { title: "Dashboard", href: "/dashboard" },
-                { title: "Bedrijven", href: "/companies" },
-                {
-                    title: this.company.company,
-                    href: "/companies/" + this.company.guid,
-                },
-                {
-                    title: "Bronnen",
-                    href: "/companies/" + this.company.guid,
-                },
-                {
-                    title: this.source.name,
-                    href:
-                        "/companies/" +
-                        this.company.guid +
-                        "/sources/" +
-                        this.source.id,
-                },
-            ],
         };
     },
     methods: {

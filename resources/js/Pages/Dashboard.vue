@@ -13,7 +13,7 @@
                         <span class="truncate">{{
                             selectedDashboard
                                 ? selectedDashboard.name
-                                : "Selecteer dashboard"
+                                : $t("dashboard.select")
                         }}</span>
                         <div class="ml-2 flex flex-col">
                             <svg
@@ -88,7 +88,7 @@
                                 "
                                 class="px-3 py-2 text-sm text-gray-500"
                             >
-                                Geen dashboards beschikbaar
+                                {{ $t("labels.noresults") }}
                             </div>
                         </div>
                     </div>
@@ -134,7 +134,7 @@
                                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                                     />
                                 </svg>
-                                Maak nieuw dashboard
+                                {{ $t("dashboard.create") }}
                             </button>
                             <button
                                 @click="toggleExportDashbpard()"
@@ -142,7 +142,7 @@
                             >
                                 <i class="far fa-file-pdf mr-[14px]"></i>
 
-                                Exporteer dashboard
+                                {{ $t("dashboard.export") }}
                             </button>
                             <button
                                 @click="makeDefault(dashboard)"
@@ -162,7 +162,7 @@
                                         d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
                                     />
                                 </svg>
-                                Maak default
+                                {{ $t("dashboard.default") }}
                             </button>
 
                             <hr class="my-1 border-gray-200" />
@@ -184,7 +184,7 @@
                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                     />
                                 </svg>
-                                Verwijder
+                                {{ $t("dashboard.delete") }}
                             </button>
                         </div>
                     </div>
@@ -197,9 +197,7 @@
                 v-if="!pinned_items?.length"
             >
                 <p>
-                    Welkom op je dashboard! Hier kun je grafieken en tabellen
-                    toevoegen om snel inzicht te krijgen in je data. Begin met
-                    het vastpinnen van items via de conversatie.
+                    {{ $t("dashboard.welcome") }}
                 </p>
             </section>
 
@@ -354,7 +352,7 @@
                                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                                 />
                                             </svg>
-                                            Titel bewerken
+                                            {{ $t("dashboard.edit") }}
                                         </button>
 
                                         <button
@@ -379,8 +377,8 @@
                                             </svg>
                                             {{
                                                 item.width === "full"
-                                                    ? "Verklein"
-                                                    : "Vergroot"
+                                                    ? $t("dashboard.small")
+                                                    : $t("dashboard.big")
                                             }}
                                         </button>
 
@@ -404,7 +402,11 @@
                                                     d="M4 4v6h6M20 20v-6h-6M4 20l5-5M20 4l-5 5"
                                                 />
                                             </svg>
-                                            <span>Refresh</span>
+                                            <span>
+                                                {{
+                                                    $t("dashboard.refresh")
+                                                }}</span
+                                            >
                                         </button>
 
                                         <button
@@ -417,7 +419,7 @@
                                             <i
                                                 class="far fa-clone mr-2 w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-transform duration-200"
                                             ></i>
-                                            Dupliceer
+                                            {{ $t("dashboard.duplicate") }}
                                         </button>
 
                                         <!-- Divider -->
@@ -446,7 +448,7 @@
                                                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                                 />
                                             </svg>
-                                            Losmaken
+                                            {{ $t("dashboard.delete_pin") }}
                                         </button>
                                     </div>
                                 </div>
@@ -459,26 +461,11 @@
                                 class="w-full h-96 bg-white rounded border border-gray-100"
                                 v-if="item.type === 'graph'"
                             >
-                                <ag-charts
-                                    v-if="
-                                        getPinnedChartOptions(item).data?.length
-                                    "
-                                    class="w-full h-full"
-                                    :options="getPinnedChartOptions(item)"
+                                <ChartBuilder
+                                    :message="item.message"
+                                    :config="item.config"
+                                    sort="pinned"
                                 />
-                                <div
-                                    v-else
-                                    class="w-full h-full flex items-center justify-center text-gray-500"
-                                >
-                                    <div class="text-center">
-                                        <i
-                                            class="fas fa-chart-bar text-3xl mb-2"
-                                        ></i>
-                                        <p class="text-sm">
-                                            Geen data beschikbaar voor grafiek
-                                        </p>
-                                    </div>
-                                </div>
                             </div>
 
                             <div
@@ -500,12 +487,25 @@
                             <div
                                 class="flex justify-between items-center text-xs text-gray-500"
                             >
-                                <span
-                                    >{{ item.json?.length || 0 }} records</span
-                                >
-                                <span v-if="item.type == 'graph'">{{
-                                    formatChartType(item?.sort_chart)
-                                }}</span>
+                                <div class="">
+                                    <span
+                                        >{{
+                                            item.json?.length || 0
+                                        }}
+                                        records</span
+                                    >
+
+                                    <!-- <span v-if="item.type == 'graph'">{{
+                                        formatChartType(item?.sort_chart)
+                                    }}</span> -->
+                                </div>
+
+                                <div class="flex gap-2 items-end">
+                                    <small class="text-gray-400 ml-2">
+                                        Laatst geüpdatet:
+                                        {{ formatDateTime(item?.last_updated) }}
+                                    </small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -535,6 +535,7 @@ import Sortable from "sortablejs";
 import AddDashboard from "@/Components/Modals/AddDashboard.vue";
 import { changeLocale } from "@/lang";
 import TableBuilder from "@/Components/TableBuilder.vue";
+import ChartBuilder from "@/Components/ChartBuilder.vue";
 
 export default {
     components: {
@@ -544,6 +545,7 @@ export default {
         RefreshGraph,
         AddDashboard,
         TableBuilder,
+        ChartBuilder,
     },
     props: {
         dashboard: Object,
@@ -648,7 +650,6 @@ export default {
                 this.loading = false;
             }
         },
-
         createConversation() {
             this.form.post(route("conversation.create"), {
                 onSuccess: () => {
@@ -694,91 +695,16 @@ export default {
                 return format(date, "dd MMM");
             }
         },
-        parseDate(value) {
-            if (!value) return null;
-
-            // Converteer naar string als het dat nog niet is
-            const dateStr = String(value).trim();
-
-            // Leeg of ongeldig
-            if (!dateStr || dateStr === "null" || dateStr === "undefined")
-                return null;
-
-            // Probeer verschillende datum formaten
-            const formats = [
-                /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // 2023-12-01T10:30:00
-                /^\d{4}-\d{2}-\d{2}/, // 2023-12-01
-                /^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/, // 01-12-2023 of 1/12/2023
-                /^\d{1,2}[-\/]\d{1,2}[-\/]\d{2}/, // 01-12-23
-                /^\d{13}$/, // 1640995200000
-                /^\d{10}$/, // 1640995200
-            ];
-
-            // Controleer of het een geldig datum formaat lijkt
-            const hasDateFormat = formats.some((format) =>
-                format.test(dateStr)
-            );
-
-            if (hasDateFormat) {
-                // Probeer als timestamp (milliseconds)
-                if (/^\d{13}$/.test(dateStr)) {
-                    const timestamp = parseInt(dateStr);
-                    const date = new Date(timestamp);
-                    return isNaN(date.getTime()) ? null : date;
-                }
-
-                // Probeer als timestamp (seconds)
-                if (/^\d{10}$/.test(dateStr)) {
-                    const timestamp = parseInt(dateStr) * 1000;
-                    const date = new Date(timestamp);
-                    return isNaN(date.getTime()) ? null : date;
-                }
-
-                // Probeer normale datum parsing
-                const date = new Date(dateStr);
-
-                // Controleer of datum geldig is en niet in de verre toekomst/verleden
-                if (!isNaN(date.getTime())) {
-                    const year = date.getFullYear();
-                    if (year >= 1900 && year <= 2100) {
-                        return date;
-                    }
-                }
-            }
-
-            return null;
-        },
-        isDateField(fieldName, data) {
-            if (!data || data.length === 0) return false;
-
-            // Check eerste 10 records (of minder als er minder zijn)
-            const sampleSize = Math.min(10, data.length);
-            let dateCount = 0;
-
-            for (let i = 0; i < sampleSize; i++) {
-                const value = data[i][fieldName];
-                if (this.parseDate(value)) {
-                    dateCount++;
-                }
-            }
-
-            // Als meer dan 70% van de samples geldige datums zijn
-            return dateCount / sampleSize > 0.7;
-        },
-        isNumericField(fieldName, data) {
-            if (!data || data.length === 0) return false;
-
-            // Check eerste paar records
-            const sampleValues = data
-                .slice(0, 5)
-                .map((item) => item[fieldName])
-                .filter((val) => val != null && val !== "");
-
-            if (sampleValues.length === 0) return false;
-
-            return sampleValues.every((value) => {
-                const num = parseFloat(value);
-                return !isNaN(num) && isFinite(num);
+        formatDateTime(value) {
+            if (!value) return "-";
+            const date = new Date(value + " UTC"); // forceren dat het UTC is
+            return date.toLocaleString("nl-BE", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
             });
         },
         getGraphTitle(graph) {
@@ -806,483 +732,6 @@ export default {
                 area: "Vlakdiagram",
             };
             return types[chartType] || chartType;
-        },
-        getPinnedChartOptions(graph) {
-            const chartType = graph.sort_chart || "column";
-            const xAxis = graph._x;
-            const yAxis = graph._y;
-            const aggregation = graph._agg || "sum";
-            const order = graph._order || "value_desc";
-
-            if (!xAxis || !yAxis || !graph.json) {
-                return {};
-            }
-
-            const chartData = this.prepareChartData(
-                graph.json,
-                xAxis,
-                yAxis,
-                aggregation
-            );
-
-            if (!chartData || chartData.length === 0) {
-                console.log("No chart data available");
-                return {};
-            }
-
-            // Sorteer en limiteer data met verbeterde functie
-            const sortedData = this.sortChartData(
-                chartData,
-                xAxis,
-                order
-            ).slice(0, chartData.length);
-
-            const title = this.generateChartTitle(xAxis, yAxis, aggregation);
-
-            const baseOptions = {
-                data: sortedData,
-
-                padding: {
-                    top: 20,
-                    right: 20,
-                    bottom: 20,
-                    left: 20,
-                },
-            };
-
-            const finalConfig = this.generateChartConfig(
-                baseOptions,
-                chartType,
-                xAxis,
-                yAxis
-            );
-
-            return finalConfig;
-        },
-        prepareChartData(data, xAxis, yAxis, aggregation) {
-            if (!data || data.length === 0) {
-                console.warn("Geen data beschikbaar voor chart");
-                return [];
-            }
-
-            const isXAxisDate = this.isDateField(xAxis, data);
-
-            if (yAxis === "__count") {
-                return this.prepareCountData(data, xAxis, isXAxisDate);
-            } else {
-                return this.prepareAggregatedData(
-                    data,
-                    xAxis,
-                    yAxis,
-                    aggregation,
-                    isXAxisDate
-                );
-            }
-        },
-        prepareCountData(data, xAxis, isXAxisDate) {
-            const counts = {};
-
-            data.forEach((item, index) => {
-                let category = this.getCategoryValue(
-                    item,
-                    xAxis,
-                    index,
-                    isXAxisDate
-                );
-
-                if (category !== null) {
-                    const categoryKey =
-                        category instanceof Date
-                            ? category.toISOString()
-                            : String(category);
-                    counts[categoryKey] = (counts[categoryKey] || 0) + 1;
-                }
-            });
-
-            // Converteer naar array en sorteer
-            let entries = Object.entries(counts);
-
-            if (isXAxisDate) {
-                // Sorteer datums chronologisch
-                entries.sort(([a], [b]) => new Date(a) - new Date(b));
-                return entries.slice(0, 20).map(([categoryKey, count]) => ({
-                    category: new Date(categoryKey),
-                    value: count,
-                }));
-            } else {
-                // Sorteer op count (hoogste eerst)
-                entries.sort(([, a], [, b]) => b - a);
-                return entries.slice(0, 20).map(([category, count]) => ({
-                    category: category,
-                    value: count,
-                }));
-            }
-        },
-        prepareAggregatedData(data, xAxis, yAxis, aggregation, isXAxisDate) {
-            const groups = {};
-
-            data.forEach((item, index) => {
-                let category = this.getCategoryValue(
-                    item,
-                    xAxis,
-                    index,
-                    isXAxisDate
-                );
-
-                if (category !== null) {
-                    const categoryKey =
-                        category instanceof Date
-                            ? category.toISOString()
-                            : String(category);
-                    const value = this.parseNumericValue(item[yAxis]);
-
-                    if (value !== null) {
-                        if (!groups[categoryKey]) {
-                            groups[categoryKey] = [];
-                        }
-                        groups[categoryKey].push(value);
-                    }
-                }
-            });
-
-            // Converteer naar geaggregeerde data
-            let aggregatedData = Object.entries(groups)
-                .map(([categoryKey, values]) => {
-                    const aggregatedValue = this.aggregateValues(
-                        values,
-                        aggregation
-                    );
-
-                    return {
-                        category: isXAxisDate
-                            ? new Date(categoryKey)
-                            : categoryKey,
-                        value: aggregatedValue,
-                    };
-                })
-                .filter(
-                    (item) =>
-                        item.value !== null &&
-                        !isNaN(item.value) &&
-                        isFinite(item.value)
-                );
-
-            return aggregatedData.slice(0, 20);
-        },
-        getCategoryValue(item, xAxis, index, isXAxisDate) {
-            if (xAxis === "__index") {
-                return `Item ${index + 1}`;
-            }
-
-            const rawValue = item[xAxis];
-
-            // Controleer op lege waarden
-            if (
-                rawValue === null ||
-                rawValue === undefined ||
-                rawValue === ""
-            ) {
-                return "Onbekend";
-            }
-
-            if (isXAxisDate) {
-                const dateValue = this.parseDate(rawValue);
-                if (dateValue) {
-                    return dateValue;
-                } else {
-                    console.warn("Kon datum niet parsen:", rawValue);
-                    return null; // Skip invalid dates
-                }
-            } else {
-                return String(rawValue);
-            }
-        },
-        parseNumericValue(value) {
-            if (value === null || value === undefined || value === "") {
-                return null;
-            }
-
-            // Probeer als getal te parsen
-            const numValue = parseFloat(value);
-
-            // Controleer of het een geldig getal is
-            if (isNaN(numValue) || !isFinite(numValue)) {
-                return null;
-            }
-
-            return numValue;
-        },
-        sortChartData(chartData, xAxis, sortOrder) {
-            // Bepaal of het datums zijn door te kijken naar het eerste item
-            const isDateData =
-                chartData.length > 0 && chartData[0].category instanceof Date;
-
-            switch (sortOrder) {
-                case "value_desc":
-                    return chartData.sort((a, b) => b.value - a.value);
-
-                case "value_asc":
-                    return chartData.sort((a, b) => a.value - b.value);
-
-                case "category_asc":
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => a.category - b.category
-                        );
-                    } else {
-                        return chartData.sort((a, b) =>
-                            String(a.category).localeCompare(
-                                String(b.category),
-                                "nl"
-                            )
-                        );
-                    }
-
-                case "category_desc":
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => b.category - a.category
-                        );
-                    } else {
-                        return chartData.sort((a, b) =>
-                            String(b.category).localeCompare(
-                                String(a.category),
-                                "nl"
-                            )
-                        );
-                    }
-
-                case "date_asc":
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => a.category - b.category
-                        );
-                    } else {
-                        // Probeer alsnog te sorteren op datum als het geen Date object is
-                        return chartData.sort((a, b) => {
-                            const dateA = this.parseDate(a.category);
-                            const dateB = this.parseDate(b.category);
-                            if (dateA && dateB) {
-                                return dateA - dateB;
-                            }
-                            return String(a.category).localeCompare(
-                                String(b.category),
-                                "nl"
-                            );
-                        });
-                    }
-
-                case "date_desc":
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => b.category - a.category
-                        );
-                    } else {
-                        // Probeer alsnog te sorteren op datum als het geen Date object is
-                        return chartData.sort((a, b) => {
-                            const dateA = this.parseDate(a.category);
-                            const dateB = this.parseDate(b.category);
-                            if (dateA && dateB) {
-                                return dateB - dateA;
-                            }
-                            return String(b.category).localeCompare(
-                                String(a.category),
-                                "nl"
-                            );
-                        });
-                    }
-
-                default:
-                    // Fallback naar oude logica
-                    if (isDateData) {
-                        return chartData.sort(
-                            (a, b) => a.category - b.category
-                        );
-                    } else {
-                        return chartData.sort((a, b) => b.value - a.value);
-                    }
-            }
-        },
-        aggregateValues(values, aggregation) {
-            const validValues = values.filter(
-                (v) => v !== null && !isNaN(v) && isFinite(v)
-            );
-
-            if (validValues.length === 0) return 0;
-
-            switch (aggregation) {
-                case "sum":
-                    return validValues.reduce((sum, val) => sum + val, 0);
-                case "avg":
-                    return (
-                        validValues.reduce((sum, val) => sum + val, 0) /
-                        validValues.length
-                    );
-                case "count":
-                    return validValues.length;
-                case "min":
-                    return Math.min(...validValues);
-                case "max":
-                    return Math.max(...validValues);
-                default:
-                    return validValues.reduce((sum, val) => sum + val, 0);
-            }
-        },
-        generateChartTitle(xAxis, yAxis, aggregation) {
-            const xName = this.getFieldDisplayName(xAxis);
-            const yName = this.getFieldDisplayName(yAxis);
-
-            if (yAxis === "__count") {
-                return `Aantal per ${xName}`;
-            }
-
-            const aggLabel =
-                {
-                    sum: "Totaal",
-                    avg: "Gemiddelde",
-                    count: "Aantal",
-                    min: "Minimum",
-                    max: "Maximum",
-                }[aggregation] || "Totaal";
-
-            return `${aggLabel} ${yName} per ${xName}`;
-        },
-        getFieldDisplayName(fieldName) {
-            if (fieldName === "__index") return "Rij Nummer";
-            if (fieldName === "__count") return "Aantal";
-
-            // Capitalize first letter and replace underscores
-            return fieldName
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase());
-        },
-        generateChartConfig(baseOptions, chartType, xAxis, yAxis) {
-            const xAxisTitle = this.getFieldDisplayName(xAxis);
-            const yAxisTitle = this.getFieldDisplayName(yAxis);
-
-            // Check of x-as datum bevat
-            const isXAxisDate =
-                baseOptions.data.length > 0 &&
-                baseOptions.data[0].category instanceof Date;
-
-            const maxLabelChars = 15;
-
-            const xAxisConfig = {
-                type: isXAxisDate ? "time" : "category",
-                position: "bottom",
-                title: { text: xAxisTitle },
-                label: {
-                    rotation:
-                        !isXAxisDate && baseOptions.data.length > 10 ? -45 : 0,
-                    fontSize: 11,
-                    format: isXAxisDate ? "%d/%m/%Y" : undefined,
-                    formatter: (params) => {
-                        let val = params.value;
-                        if (
-                            typeof val === "string" &&
-                            val.length > maxLabelChars
-                        ) {
-                            return val.slice(0, maxLabelChars) + "…";
-                        }
-                        return val;
-                    },
-                },
-            };
-
-            const yAxisConfig = {
-                type: "number",
-                position: "left",
-                title: { text: yAxisTitle },
-                label: {
-                    fontSize: 11,
-                },
-            };
-
-            const commonAxes = [xAxisConfig, yAxisConfig];
-
-            const tooltipRenderer = ({ datum }) => {
-                const xValue = isXAxisDate
-                    ? datum.category.toLocaleDateString("nl-NL")
-                    : datum.category;
-
-                const yValue =
-                    typeof datum.value === "number"
-                        ? datum.value.toLocaleString("nl-NL")
-                        : datum.value;
-
-                return {
-                    content: `${xAxisTitle}: ${xValue}<br/>${yAxisTitle}: ${yValue}`,
-                };
-            };
-
-            // Basis serie configuratie
-            const serieConfig = {
-                xKey: "category",
-                yKey: "value",
-                tooltip: { renderer: tooltipRenderer },
-            };
-
-            switch (chartType) {
-                case "bar":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "bar",
-                                fill: "#3B82F6",
-                            },
-                        ],
-                    };
-
-                case "line":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "line",
-                                stroke: "#3B82F6",
-                                strokeWidth: 2,
-                                marker: {
-                                    enabled: true,
-                                    fill: "#3B82F6",
-                                    size: 6,
-                                },
-                            },
-                        ],
-                    };
-
-                case "area":
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "area",
-                                fill: "rgba(59, 130, 246, 0.3)",
-                                stroke: "#3B82F6",
-                                strokeWidth: 2,
-                            },
-                        ],
-                    };
-
-                default: // column
-                    return {
-                        ...baseOptions,
-                        axes: commonAxes,
-                        series: [
-                            {
-                                ...serieConfig,
-                                type: "bar",
-                                fill: "#3B82F6",
-                            },
-                        ],
-                    };
-            }
         },
         unpinGraph(graphId) {
             this.form.delete(route("conversation.unpinItem", graphId), {
@@ -1446,7 +895,6 @@ export default {
         async onGraphReorder(evt) {
             this.reorderItems(evt, this.pinned_items, this.updateGraphOrder);
         },
-
         toggleDashboardDropdown() {
             this.isDashboardOpen = !this.isDashboardOpen;
         },

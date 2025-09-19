@@ -4,12 +4,12 @@
             @submit.prevent="sendModal"
             class="flex flex-col gap-6 w-full mt-8"
         >
-            <h2 class="text-xl font-semibold">Geef je suggestievraag door</h2>
+            <h2 class="text-xl font-semibold">{{ $t("modals.suggestion") }}</h2>
 
             <TextInput
                 v-model="form.question"
-                label="Vraag"
-                placeholder="Vraag"
+                :label="$t('labels.question')"
+                :placeholder="$t('labels.question')"
                 :class="{ 'border-red-500': form.errors.question }"
             />
 
@@ -28,8 +28,10 @@
                     @click="deleteType"
                     :disabled="loadingDelete || loadingSave"
                 >
-                    <span v-if="loadingDelete">Verwijderen...</span>
-                    <span v-else>Verwijder</span>
+                    <span v-if="loadingDelete">{{
+                        $t("modals.delete_loading")
+                    }}</span>
+                    <span v-else>{{ $t("modals.delete") }}</span>
                 </DangerButton>
 
                 <PrimaryButton
@@ -57,11 +59,13 @@
                                 d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                             ></path>
                         </svg>
-                        Opslaan...
+                        {{ $t("modals.add") }}...
                     </span>
                     <span v-else>
-                        <span v-if="mode === 'edit'">Opslaan</span>
-                        <span v-else>Maak aan</span>
+                        <span v-if="mode === 'edit'">
+                            {{ $t("modals.add") }}</span
+                        >
+                        <span v-else> {{ $t("modals.create") }}</span>
                     </span>
                 </PrimaryButton>
             </div>

@@ -23,7 +23,6 @@ class ConversationController extends Controller
 
         return Inertia::render('Conversations/Read', [
             'conversation' => $conversation,
-            'pinned_items' => PinnedItem::with('message')->where('user_id', auth()->user()->id)->get(),
             'dashboards' => Dashboard::where('user_id',  auth()->user()->id)->orderBy('default', 'desc')->get(),
         ]);
     }
@@ -190,6 +189,7 @@ class ConversationController extends Controller
 
     public function pinChart(Request $request)
     {
+        // dd($request->all());
         $request->validate([
             'dashboard_id' => 'required|exists:dashboards,id',
         ]);
@@ -207,11 +207,12 @@ class ConversationController extends Controller
             '_agg' => $request->message['selectedAggregation'],
             '_order' => $request->message['selectedSortField'],
             '_order_dir' => $request->message['selectedSortDirection'],
-
             'width' => $request->width,
             ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
             'display_order' => (PinnedItem::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
             'dashboard_id' => $dashboard->id,
+            'last_updated' => now()->format('Y-m-d H:i:s'),
+            'config' => $request->message['config'],
         ]);
 
 
@@ -249,6 +250,7 @@ class ConversationController extends Controller
             'col_def' => $request->col_def,
             'display_order' => (PinnedItem::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
             'dashboard_id' => $dashboard->id,
+            'last_updated' => now()->format('Y-m-d H:i:s'),
         ]);
 
         $message = Message::where('id', $request->message['id'])->first();
@@ -327,11 +329,13 @@ class ConversationController extends Controller
                 ? ['json' => is_string($json['data']) ? json_decode($json['data'], true) : $json['data']]
                 : []
             ),
+            'last_updated' =>  now()->format('Y-m-d H:i:s'),
         ]);
 
         return;
     }
 
+    // UPDATE
     public function changeInput($id, Request $request)
     {
         $message = Message::with(['source', 'conversation'])->find($id);
@@ -368,10 +372,10 @@ class ConversationController extends Controller
             dd('response failed');
             return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
         }
-
         $json = $response->json();
-        // TESTING PURPOSE ONLY
-        $message->_color = '#00FF00';
+        $output = $json['output'];
+
+        $message->config = json_encode($output[0]);
         $message->save();
 
         return [
@@ -502,11 +506,11 @@ class ConversationController extends Controller
         }
 
         $user = auth()->user()->load('companies');
-
+        // dd($request->input('action'));
         $response = Http::timeout(60)->post($message->source->webhook, [
             'chat_id' => $message->conversation->id,
             'message_id' => $message->question_message,
-            'type' => 'summarize',
+            'type' => $request->input('action') === 'summarize' ? 'summarize' : 'ask_suggestion',
             'input' => '',
             'user' => [
                 'id' => $user->id,
@@ -529,10 +533,17 @@ class ConversationController extends Controller
         }
 
         $json = $response->json();
-        $output = $json['output'] ?? 'Geen samenvatting beschikbaar. Dr. Itchy heeft even pauze.';
+        $output = null;
+        if ($request->input('action') === 'suggestion') {
+            $output = $json['output']['ask_suggestion'] ?? 'Geen samenvatting beschikbaar. Dr. Itchy heeft even pauze.';
+        } else {
+            $output = $json['output'];
+        }
+
 
         return [
             'summary' => $output,
+            'type' => $request->input('action') === 'summarize' ? 'summarize' : 'ask_suggestion',
             'csrf_token' => csrf_token(),
         ];
     }

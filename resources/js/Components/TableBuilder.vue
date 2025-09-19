@@ -17,18 +17,14 @@
                 groupDisplayType="multipleColumns"
                 @grid-ready="onGridReady"
                 :grandTotalRow="grandTotalRow"
+                :sideBar="sideBar"
             />
         </div>
     </div>
 </template>
 
 <script>
-import {
-    iconSetQuartzLight,
-    ModuleRegistry,
-    themeBalham,
-    themeQuartz,
-} from "ag-grid-community";
+import { ModuleRegistry } from "ag-grid-community";
 import { AgGridVue } from "ag-grid-vue3";
 import "ag-grid-enterprise";
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
@@ -75,10 +71,9 @@ export default {
                 filterModel: null,
                 customHeaders: null,
             },
-            // Maak defaultColDef dynamisch gebaseerd op features
             defaultColDef: {
-                sortable: this.getFeature("sorting", true), // default true
-                filter: this.getFeature("filtering", true), // default true
+                sortable: this.getFeature("sorting", true),
+                filter: this.getFeature("filtering", true),
                 resizable: true,
                 flex: 1,
                 minWidth: 100,
@@ -112,7 +107,6 @@ export default {
                         "separator",
                     ];
 
-                    // Voeg chart opties alleen toe als grouping enabled is
                     if (this.getFeature("grouping", true)) {
                         defaultItems.push("chartRange", "separator");
                     }
@@ -123,10 +117,9 @@ export default {
                 getMainMenuItems: (params) => {
                     const defaultItems = params.defaultItems;
 
-                    // Voeg "Change column name" als eerste item toe
                     defaultItems.unshift({
                         name: "Change column name",
-                        icon: '<i class="fas fa-edit"></i>', // Of gebruik een andere icon
+                        icon: '<i class="fas fa-edit"></i>',
                         cssClasses: ["custom-menu-item-with-border"],
                         action: () => {
                             const currentName =
@@ -181,6 +174,35 @@ export default {
             },
         };
     },
+    computed: {
+        sideBar() {
+            if (!this.getFeature("tools_panel", false)) {
+                return false;
+            }
+
+            return {
+                toolPanels: [
+                    {
+                        id: "columns",
+                        labelDefault: "Columns",
+                        labelKey: "columns",
+                        iconKey: "columns",
+                        toolPanel: "agColumnsToolPanel",
+                        toolPanelParams: {
+                            suppressRowGroups: false,
+                            suppressValues: false,
+                            suppressPivots: false,
+                            suppressPivotMode: false,
+                            suppressColumnFilter: false,
+                            suppressColumnSelectAll: false,
+                            suppressColumnExpandAll: false,
+                        },
+                    },
+                ],
+                defaultToolPanel: "columns",
+            };
+        },
+    },
     created() {
         this.loadGridState();
 
@@ -193,7 +215,7 @@ export default {
             const count = this.gridApi
                 ? this.gridApi.getDisplayedRowCount()
                 : 0;
-            // Update de parent component
+
             if (this.message) {
                 this.message.filteredRecordCount = count;
             }
@@ -297,7 +319,6 @@ export default {
                 .querySelector('meta[name="csrf-token"]')
                 ?.getAttribute("content");
         },
-
         updateCsrfToken(response) {
             const newToken = response.headers.get("X-CSRF-TOKEN");
             if (newToken) {
@@ -866,3 +887,25 @@ export default {
     },
 };
 </script>
+
+<style>
+.ag-input-field-input {
+    padding: 0;
+    padding-left: calc(8px * 1.5 + 12px);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.ag-input-field-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.ag-input-field-input::placeholder {
+    color: #999;
+    font-style: italic;
+}
+</style>

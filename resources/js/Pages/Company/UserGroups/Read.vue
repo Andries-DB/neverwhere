@@ -29,34 +29,35 @@
 
             <div class="flex gap-2">
                 <PrimaryButton @click="toggleEdit">
-                    <i class="fas fa-edit mr-2"></i> Pas aan
+                    <i class="fas fa-edit mr-2"></i> {{ $t("buttons.edit") }}
                 </PrimaryButton>
                 <PrimaryButton v-if="editUserGroup" @click="saveUserGroup">
-                    <i class="fas fa-check mr-2"></i>Sla op
+                    <i class="fas fa-check mr-2"></i>{{ $t("buttons.save") }}
                 </PrimaryButton>
                 <SecondaryButton @click="deleteUserGroup">
-                    <i class="fas fa-trash-alt mr-2"></i>Verwijder
+                    <i class="fas fa-trash-alt mr-2"></i
+                    >{{ $t("buttons.delete") }}
                 </SecondaryButton>
             </div>
         </div>
 
         <div class="py-6">
             <div class="w-full">
-                <InputLabel for="name" value="Naam*" />
+                <InputLabel for="name" :value="$t('labels.model') + '*'" />
                 <TextInput
                     id="name"
                     type="text"
                     class="mt-1 block w-full"
                     v-model="form.name"
                     :disabled="!editUser"
-                    placeholder="Naam"
+                    :placeholder="$t('labels.model')"
                 />
                 <InputError class="mt-2" :message="form.errors.name" />
             </div>
 
             <div class="flex flex-col gap-2 mt-4">
                 <label class="text-sm font-medium text-slate-700">
-                    Koppel bronnen
+                    {{ $t("labels.connectsources") }}
                 </label>
                 <div class="flex flex-wrap gap-2">
                     <div

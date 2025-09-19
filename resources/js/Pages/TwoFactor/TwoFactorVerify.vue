@@ -9,10 +9,10 @@
         >
             <div class="mb-4 text-center">
                 <h2 class="text-2xl font-bold text-gray-900 mb-2">
-                    Verificatie vereist
+                    {{ $t("two_factor.verification") }}
                 </h2>
                 <p class="text-gray-600">
-                    Voer de 6-cijferige code in uit je authenticator app.
+                    {{ $t("two_factor.verification_description") }}
                 </p>
             </div>
 
@@ -22,7 +22,7 @@
                         for="code"
                         class="block text-sm font-medium text-gray-700 mb-2"
                     >
-                        Verificatiecode
+                        {{ $t("two_factor.code") }}
                     </label>
                     <input
                         id="code"
@@ -49,8 +49,10 @@
                         :disabled="form.processing || form.code.length !== 6"
                         class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <span v-if="form.processing">Verifiëren...</span>
-                        <span v-else>Verifiëren</span>
+                        <span v-if="form.processing">
+                            {{ $t("two_factor.verify") }}...</span
+                        >
+                        <span v-else> {{ $t("two_factor.verify") }}</span>
                     </button>
                 </div>
             </form>
@@ -61,7 +63,7 @@
                         type="submit"
                         class="text-sm text-gray-600 hover:text-gray-900 underline"
                     >
-                        Uitloggen
+                        {{ $t("two_factor.log_out") }}
                     </button>
                 </form>
             </div>
