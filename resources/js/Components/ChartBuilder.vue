@@ -1,7 +1,10 @@
 <template>
     <div v-if="message.json">
         <!-- Configuratiepaneel -->
-        <div class="p-3 bg-gray-50 rounded-t-lg border border-gray-200">
+        <div
+            class="p-3 bg-gray-50 rounded-t-lg border border-gray-200"
+            v-if="this.sort !== 'pinned'"
+        >
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div v-if="!message.config">
                     <label class="block text-xs font-medium text-gray-700 mb-1">
@@ -158,6 +161,9 @@ export default {
             default: "normal",
         },
         config: {
+            required: false,
+        },
+        item: {
             required: false,
         },
     },
@@ -331,12 +337,28 @@ export default {
             return dateCount / sampleSize > 0.7;
         },
         getCustomChartOptions(message) {
-            const chartType = message.selectedChartType || "column";
-            let xAxis = message.selectedXAxis;
-            let yAxis = message.selectedYAxis;
-            const aggregation = message.selectedAggregation || "sum";
-            const sortField = message.selectedSortField || "";
-            const sortDirection = message.selectedSortDirection || "desc";
+            let chartType = "";
+            let xAxis = "";
+            let yAxis = "";
+            let aggregation = "";
+            let sortField = "";
+            let sortDirection = "";
+            if (this.sort === "pinned") {
+                console.log(this.item);
+                chartType = this.item.sort_chart;
+                xAxis = this.item._x;
+                yAxis = this.item._y;
+                aggregation = this.item._agg;
+                sortField = this.item._order;
+                sortDirection = this.item._order_dir;
+            } else {
+                chartType = message.selectedChartType || "column";
+                xAxis = message.selectedXAxis;
+                yAxis = message.selectedYAxis;
+                aggregation = message.selectedAggregation || "sum";
+                sortField = message.selectedSortField || "";
+                sortDirection = message.selectedSortDirection || "desc";
+            }
 
             // Parse existing config if available
             let existingConfig = null;
@@ -368,7 +390,6 @@ export default {
                     return null;
                 }
             };
-
             if (this.config) {
                 existingConfig = parseConfig(this.config);
             } else if (message.config) {
@@ -437,6 +458,8 @@ export default {
                     data: sortedData,
                 };
             }
+
+            console.log("hi");
 
             // Genereer nieuwe config
             return this.generateNewChartConfig(
@@ -652,7 +675,6 @@ export default {
                     },
                 },
             };
-
             const xAxisTitle = this.getFieldDisplayName
                 ? this.getFieldDisplayName(xAxis)
                 : xAxis;
@@ -751,6 +773,8 @@ export default {
                 yKey: "value",
                 tooltip: { renderer: tooltipRenderer },
             };
+
+            console.log(baseOptions, commonAxes, serieConfig);
 
             switch (chartType) {
                 case "bar":

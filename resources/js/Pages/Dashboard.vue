@@ -465,6 +465,7 @@
                                     :message="item.message"
                                     :config="item.config"
                                     sort="pinned"
+                                    :item="item"
                                 />
                             </div>
 
