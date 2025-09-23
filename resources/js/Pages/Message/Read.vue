@@ -190,54 +190,6 @@
                                 class="absolute bottom-full mb-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
                             >
                                 <div class="pace-y-1">
-                                    <!-- Sorting -->
-                                    <label
-                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                    >
-                                        <span class="text-xs text-gray-700">
-                                            {{
-                                                $t("conversations.sorting")
-                                            }}</span
-                                        >
-                                        <input
-                                            type="checkbox"
-                                            v-model="message.features.sorting"
-                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
-                                        />
-                                    </label>
-
-                                    <!-- Filtering -->
-                                    <label
-                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                    >
-                                        <span class="text-xs text-gray-700">
-                                            {{
-                                                $t("conversations.filtering")
-                                            }}</span
-                                        >
-                                        <input
-                                            type="checkbox"
-                                            v-model="message.features.filtering"
-                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
-                                        />
-                                    </label>
-
-                                    <!-- Grouping -->
-                                    <label
-                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                    >
-                                        <span class="text-xs text-gray-700">
-                                            {{
-                                                $t("conversations.grouping")
-                                            }}</span
-                                        >
-                                        <input
-                                            type="checkbox"
-                                            v-model="message.features.grouping"
-                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
-                                        />
-                                    </label>
-
                                     <label
                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                     >
@@ -287,6 +239,21 @@
                                             v-model="
                                                 message.features
                                                     .floating_filters
+                                            "
+                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
+                                        />
+                                    </label>
+
+                                    <label
+                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                    >
+                                        <span class="text-xs text-gray-700">{{
+                                            $t("conversations.column_panel")
+                                        }}</span>
+                                        <input
+                                            type="checkbox"
+                                            v-model="
+                                                message.features.tools_panel
                                             "
                                             class="w-3 h-3 text-yellow-500 rounded border-gray-300"
                                         />
@@ -750,13 +717,11 @@ export default {
             this.message.col_def = this.message.col_def || null;
             this.message.openFeatures = false;
             this.message.features = {
-                sorting: true,
-                filtering: true,
-                grouping: true,
                 pagination: false,
                 multiline_text: false,
                 floating_filters: false,
                 total_row: false,
+                tools_panel: false,
             };
             this.message._x = this.message._x;
             this.message._y = this.message._y;

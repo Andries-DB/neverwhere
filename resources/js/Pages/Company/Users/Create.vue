@@ -257,13 +257,11 @@ export default {
         },
         selectRole(role) {
             this.selectedRole = role;
-            console.log(this.selectedRole);
             this.form.role = role.value;
             this.isRoleDropdownOpen = false;
         },
         toggleRoleDropdown() {
             this.isRoleDropdownOpen = !this.isRoleDropdownOpen;
-            // console.log(this.isRoleDropdownOpen);
         },
 
         closeRoleDropdown() {

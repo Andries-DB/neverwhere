@@ -477,6 +477,7 @@
                                     :message="item.message"
                                     sort="pinned"
                                     :col_def="item.col_def"
+                                    :total_row="item.total_row"
                                 />
                             </div>
                         </div>

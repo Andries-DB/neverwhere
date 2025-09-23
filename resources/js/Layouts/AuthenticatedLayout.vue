@@ -116,10 +116,7 @@ function createConversation() {
 
 const deleteConversation = (guid) => {
     form.delete(route("conversation.delete", guid), {
-        onSuccess: () => {
-            // Optioneel: success message
-            console.log("Conversatie verwijderd");
-        },
+        onSuccess: () => {},
         onError: () => {
             // Optioneel: error message
             console.log("Kon conversatie niet verwijderen");

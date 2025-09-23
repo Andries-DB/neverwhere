@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\PinnedItem;
 use App\Models\Source;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
@@ -18,7 +19,6 @@ class ConversationController extends Controller
     public function read($guid, Request $request)
     {
         $conversation = Conversation::where('guid', $guid)->with('messages', 'user.sources.suggestions')->where('visible', 1)->first();
-
         abort_unless($conversation, 403, 'This conversation does not exist');
 
         return Inertia::render('Conversations/Read', [
@@ -116,7 +116,6 @@ class ConversationController extends Controller
             ],
             'source' => [
                 'id' => $source->id,
-                // 'id' => 5,
                 'name' => $source->name,
             ],
             'query' => '',
@@ -129,22 +128,15 @@ class ConversationController extends Controller
         }
 
         $json = $response->json();
-
         $graph = $json['graph'] ?? null;
-
-        $type = null;
-        $x = null;
-        $y = null;
-        $color = "#3B82F6";
+        $graphConfig = null;
 
         if ($graph) {
-            $graphData = is_string($graph) ? json_decode($graph, true) : $graph;
-            if (isset($graphData['series'][0]['type'])) {
-                $type = $graphData['series'][0]['type'];
-                $x = $graphData['series'][0]['xKey'];
-                $y = $graphData['series'][0]['yKey'];
-            }
+            $graphConfig = [
+                "Graph" =>  is_string($graph) ? json_decode($graph, true) : $graph,
+            ];
         }
+
 
         $botMessage = $conversation->messages()->create([
             'guid' => (string) Str::uuid(),
@@ -159,10 +151,7 @@ class ConversationController extends Controller
                 : []
             ),
             'question_message' => $lastUserMessage->id,
-            '_sort' => $type,
-            '_x' => $x,
-            '_y' => $y,
-            '_color' => $color,
+            'config' => $graphConfig ? json_encode($graphConfig) : null,
         ]);
 
 
@@ -211,7 +200,7 @@ class ConversationController extends Controller
             ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
             'display_order' => (PinnedItem::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
             'dashboard_id' => $dashboard->id,
-            'last_updated' => now()->format('Y-m-d H:i:s'),
+            'last_updated' => Carbon::parse($request->message['updated_at'])->format('Y-m-d H:i:s'),
             'config' => $request->message['config'],
         ]);
 
@@ -232,13 +221,10 @@ class ConversationController extends Controller
 
     public function pinTable(Request $request)
     {
-        // dd($request->all());
         $request->validate([
             'dashboard_id' => 'required|exists:dashboards,id',
         ]);
         $dashboard = Dashboard::where('id', $request->dashboard_id)->first();
-
-
 
         PinnedItem::create([
             'user_id' => auth()->id(),
@@ -251,6 +237,7 @@ class ConversationController extends Controller
             'display_order' => (PinnedItem::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
             'dashboard_id' => $dashboard->id,
             'last_updated' => now()->format('Y-m-d H:i:s'),
+            'total_row' => $request->message['features']['total_row'] ? 1 : 0,
         ]);
 
         $message = Message::where('id', $request->message['id'])->first();
@@ -338,6 +325,7 @@ class ConversationController extends Controller
     // UPDATE
     public function changeInput($id, Request $request)
     {
+        // dd($request->all());
         $message = Message::with(['source', 'conversation'])->find($id);
 
         abort_if(!$message, 403, 'This pinned item does not exist');
@@ -359,7 +347,6 @@ class ConversationController extends Controller
                 'name' => $company->company,
             ],
             'source' => [
-                // 'id' => 5,
                 'id' => $message->source->id,
                 'name' => $message->source->name,
             ],
@@ -369,7 +356,6 @@ class ConversationController extends Controller
 
 
         if ($response->failed()) {
-            dd('response failed');
             return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
         }
         $json = $response->json();
@@ -500,6 +486,7 @@ class ConversationController extends Controller
     public function summarize(Request $request)
     {
         $message = Message::with('conversation', 'source')->find($request->input('message_id'));
+        $conversation = $message->conversation;
 
         if (!$message) {
             return response()->json(['error' => 'Message not found'], 404);
@@ -535,15 +522,36 @@ class ConversationController extends Controller
         $json = $response->json();
         $output = null;
         if ($request->input('action') === 'suggestion') {
-            $output = $json['output']['ask_suggestion'] ?? 'Geen samenvatting beschikbaar. Dr. Itchy heeft even pauze.';
+            $output = $conversation->messages()->create([
+                'guid' => (string) Str::uuid(),
+                'user_id' => $user->id,
+                'message' => '',
+                'sql_query' => '',
+                'respond_type' => 'ask_suggestion',
+                'source_id' => $message->source->id,
+                'send_by' => 'ai',
+                ...(isset($json['output']['ask_suggestion'])
+                    ? ['json' => json_encode(array_column($json['output']['ask_suggestion'], 0))]
+                    : []
+                ),
+
+            ]);
         } else {
-            $output = $json['output'];
+            $output = $conversation->messages()->create([
+                'guid' => (string) Str::uuid(),
+                'user_id' => $user->id,
+                'message' => '',
+                'sql_query' => '',
+                'respond_type' => 'summary',
+                'source_id' => $message->source->id,
+                'send_by' => 'ai',
+                'json' => $json['output'],
+            ]);
         }
 
 
         return [
             'summary' => $output,
-            'type' => $request->input('action') === 'summarize' ? 'summarize' : 'ask_suggestion',
             'csrf_token' => csrf_token(),
         ];
     }
@@ -576,12 +584,13 @@ class ConversationController extends Controller
             return response()->json(['error' => 'Message not found'], 404);
         }
 
-        $message->_agg = $request->input('data')['_agg'];
-        $message->_sort = $request->input('data')['_sort'];
-        $message->_x = $request->input('data')['_x'];
-        $message->_y = $request->input('data')['_y'];
         $message->_order = $request->input('data')['_order'];
         $message->_order_dir = $request->input('data')['_order_dir'];
+        $message->_x = $request->input('data')['_x'];
+        $message->_y = $request->input('data')['_y'];
+        $message->_agg = $request->input('data')['_agg'];
+        $message->_sort = $request->input('data')['_sort'];
+
         $message->save();
 
         return [

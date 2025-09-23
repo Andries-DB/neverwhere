@@ -27,8 +27,8 @@ class PinnedItem extends Model
         'col_def',
         '_order_dir',
         'last_updated',
-        'config'
-
+        'config',
+        'total_row',
     ];
 
     protected $casts = [

@@ -65,7 +65,7 @@ export default {
             if (props.message?.id) {
                 form.message_id = props.message.id;
             }
-            console.log(props.sort);
+
             if (props.sort === "dislike") {
                 form.post(route("conversation.dislikeMessage"), {
                     preserveScroll: true,

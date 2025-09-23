@@ -176,8 +176,6 @@ const props = defineProps({
     last_verified: String,
 });
 
-console.log(props);
-
 const qrCanvas = ref(null);
 
 const form = useForm({

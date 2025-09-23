@@ -6,7 +6,7 @@
             v-if="this.sort !== 'pinned'"
         >
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                <div v-if="!message.config">
+                <!-- <div v-if="!message.config">
                     <label class="block text-xs font-medium text-gray-700 mb-1">
                         {{ $t("chart.type") }}
                     </label>
@@ -78,7 +78,7 @@
                             {{ field.display }}
                         </option>
                     </select>
-                </div>
+                </div> -->
 
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">
@@ -188,6 +188,146 @@ export default {
         };
     },
     methods: {
+        getCustomChartOptions(message) {
+            let chartType = "";
+            let xAxis = "";
+            let yAxis = "";
+            let aggregation = "";
+            let sortField = "";
+            let sortDirection = "";
+
+            if (this.sort === "pinned") {
+                chartType = this.item.sort_chart;
+                xAxis = this.item._x;
+                yAxis = this.item._y;
+                aggregation = this.item._agg;
+                sortField = this.item._order;
+                sortDirection = this.item._order_dir;
+            } else {
+                chartType = message.selectedChartType || "column";
+                xAxis = message.selectedXAxis;
+                yAxis = message.selectedYAxis;
+                aggregation = message.selectedAggregation || "sum";
+                sortField = message.selectedSortField || "";
+                sortDirection = message.selectedSortDirection || "desc";
+            }
+
+            // Parse existing config if available
+            let existingConfig = null;
+
+            const parseConfig = (configString) => {
+                try {
+                    const parsed = JSON.parse(configString);
+
+                    if (
+                        parsed.Graph &&
+                        Array.isArray(parsed.Graph) &&
+                        parsed.Graph[0]
+                    ) {
+                        if (parsed.Graph[0]["0"]) {
+                            return parsed.Graph[0]["0"];
+                        }
+                        return parsed.Graph[0];
+                    }
+
+                    if (parsed.data || parsed.series) {
+                        return parsed;
+                    }
+                    return null;
+                } catch (e) {
+                    console.error("Kon config niet parsen:", e);
+                    return null;
+                }
+            };
+            if (this.config) {
+                existingConfig = parseConfig(this.config);
+            } else if (message.config) {
+                existingConfig = parseConfig(message.config);
+            }
+
+            // Extract axes from existing config
+            if (existingConfig) {
+                // Voor pie charts
+                if (existingConfig.series?.[0]?.type === "pie") {
+                    xAxis =
+                        existingConfig.series[0].calloutLabelKey ||
+                        existingConfig.series[0].labelKey;
+                    yAxis = existingConfig.series[0].angleKey;
+                }
+                // Voor normale charts
+                else if (existingConfig.series?.[0]) {
+                    const firstSeries = existingConfig.series[0];
+
+                    if (Array.isArray(firstSeries.xKey)) {
+                        xAxis = firstSeries.xKey;
+                    } else {
+                        xAxis = firstSeries.xKey;
+                    }
+
+                    if (existingConfig.series.length > 1) {
+                        yAxis = existingConfig.series.map((s) => s.yKey);
+                    } else {
+                        yAxis = firstSeries.yKey;
+                    }
+                }
+            }
+
+            // Prepareer data
+            const chartData = this.prepareCustomChartData(
+                message.json,
+                xAxis,
+                yAxis,
+                aggregation,
+                existingConfig
+            );
+
+            if (!chartData || chartData.length === 0) {
+                return {};
+            }
+
+            // Sorteer data
+            let sortedData = this.sortChartData(
+                chartData.data,
+                sortField,
+                sortDirection,
+                xAxis,
+                yAxis
+            );
+
+            sortedData = this.transformDataToOutputKeys(
+                sortedData,
+                chartData.keys
+            );
+
+            if (existingConfig) {
+                if (
+                    existingConfig.series &&
+                    existingConfig.series[0]?.label?.formatter &&
+                    typeof existingConfig.series[0].label.formatter === "string"
+                ) {
+                    const formatterString =
+                        existingConfig.series[0].label.formatter;
+                    existingConfig.series[0].label.formatter = new Function(
+                        "params",
+                        `return (${formatterString})(params);`
+                    );
+                }
+
+                return {
+                    ...existingConfig,
+                    data: sortedData,
+                };
+            }
+
+            // Genereer nieuwe config
+            return this.generateNewChartConfig(
+                sortedData,
+                chartType,
+                xAxis,
+                yAxis,
+                aggregation
+            );
+        },
         async SaveGraphState() {
             try {
                 const data = {
@@ -336,146 +476,11 @@ export default {
 
             return dateCount / sampleSize > 0.7;
         },
-        getCustomChartOptions(message) {
-            let chartType = "";
-            let xAxis = "";
-            let yAxis = "";
-            let aggregation = "";
-            let sortField = "";
-            let sortDirection = "";
-            if (this.sort === "pinned") {
-                console.log(this.item);
-                chartType = this.item.sort_chart;
-                xAxis = this.item._x;
-                yAxis = this.item._y;
-                aggregation = this.item._agg;
-                sortField = this.item._order;
-                sortDirection = this.item._order_dir;
-            } else {
-                chartType = message.selectedChartType || "column";
-                xAxis = message.selectedXAxis;
-                yAxis = message.selectedYAxis;
-                aggregation = message.selectedAggregation || "sum";
-                sortField = message.selectedSortField || "";
-                sortDirection = message.selectedSortDirection || "desc";
-            }
 
-            // Parse existing config if available
-            let existingConfig = null;
-
-            const parseConfig = (configString) => {
-                try {
-                    const parsed = JSON.parse(configString);
-
-                    // Normaliseer de structuur - pak de echte config uit de geneste structuur
-                    if (
-                        parsed.Graph &&
-                        Array.isArray(parsed.Graph) &&
-                        parsed.Graph[0]
-                    ) {
-                        // Als het de oude geneste structuur is: {"Graph":[{"0": {...}}]}
-                        if (parsed.Graph[0]["0"]) {
-                            return parsed.Graph[0]["0"];
-                        }
-                        // Of als het direct in Graph[0] staat
-                        return parsed.Graph[0];
-                    }
-                    // Als het direct de config is
-                    if (parsed.data || parsed.series) {
-                        return parsed;
-                    }
-                    return null;
-                } catch (e) {
-                    console.error("Kon config niet parsen:", e);
-                    return null;
-                }
-            };
-            if (this.config) {
-                existingConfig = parseConfig(this.config);
-            } else if (message.config) {
-                existingConfig = parseConfig(message.config);
-            }
-
-            // Extract axes from existing config
-            if (existingConfig) {
-                // Voor pie charts
-                if (existingConfig.series?.[0]?.type === "pie") {
-                    xAxis =
-                        existingConfig.series[0].calloutLabelKey ||
-                        existingConfig.series[0].labelKey;
-                    yAxis = existingConfig.series[0].angleKey;
-                }
-                // Voor normale charts
-                else if (existingConfig.series?.[0]) {
-                    const firstSeries = existingConfig.series[0];
-
-                    if (Array.isArray(firstSeries.xKey)) {
-                        xAxis = firstSeries.xKey;
-                    } else {
-                        xAxis = firstSeries.xKey;
-                    }
-
-                    if (existingConfig.series.length > 1) {
-                        yAxis = existingConfig.series.map((s) => s.yKey);
-                    } else {
-                        yAxis = firstSeries.yKey;
-                    }
-                }
-            }
-
-            // Prepareer data
-            const chartData = this.prepareCustomChartData(
-                message.json,
-                xAxis,
-                yAxis,
-                aggregation,
-                existingConfig
-            );
-
-            if (!chartData || chartData.length === 0) {
-                return {};
-            }
-
-            // Sorteer data
-            let sortedData = this.sortChartData(
-                chartData.data,
-                sortField,
-                sortDirection,
-                xAxis,
-                yAxis
-            );
-
-            sortedData = this.transformDataToOutputKeys(
-                sortedData,
-                chartData.keys
-            );
-
-            // Als we een bestaande config hebben, gebruik die met nieuwe data
-            if (existingConfig) {
-                console.log("Using existing config:", existingConfig);
-                return {
-                    ...existingConfig,
-                    data: sortedData,
-                };
-            }
-
-            console.log("hi");
-
-            // Genereer nieuwe config
-            return this.generateNewChartConfig(
-                sortedData,
-                chartType,
-                xAxis,
-                yAxis,
-                aggregation
-            );
-        },
         sortChartData(data, sortField, sortDirection, xAxis, yAxis) {
             if (!sortField) {
                 return data;
             }
-
-            console.log(data, sortField, sortDirection, xAxis, yAxis);
 
             const getFieldValue = (item, field) => {
                 const value = item[field];
@@ -495,8 +500,6 @@ export default {
                         ? result
                         : a._originalIndex - b._originalIndex;
                 }
-
-                console.log("we hebben strings nondeju");
 
                 if (aVal instanceof Date && bVal instanceof Date) {
                     return sortDirection === "asc"
@@ -715,7 +718,6 @@ export default {
 
                         // Voor datum formatting
                         if (isXAxisDate) {
-                            // params.value is al een Date object bij time axis
                             return this.formatDate ? this.formatDate(val) : val;
                         }
 
@@ -773,8 +775,6 @@ export default {
                 yKey: "value",
                 tooltip: { renderer: tooltipRenderer },
             };
-
-            console.log(baseOptions, commonAxes, serieConfig);
 
             switch (chartType) {
                 case "bar":
@@ -866,12 +866,19 @@ export default {
                 yAxis
             );
 
+            // BELANGRIJKE FIX: Transformeer de data direct naar het juiste formaat
+            // zodat transformDataToOutputKeys de juiste properties kan vinden
+            const processedData = data.map((item, index) => ({
+                ...item,
+                categoryValue: item[xAxis], // Voor de x-as waarde
+                aggregatedValue: item[yAxis], // Voor de y-as waarde
+                _originalIndex: index, // Voor sorting tiebreaker
+            }));
+
             return {
                 keys: outputKeys,
-                data: data,
+                data: processedData,
             };
-            // Transformeer data naar de gewenste key structuur
-            // return this.transformDataToOutputKeys(data, outputKeys);
         },
         preparePieChartData(data, xAxis, yAxis, aggregation, config) {
             const isXAxisDate = this.isDateField(xAxis, data);
@@ -1053,30 +1060,42 @@ export default {
             return processedData.map((item) => {
                 const result = {};
 
-                // Handle array xKey (multiple fields)
+                // Handle xKey - check of de property bestaat in het item
                 if (Array.isArray(outputKeys.xKey)) {
                     outputKeys.xKey.forEach((field) => {
-                        result[field] = item.categoryValue
-                            ? item.categoryValue.split(", ")[
-                                  outputKeys.xKey.indexOf(field)
-                              ] || item.categoryValue
-                            : item[field];
+                        result[field] =
+                            item[field] !== undefined
+                                ? item[field]
+                                : item.categoryValue
+                                ? item.categoryValue.split(", ")[
+                                      outputKeys.xKey.indexOf(field)
+                                  ]
+                                : null;
                     });
                 } else {
                     result[outputKeys.xKey] =
-                        item.categoryValue || item[outputKeys.xKey];
+                        item[outputKeys.xKey] !== undefined
+                            ? item[outputKeys.xKey]
+                            : item.categoryValue;
                 }
 
-                // Handle array yKey (multiple y fields)
+                // Handle yKey - check of de property bestaat in het item
                 if (Array.isArray(outputKeys.yKey)) {
                     outputKeys.yKey.forEach((field) => {
-                        result[field] = item.aggregatedValues
-                            ? item.aggregatedValues[field] || 0
-                            : item[field] || 0;
+                        result[field] =
+                            item[field] !== undefined
+                                ? item[field]
+                                : item.aggregatedValues
+                                ? item.aggregatedValues[field]
+                                : 0;
                     });
                 } else {
                     result[outputKeys.yKey] =
-                        item.aggregatedValue || item[outputKeys.yKey];
+                        item[outputKeys.yKey] !== undefined
+                            ? item[outputKeys.yKey]
+                            : item.aggregatedValue !== undefined
+                            ? item.aggregatedValue
+                            : 0;
                 }
 
                 return result;

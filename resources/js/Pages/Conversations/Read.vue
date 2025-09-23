@@ -24,6 +24,45 @@
                             </div>
 
                             <div
+                                v-if="message.respond_type === 'ask_suggestion'"
+                                class=""
+                            >
+                                <div
+                                    v-if="parseSuggestions(message).length"
+                                    class="w-full px-2 py-4"
+                                >
+                                    <div class="flex flex-wrap gap-2">
+                                        <button
+                                            v-for="(s, idx) in parseSuggestions(
+                                                message
+                                            )"
+                                            :key="idx"
+                                            type="button"
+                                            @click="useSuggestion(s)"
+                                            class="px-3 py-1.5 rounded-full bg-slate-200 text-xs text-gray-700 hover:bg-slate-300 transition-colors"
+                                        >
+                                            {{ s }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                v-if="message.respond_type === 'summary'"
+                                class="w-full px-2 py-4"
+                            >
+                                <div
+                                    class="bg-white rounded-lg p-3 border border-gray-200"
+                                >
+                                    <p
+                                        class="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap"
+                                    >
+                                        {{ message.json }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div
                                 class="p-3 rounded-lg shadow-sm relative"
                                 :class="{
                                     'bg-gray-300 text-gray-900 self-end max-w-[75%]':
@@ -37,6 +76,10 @@
                                         (message.displayAsTable ||
                                             message.displayAsChart),
                                 }"
+                                v-if="
+                                    message.respond_type !== 'ask_suggestion' &&
+                                    message.respond_type !== 'summary'
+                                "
                             >
                                 <p
                                     v-if="message.send_by === 'user'"
@@ -179,10 +222,6 @@
                                                 togglePinModal(message, 'chart')
                                             "
                                             :title="'Vastzetten op Dashboard'"
-                                            :disabled="
-                                                !message.selectedXAxis ||
-                                                !message.selectedYAxis
-                                            "
                                         >
                                             <i
                                                 :class="[
@@ -408,11 +447,9 @@
                                             >
                                                 <span
                                                     v-if="
-                                                        (message._sort &&
-                                                            message._x &&
-                                                            message._y &&
-                                                            message._agg) ||
-                                                        message.config
+                                                        message.config ||
+                                                        (message._order &&
+                                                            message._order_dir)
                                                     "
                                                 >
                                                     <i
@@ -471,72 +508,6 @@
                                                 class="absolute bottom-full mb-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
                                             >
                                                 <div class="pace-y-1">
-                                                    <!-- Sorting -->
-                                                    <label
-                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                                    >
-                                                        <span
-                                                            class="text-xs text-gray-700"
-                                                            >{{
-                                                                $t(
-                                                                    "conversations.sorting"
-                                                                )
-                                                            }}</span
-                                                        >
-                                                        <input
-                                                            type="checkbox"
-                                                            v-model="
-                                                                message.features
-                                                                    .sorting
-                                                            "
-                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
-                                                        />
-                                                    </label>
-
-                                                    <!-- Filtering -->
-                                                    <label
-                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                                    >
-                                                        <span
-                                                            class="text-xs text-gray-700"
-                                                            >{{
-                                                                $t(
-                                                                    "conversations.filtering"
-                                                                )
-                                                            }}</span
-                                                        >
-                                                        <input
-                                                            type="checkbox"
-                                                            v-model="
-                                                                message.features
-                                                                    .filtering
-                                                            "
-                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
-                                                        />
-                                                    </label>
-
-                                                    <!-- Grouping -->
-                                                    <label
-                                                        class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                                    >
-                                                        <span
-                                                            class="text-xs text-gray-700"
-                                                            >{{
-                                                                $t(
-                                                                    "conversations.grouping"
-                                                                )
-                                                            }}</span
-                                                        >
-                                                        <input
-                                                            type="checkbox"
-                                                            v-model="
-                                                                message.features
-                                                                    .grouping
-                                                            "
-                                                            class="w-3 h-3 text-yellow-500 rounded border-gray-300"
-                                                        />
-                                                    </label>
-
                                                     <label
                                                         class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
                                                     >
@@ -740,29 +711,6 @@
                         >
                             {{ this.error }}
                         </div>
-                    </div>
-                </div>
-
-                <div v-if="suggestions.length" class="w-full px-2">
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            v-for="s in suggestions"
-                            :key="s.id"
-                            type="button"
-                            @click="useSuggestion(s)"
-                            class="px-3 py-1.5 rounded-full bg-slate-200 text-xs text-gray-700 hover:bg-slate-300 transition-colors"
-                        >
-                            {{ s }}
-                        </button>
-                    </div>
-                </div>
-                <div v-if="summary && summary.length" class="w-full px-2">
-                    <div class="bg-white rounded-lg p-3 border border-gray-200">
-                        <p
-                            class="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap"
-                        >
-                            {{ summary }}
-                        </p>
                     </div>
                 </div>
 
@@ -994,9 +942,6 @@ export default {
             summary: "",
             openFeatures: false,
             features: {
-                sorting: true,
-                filtering: true,
-                grouping: true,
                 pagination: false,
                 multiline_text: false,
                 floating_filters: false,
@@ -1131,12 +1076,12 @@ export default {
                         .SaveGraphState()
                         .then((result) => {
                             if (result.success) {
-                                console.log(result.data._x);
                                 message._x = result.data._x;
                                 message._y = result.data._y;
-                                message._sort = result.data._sort;
-                                message._order = result.data._order;
                                 message._agg = result.data._agg;
+                                message._order = result.data._order;
+                                message._sort = result.data._sort;
+                                message._order_dir = result.data._order_dir;
 
                                 this.$refs.snackbar.show(
                                     "Grafiek is goed opgeslagen",
@@ -1219,20 +1164,25 @@ export default {
                 }
 
                 let result = await response.json();
-                console.log(result);
 
-                this.updateCsrfToken(response);
-
-                if (result.type === "ask_suggestion") {
-                    // Add suggestion questions to array
-                    this.suggestions = result.summary.flat();
-                } else {
-                    this.summary = result.summary;
+                if (message && message.created_at) {
+                    this.messages.push({
+                        ...result.summary,
+                        displayAsTable: false,
+                        displayAsChart: false,
+                        displayAsQuery: false,
+                        thumbs_up: 0,
+                        thumbs_down: 0,
+                        selectedChartType: "bar",
+                        selectedXAxis: null,
+                        selectedYAxis: null,
+                        selectedAggregation: "sum",
+                        selectedSortField: null,
+                        selectedSortDirection: null,
+                        col_def: null,
+                    });
                 }
-
-                console.log(result);
             } catch (error) {
-                console.log(error);
                 this.summaryError = error.message;
             } finally {
                 this.summaryLoading = false;
@@ -1335,6 +1285,7 @@ export default {
             message.displayAsQuery = mode === "sql_query";
 
             // Set default axes if switching to chart mode and not already set
+
             if (
                 mode === "chart" &&
                 (!message.selectedXAxis || !message.selectedYAxis) &&
@@ -1344,9 +1295,12 @@ export default {
                 if (fields.length > 0) {
                     message.selectedXAxis = fields[0].key;
                     // Try to find a numeric field for Y-axis, otherwise default to count
-                    const numericField = fields.find((f) =>
-                        this.isNumericField(f.key, message.json)
+                    const numericField = fields.find(
+                        (f) =>
+                            f.key !== message.selectedXAxis &&
+                            this.isNumericField(f.key, message.json)
                     );
+
                     message.selectedYAxis = numericField
                         ? numericField.key
                         : "__count";
@@ -1465,7 +1419,6 @@ export default {
         isNumericField(fieldName, data) {
             if (!data || data.length === 0) return false;
 
-            // Check eerste paar records
             const sampleValues = data
                 .slice(0, 5)
                 .map((item) => item[fieldName])
@@ -1474,10 +1427,12 @@ export default {
             if (sampleValues.length === 0) return false;
 
             return sampleValues.every((value) => {
-                const num = parseFloat(value);
-                return !isNaN(num) && isFinite(num);
+                return (
+                    typeof value === "number" || /^-?\d+(\.\d+)?$/.test(value)
+                );
             });
         },
+
         formatDate(date) {
             const options = {
                 year: "numeric",
@@ -1648,6 +1603,13 @@ export default {
                 document
                     .querySelector('meta[name="csrf-token"]')
                     .setAttribute("content", newToken);
+            }
+        },
+        parseSuggestions(message) {
+            try {
+                return JSON.parse(message.json || "[]");
+            } catch (e) {
+                return [];
             }
         },
         async useSuggestion(message) {
@@ -1872,9 +1834,6 @@ export default {
                             _sort: bot_message._sort,
                             _order_dir: bot_message._order_dir,
                             features: {
-                                sorting: true,
-                                filtering: true,
-                                grouping: true,
                                 pagination: false,
                                 multiline_text: false,
                                 floating_filters: false,
@@ -1883,8 +1842,6 @@ export default {
                             },
                             openFeatures: false,
                         });
-
-                        console.log(this.messages);
                     }
                 } catch (error) {
                     setTimeout(() => {
@@ -1929,11 +1886,6 @@ export default {
                     this.messages[index].thumbs_up = 0;
                     this.messages[index].thumbs_down = 1;
                 }
-
-                console.log(
-                    "Message disliked successfully",
-                    this.messages[index]
-                );
             } catch (error) {
                 this.$refs.snackbar.show(
                     "Er is een fout opgetreden bij het disliken van het bericht",
@@ -1978,9 +1930,6 @@ export default {
             _order_dir: m._order_dir,
             openFeatures: false,
             features: m.features || {
-                sorting: true,
-                filtering: true,
-                grouping: true,
                 pagination: false,
                 multiline_text: false,
                 tools_panel: false,

@@ -5,7 +5,7 @@
             <div
                 class="flex justify-between flex-col md:flex-row gap-2 items-end w-full"
             >
-                <div class="md:w-[90%] w-full">
+                <div class="md:w-[80%] w-full">
                     <label class="block mb-2 text-sm font-medium text-gray-700">
                         {{ $t("labels.dashboard") }}</label
                     >
@@ -101,9 +101,23 @@
                     </div>
                 </div>
 
-                <PrimaryButton type="submit" :disabled="this.form.processing">
-                    {{ $t("buttons.save") }}</PrimaryButton
-                >
+                <div class="flex gap-1">
+                    <PrimaryButton
+                        type="submit"
+                        :disabled="this.form.processing"
+                        v-if="editModal"
+                    >
+                        {{ $t("buttons.save") }}</PrimaryButton
+                    >
+
+                    <SecondaryButton
+                        @click="toggleEdit"
+                        :disabled="!selectedSource"
+                        v-if="selectedSource"
+                    >
+                        {{ $t("buttons.edit") }}</SecondaryButton
+                    >
+                </div>
             </div>
 
             <div v-if="selectedSource" class="w-full">
@@ -113,6 +127,7 @@
                         class="w-full h-96 resize-vertical p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm py-2"
                         :placeholder="$t('labels.textarea') + '...'"
                         v-model="this.form.model"
+                        :disabled="!editModal"
                     ></textarea>
                     <InputError class="mt-2" :message="form.errors.model" />
                 </form>
@@ -297,7 +312,32 @@
                                         {{ k.query }}
                                     </td>
                                     <td class="px-6 py-4 flex justify-end">
-                                        <!-- button code hier -->
+                                        <button
+                                            @click.prevent="
+                                                toggleOpenModal('edit', k)
+                                            "
+                                            class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke-width="1.5"
+                                                stroke="currentColor"
+                                                class="w-5 h-5"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    d="M16.5 3.75h-9A2.25 2.25 0 005.25 6v12A2.25 2.25 0 007.5 20.25h9a2.25 2.25 0 002.25-2.25V6A2.25 2.25 0 0016.5 3.75z"
+                                                />
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    d="M9 3.75v4.5h6v-4.5M9 12h6"
+                                                />
+                                            </svg>
+                                        </button>
                                     </td>
                                 </tr>
                                 <tr v-if="this.knowledge.length < 1">
@@ -356,6 +396,7 @@ import Snackbar from "@/Components/Snackbar.vue";
 import TextInput from "@/Components/TextInput.vue";
 import ModalKnowledge from "@/Components/Modals/ModalKnowledge.vue";
 import ModalSuggestion from "@/Components/Modals/ModalSuggestion.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
 export default {
     name: "ReportsIndex",
     components: {
@@ -368,6 +409,7 @@ export default {
         TextInput,
         ModalKnowledge,
         ModalSuggestion,
+        SecondaryButton,
     },
     props: {
         sources: Array,
@@ -389,6 +431,7 @@ export default {
             selectedSugString: "",
             selectedSugType: null,
             showSugModal: false,
+            editModal: false,
         };
     },
     methods: {
@@ -411,7 +454,6 @@ export default {
             this.selectedString = type;
             this.selectedType = item;
         },
-
         handleSugSubmitted(data) {
             const index = this.suggestions.findIndex((s) => s.id === data.id);
             if (index !== -1) {
@@ -465,6 +507,9 @@ export default {
         },
         closeSourceDropdown() {
             this.isSourceOpen = false;
+        },
+        toggleEdit() {
+            this.editModal = !this.editModal;
         },
     },
 };

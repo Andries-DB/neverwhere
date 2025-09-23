@@ -59,6 +59,10 @@ export default {
             type: Object,
             required: false,
         },
+        total_row: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
         return {
@@ -72,14 +76,14 @@ export default {
                 customHeaders: null,
             },
             defaultColDef: {
-                sortable: this.getFeature("sorting", true),
-                filter: this.getFeature("filtering", true),
+                sortable: true,
+                filter: true,
                 resizable: true,
                 flex: 1,
                 minWidth: 100,
-                enableValue: this.getFeature("grouping", true),
-                enableRowGroup: this.getFeature("grouping", true),
-                enablePivot: this.getFeature("grouping", true),
+                enableValue: true,
+                enableRowGroup: true,
+                enablePivot: true,
                 chartDataType: "category",
                 autoHeight: true,
                 floatingFilter: false,
@@ -95,23 +99,20 @@ export default {
                 enableCharts: true,
                 enableRangeSelection: true,
                 suppressRowClickSelection: true,
-                enableRowGroup: this.getFeature("grouping", true),
-                enablePivot: this.getFeature("grouping", true),
-                enableValue: this.getFeature("grouping", true),
-
+                enableRowGroup: true,
+                enablePivot: true,
+                enableValue: true,
                 chartThemes: ["ag-default", "ag-material", "ag-pastel"],
                 getContextMenuItems: (params) => {
                     const defaultItems = [
                         "copy",
                         "copyWithHeaders",
                         "separator",
+                        "chartRange",
+                        "separator",
+                        "export",
                     ];
 
-                    if (this.getFeature("grouping", true)) {
-                        defaultItems.push("chartRange", "separator");
-                    }
-
-                    defaultItems.push("export");
                     return defaultItems;
                 },
                 getMainMenuItems: (params) => {
@@ -131,6 +132,22 @@ export default {
                             );
 
                             if (newName && newName.trim() !== "") {
+                                const fieldName =
+                                    params.column.getColDef().field;
+
+                                // Update de originele columnDefs array (in je Vue component)
+                                const columnDefs = this.getTableColumnDefs(
+                                    this.message
+                                ); // of hoe je ze ook ophaalt
+                                const targetCol = columnDefs.find(
+                                    (col) => col.field === fieldName
+                                );
+                                if (targetCol) {
+                                    targetCol.headerName = newName;
+                                }
+
+                                // Update de grid met de nieuwe column definitions
+                                this.gridApi.setColumnDefs(columnDefs);
                                 const colDef = params.column.getColDef();
                                 colDef.headerName = newName;
 
@@ -162,6 +179,7 @@ export default {
                                 colState.headerName = newName;
 
                                 params.api.refreshHeader();
+                                params.api.refreshToolPanel(); // Dit vernieuwt de sidebar
                             }
                         },
                     });
@@ -206,7 +224,10 @@ export default {
     created() {
         this.loadGridState();
 
-        if (this.message._total_row && this.sort !== "pinned") {
+        if (
+            (this.sort === "pinned" && this.total_row === 1) ||
+            this.message._total_row === 1
+        ) {
             this.grandTotalRow = "bottom";
         }
     },
@@ -345,22 +366,26 @@ export default {
                     const columnDef = {
                         field: key,
                         headerName: this.getFieldDisplayName(key),
-                        sortable: this.getFeature("sorting", true),
-                        filter: this.getFeature("filtering", true)
+                        sortable: true,
+                        filter: true
                             ? isNumeric
                                 ? "agNumberColumnFilter"
                                 : "agTextColumnFilter"
                             : false,
                         resizable: true,
-                        enableRowGroup: this.getFeature("grouping", true),
-                        enablePivot: this.getFeature("grouping", true),
-                        enableValue: this.getFeature("grouping", true),
+                        enableRowGroup: true,
+                        enablePivot: true,
+                        enableValue: true,
                         chartDataType: isNumeric
                             ? "series"
                             : isDate
                             ? "time"
                             : "category",
-                        menuTabs: this.getMenuTabs(),
+                        menuTabs: [
+                            "filterMenuTab",
+                            "generalMenuTab",
+                            "columnsMenuTab",
+                        ],
                         cellRenderer: (params) => {
                             if (
                                 typeof params.value === "string" &&
@@ -375,21 +400,18 @@ export default {
                         },
                     };
 
-                    // Type-specifieke configuratie alleen toevoegen als grouping enabled is
-                    if (this.getFeature("grouping", true)) {
-                        if (isNumeric) {
-                            Object.assign(columnDef, {
-                                type: "numericColumn",
-                                cellClass: "number-cell",
-                                aggFunc: "sum",
-                            });
-                        }
-                        if (isDate) {
-                            Object.assign(columnDef, {
-                                type: "dateColumn",
-                                cellClass: "date-cell",
-                            });
-                        }
+                    if (isNumeric) {
+                        Object.assign(columnDef, {
+                            type: "numericColumn",
+                            cellClass: "number-cell",
+                            aggFunc: "sum",
+                        });
+                    }
+                    if (isDate) {
+                        Object.assign(columnDef, {
+                            type: "dateColumn",
+                            cellClass: "date-cell",
+                        });
                     }
 
                     return columnDef;
@@ -401,14 +423,15 @@ export default {
             return parsed.headers.map((header) => ({
                 field: header,
                 headerName: header,
-                sortable: this.getFeature("sorting", true),
-                filter: this.getFeature("filtering", true),
+                sortable: true,
+                filter: true,
                 resizable: true,
-                enableRowGroup: this.getFeature("grouping", true),
-                enablePivot: this.getFeature("grouping", true),
-                enableValue: this.getFeature("grouping", true),
+                enableRowGroup: true,
+                enablePivot: true,
+                enableValue: true,
                 chartDataType: "category",
-                menuTabs: this.getMenuTabs(),
+                menuTabs: ["filterMenuTab", "generalMenuTab", "columnsMenuTab"],
+
                 cellRenderer: (params) => {
                     if (
                         typeof params.value === "string" &&
@@ -420,17 +443,7 @@ export default {
                 },
             }));
         },
-        getMenuTabs() {
-            const tabs = ["generalMenuTab"];
 
-            if (this.getFeature("filtering", true)) {
-                tabs.unshift("filterMenuTab"); // Voeg toe aan het begin
-            }
-
-            tabs.push("columnsMenuTab");
-
-            return tabs;
-        },
         formatNumber(value) {
             if (value === null || value === undefined) return "";
 
@@ -854,7 +867,7 @@ export default {
             }
         },
         "message.features.floating_filters": function (newValue) {
-            if (this.gridApi && this.getFeature("filtering") === true) {
+            if (this.gridApi) {
                 this.defaultColDef.floatingFilter = newValue;
 
                 const allColumns = this.gridApi.getColumns();
@@ -865,22 +878,21 @@ export default {
 
                 // Refresh de grid
                 this.gridApi.refreshCells();
-                // this.gridApi.resetRowHeights();
             }
         },
-        "message.features.filtering": function (newValue) {
-            if (this.gridApi && this.getFeature("floating_filters") === true) {
-                this.defaultColDef.floatingFilter = newValue;
+        // "message.features.filtering": function (newValue) {
+        //     if (this.gridApi && this.getFeature("floating_filters") === true) {
+        //         this.defaultColDef.floatingFilter = newValue;
 
-                const allColumns = this.gridApi.getColumns();
-                allColumns.forEach((column) => {
-                    const colDef = column.getColDef();
-                    colDef.floatingFilter = newValue;
-                });
+        //         const allColumns = this.gridApi.getColumns();
+        //         allColumns.forEach((column) => {
+        //             const colDef = column.getColDef();
+        //             colDef.floatingFilter = newValue;
+        //         });
 
-                this.gridApi.refreshCells();
-            }
-        },
+        //         this.gridApi.refreshCells();
+        //     }
+        // },
         "message.features.total_row": function (newValue) {
             this.grandTotalRow = newValue === true ? "bottom" : "";
         },
