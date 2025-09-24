@@ -103,7 +103,7 @@
 
                 <div class="flex gap-1">
                     <PrimaryButton
-                        type="submit"
+                        @click="updateSource"
                         :disabled="this.form.processing"
                         v-if="editModal"
                     >
@@ -435,6 +435,17 @@ export default {
         };
     },
     methods: {
+        updateSource() {
+            this.form
+                .patch(route("studio.patch", this.form.source_id), {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        this.editModal = false;
+                    },
+                    onError: () => {},
+                })
+                .catch(() => {});
+        },
         handleSubmitted(data) {
             const index = this.knowledge.findIndex((k) => k.id === data.id);
             if (index !== -1) {
