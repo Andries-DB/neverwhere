@@ -141,7 +141,7 @@ export default {
                                 params.column.getColDef().headerName ||
                                 params.column.getColDef().field;
                             const newName = prompt(
-                                $t("dashboard.change_name_help"),
+                                this.$t("dashboard.change_name_help"),
                                 currentName
                             );
 
