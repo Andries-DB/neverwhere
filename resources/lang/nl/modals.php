@@ -18,6 +18,6 @@ return [
     'full' => 'Volle',
     'pin' => 'Pin',
     'pinning' => 'Aan het pinnen...',
-    'create_new_dashboard' => 'Maak een nieuw dashboard aan',
-    'new_dashboard' => 'Nieuw dashboard',
+    'create_new_dashboard' => 'Maak een nieuw pinboard aan',
+    'new_dashboard' => 'Nieuw pinboard',
 ];

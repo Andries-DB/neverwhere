@@ -34,10 +34,8 @@
         <link rel="apple-touch-icon" href="{{ asset('favicon.ico') }}">
 
         <!-- Tile for Win8 -->
-        <meta name="msapplication-TileColor" content="#ffc02a">
+        <meta name="msapplication-TileColor" content="#111828">
         <meta name="msapplication-TileImage" content="/images/icons/icon-512x512.png">
-
-
 
         <!-- Scripts -->
         @routes

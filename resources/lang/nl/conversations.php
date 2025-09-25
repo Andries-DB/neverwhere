@@ -31,6 +31,6 @@ return [
     'getsummary' => 'Analyseer deze data.',
     'suggestion' => 'Suggestie',
     'getsuggestion' => 'Help me. Wat kan ik nog vragen?',
-    'analysing' => 'Dr. Itchy praat met Neverwhere.'
+    'analysing' => 'Dr. Itchy praat met Neverwhere...'
 
 ];

@@ -186,7 +186,7 @@
                     {{
                         form.type === "feature"
                             ? $t("reports.feature_title")
-                            : $t("reports.detail_description")
+                            : $t("reports.detail")
                     }}
                 </label>
                 <TextInput
@@ -246,7 +246,7 @@
             </div>
 
             <!-- Browser/Device info -->
-            <div>
+            <div v-if="form.type !== 'feature'">
                 <label
                     for="environment"
                     class="block text-sm font-medium text-slate-700 mb-2"
@@ -337,7 +337,7 @@ export default {
     data() {
         return {
             form: {
-                type: "",
+                type: "feature",
                 title: "",
                 description: "",
                 steps: "",
@@ -412,7 +412,7 @@ export default {
 
         resetForm() {
             this.form = {
-                type: "",
+                type: "feature",
                 title: "",
                 description: "",
                 steps: "",

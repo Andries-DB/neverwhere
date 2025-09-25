@@ -7,7 +7,7 @@
             >
                 <div class="md:w-[80%] w-full">
                     <label class="block mb-2 text-sm font-medium text-gray-700">
-                        {{ $t("labels.dashboard") }}</label
+                        {{ $t("studio.dashboard") }}</label
                     >
                     <div class="relative" v-click-outside="closeSourceDropdown">
                         <button

@@ -283,7 +283,7 @@ watch(sidebarCollapsed, (newValue) => {
                         v-if="!sidebarCollapsed"
                         class="ml-3 text-lg font-semibold text-slate-900 truncate"
                     >
-                        Neverwhere
+                        Neverwhere AI
                     </span>
                 </a>
             </div>

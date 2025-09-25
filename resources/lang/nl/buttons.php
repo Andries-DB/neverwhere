@@ -4,4 +4,5 @@ return [
     'delete' => 'Verwijderen',
     'save' => 'Opslaan',
     'edit' => 'Aanpassen',
+    'cancel' => 'Annuleren'
 ];

@@ -372,8 +372,8 @@ class ConversationController extends Controller
                 'name' => $company->company,
             ],
             'source' => [
-                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
-                'id' => $message->source->guid,
+                'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+                // 'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -445,9 +445,9 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+                'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
 
-                'id' => $message->source->guid,
+                // 'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -497,9 +497,9 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+                'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
 
-                'id' => $message->source->guid,
+                // 'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -539,9 +539,9 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+                'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
 
-                'id' => $message->source->guid,
+                // 'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -609,19 +609,27 @@ class ConversationController extends Controller
 
     public function saveChartDef(Request $request)
     {
-        // dd($request->all());
         $message = Message::where('guid', $request->input('message_guid'))->first();
 
         if (!$message) {
             return response()->json(['error' => 'Message not found'], 404);
         }
 
-        $message->_order = $request->input('data')['_order'];
-        $message->_order_dir = $request->input('data')['_order_dir'];
-        $message->_x = $request->input('data')['_x'];
-        $message->_y = $request->input('data')['_y'];
-        $message->_agg = $request->input('data')['_agg'];
-        $message->_sort = $request->input('data')['_sort'];
+        $data = $request->input('data');
+        // Unset the data out of $request->input('data')['config]
+        if (isset($data['config'])) {
+            $data['config']['data'] = []; // data leegmaken
+        }
+
+        $message->_order = $data['_order'];
+        $message->_order_dir = $data['_order_dir'];
+        $message->_x = $data['_x'];
+        $message->_y = $data['_y'];
+        $message->_agg = $data['_agg'];
+        $message->_sort = $data['_sort'];
+
+        // Config opnieuw opslaan zonder data
+        $message->config = json_encode($data['config']);
 
         $message->save();
 

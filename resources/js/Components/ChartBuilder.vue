@@ -325,6 +325,18 @@ export default {
                             }
                         });
                     }
+
+                    if (
+                        series.tooltip?.renderer &&
+                        typeof series.tooltip.renderer === "string"
+                    ) {
+                        const tooltipString = series.tooltip.renderer;
+
+                        series.tooltip.renderer = new Function(
+                            "params",
+                            `return (${tooltipString})(params);`
+                        );
+                    }
                 }
 
                 return {
@@ -507,6 +519,9 @@ export default {
                         _y: this.message.selectedYAxis,
                         _order: this.message.selectedSortField,
                         _order_dir: this.message.selectedSortDirection,
+                        config: this.getCustomChartOptionsWithoutFunctions(
+                            this.message
+                        ),
                     },
                 };
 
