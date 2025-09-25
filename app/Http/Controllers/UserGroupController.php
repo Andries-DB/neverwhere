@@ -70,6 +70,11 @@ class UserGroupController extends Controller
 
         $user_group->sources()->sync($request->source_ids ?? []);
 
+        // All linked users need to be re-synced
+        foreach ($user_group->users as $user) {
+            $user->syncSources();
+        }
+
         return redirect()->back()->with('success', 'Gebruiker succesvol bijgewerkt.');
     }
 

@@ -107,16 +107,23 @@
                         :disabled="this.form.processing"
                         v-if="editModal"
                     >
-                        {{ $t("buttons.save") }}</PrimaryButton
-                    >
+                        <i class="fas fa-check mr-2"></i
+                        >{{ $t("buttons.save") }}
+                    </PrimaryButton>
 
-                    <SecondaryButton
-                        @click="toggleEdit"
-                        :disabled="!selectedSource"
-                        v-if="selectedSource"
-                    >
-                        {{ $t("buttons.edit") }}</SecondaryButton
-                    >
+                    <PrimaryButton @click="toggleEdit">
+                        <i
+                            :class="[
+                                editModal ? 'fas fa-times' : 'fas fa-edit',
+                                'mr-2',
+                            ]"
+                        ></i>
+                        {{
+                            editModal
+                                ? $t("buttons.cancel")
+                                : $t("buttons.edit")
+                        }}
+                    </PrimaryButton>
                 </div>
             </div>
 
@@ -305,10 +312,10 @@
                                     >
                                         {{ k.key }}
                                     </td>
-                                    <td class="px-6 py-4 truncate">
+                                    <td class="px-6 py-4 truncate max-w-xs">
                                         {{ k.description }}
                                     </td>
-                                    <td class="px-6 py-4 truncate">
+                                    <td class="px-6 py-4 truncate max-w-xs">
                                         {{ k.query }}
                                     </td>
                                     <td class="px-6 py-4 flex justify-end">
@@ -436,15 +443,13 @@ export default {
     },
     methods: {
         updateSource() {
-            this.form
-                .patch(route("studio.patch", this.form.source_id), {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        this.editModal = false;
-                    },
-                    onError: () => {},
-                })
-                .catch(() => {});
+            this.form.patch(route("studio.patch", this.form.source_id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    this.editModal = false;
+                },
+                onError: () => {},
+            });
         },
         handleSubmitted(data) {
             const index = this.knowledge.findIndex((k) => k.id === data.id);

@@ -39,6 +39,29 @@ class StudioController extends Controller
         $source = Source::findOrFail($validated['source_id']);
         $source->update(['model' => $validated['model']]);
 
+        $response = Http::timeout(60)->post($source->webhook, [
+            'type' => 'model',
+            'input' => $source->model,
+            'source' => [
+                'id' => $source->guid,
+                'name' => $source->name,
+            ],
+            'user' => [
+                'id' => $user->guid,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
+            'company' => [
+                'id' => $user->companies[0]->guid,
+                'name' => $user->companies[0]->company
+            ],
+            'query' => '',
+        ]);
+
+        if ($response->failed()) {
+            return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
+        }
+
         return back();
     }
 
@@ -86,16 +109,16 @@ class StudioController extends Controller
                 ['type' => $type, 'question' => $suggestion->question, 'created_at' => $suggestion->created_at, 'updated_at' => $suggestion->updated_at, 'id' => $suggestion->id]
             ),
             'source' => [
-                'id' => $source->id,
+                'id' => $source->guid,
                 'name' => $source->name,
             ],
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $user->companies[0]->id,
+                'id' => $user->companies[0]->guid,
                 'name' => $user->companies[0]->company
             ],
             'query' => '',
@@ -158,16 +181,16 @@ class StudioController extends Controller
                 ['type' => $type, 'key' => $knowledge->key, 'description' => $knowledge->description, 'query' => $knowledge->query, 'created_at' => $knowledge->created_at, 'updated_at' => $knowledge->updated_at, 'id' => $knowledge->id]
             ),
             'source' => [
-                'id' => $source->id,
+                'id' => $source->guid,
                 'name' => $source->name,
             ],
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $user->companies[0]->id,
+                'id' => $user->companies[0]->guid,
                 'name' => $user->companies[0]->company
             ],
             'query' => '',
@@ -194,16 +217,16 @@ class StudioController extends Controller
                 ['type' => 'delete']
             )),
             'source' => [
-                'id' => $source->id,
+                'id' => $source->guid,
                 'name' => $source->name,
             ],
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $user->companies[0]->id,
+                'id' => $user->companies[0]->guid,
                 'name' => $user->companies[0]->company
             ],
             'query' => '',
@@ -235,16 +258,16 @@ class StudioController extends Controller
                 ['type' => 'delete']
             )),
             'source' => [
-                'id' => $source->id,
+                'id' => $source->guid,
                 'name' => $source->name,
             ],
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $user->companies[0]->id,
+                'id' => $user->companies[0]->guid,
                 'name' => $user->companies[0]->company
             ],
             'query' => '',

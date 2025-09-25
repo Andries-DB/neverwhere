@@ -22,14 +22,28 @@
                         <span>{{ source.name }}</span>
                     </div>
                 </div>
-                <h1 class="text-black font-bold text-4xl">
-                    {{ user.firstname }} {{ user.name }}
-                </h1>
+                <div class="flex items-center gap-3">
+                    <button
+                        class="flex items-center justify-center w-9 h-9 rounded-md bg-gray-200 text-gray-600 hover:bg-gray-300 transition cursor-pointer"
+                        @click="goBack"
+                    >
+                        <i class="fas fa-arrow-left text-sm"></i>
+                    </button>
+                    <h1 class="text-black font-bold text-4xl">
+                        {{ user.firstname }} {{ user.name }}
+                    </h1>
+                </div>
             </div>
 
             <div class="flex gap-2">
                 <PrimaryButton @click="toggleEdit">
-                    <i class="fas fa-edit mr-2"></i> {{ $t("buttons.edit") }}
+                    <i
+                        :class="[
+                            editUser ? 'fas fa-times' : 'fas fa-edit',
+                            'mr-2',
+                        ]"
+                    ></i>
+                    {{ editUser ? $t("buttons.cancel") : $t("buttons.edit") }}
                 </PrimaryButton>
                 <PrimaryButton v-if="editUser" @click="saveUser">
                     <i class="fas fa-check mr-2"></i>{{ $t("buttons.save") }}
@@ -267,7 +281,7 @@ export default {
         return {
             editUser: false,
             addReport: false,
-            selectedUserGroups: [], // meerdere selecties mogelijk
+            selectedUserGroups: [],
             form: useForm({
                 name: this.user.name,
                 firstname: this.user.firstname,
@@ -277,28 +291,10 @@ export default {
             }),
         };
     },
-    mounted() {
-        if (this.user.usergroups && this.user.usergroups.length) {
-            this.selectedUserGroups = this.company.usergroups.filter(
-                (companyGroup) =>
-                    this.user.usergroups.some(
-                        (userGroup) => userGroup.id === companyGroup.id
-                    )
-            );
-
-            // Zet form.user_group_ids
-            this.form.user_group_ids = this.selectedUserGroups.map((g) => g.id);
-
-            // Voeg alle bronnen van deze groepen toe aan de source_ids
-            const allSources = this.selectedUserGroups.flatMap((g) =>
-                g.sources.map((s) => s.id)
-            );
-            this.form.source_ids = [
-                ...new Set([...this.form.source_ids, ...allSources]),
-            ];
-        }
-    },
     methods: {
+        goBack() {
+            this.$inertia.visit(route("company.read", this.company.guid));
+        },
         deleteUser() {
             this.form.delete(
                 route("company.user.delete", {
@@ -364,6 +360,24 @@ export default {
             this.addReport = !this.addReport;
         },
     },
-    computed: {},
+    mounted() {
+        if (this.user.usergroups && this.user.usergroups.length) {
+            this.selectedUserGroups = this.company.usergroups.filter(
+                (companyGroup) =>
+                    this.user.usergroups.some(
+                        (userGroup) => userGroup.id === companyGroup.id
+                    )
+            );
+
+            this.form.user_group_ids = this.selectedUserGroups.map((g) => g.id);
+
+            const allSources = this.selectedUserGroups.flatMap((g) =>
+                g.sources.map((s) => s.id)
+            );
+            this.form.source_ids = [
+                ...new Set([...this.form.source_ids, ...allSources]),
+            ];
+        }
+    },
 };
 </script>

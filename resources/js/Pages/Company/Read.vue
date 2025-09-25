@@ -4,7 +4,17 @@
         <div
             class="flex md:flex-row gap-4 md:gap-0 flex-col md:items-center items-start justify-between"
         >
-            <h1 class="text-black font-bold text-4xl">{{ company.company }}</h1>
+            <div class="flex items-center gap-3">
+                <button
+                    class="flex items-center justify-center w-9 h-9 rounded-md bg-gray-200 text-gray-600 hover:bg-gray-300 transition cursor-pointer"
+                    @click="goBack"
+                >
+                    <i class="fas fa-arrow-left text-sm"></i>
+                </button>
+                <h1 class="text-black font-bold text-4xl">
+                    {{ company.company }}
+                </h1>
+            </div>
 
             <div class="flex gap-2">
                 <template v-for="(btn, i) in buttons" :key="i">
@@ -467,6 +477,9 @@ export default {
         };
     },
     methods: {
+        goBack() {
+            this.$inertia.visit(route("company.get"));
+        },
         changeSort(sort) {
             this.show_sort = sort;
 
@@ -521,8 +534,8 @@ export default {
                 {
                     condition: "settings",
                     show: true,
-                    icon: "fas fa-edit",
-                    text: "Pas aan",
+                    icon: this.editCompany ? "fas fa-times" : "fas fa-edit",
+                    text: this.editCompany ? "Annuleer" : "Pas aan",
                     click: this.toggleEdit,
                 },
                 {

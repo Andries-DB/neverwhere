@@ -22,14 +22,32 @@
                         <span>{{ source.name }}</span>
                     </div>
                 </div>
-                <h1 class="text-black font-bold text-4xl">
-                    {{ user_group.name }}
-                </h1>
+                <div class="flex items-center gap-3">
+                    <button
+                        class="flex items-center justify-center w-9 h-9 rounded-md bg-gray-200 text-gray-600 hover:bg-gray-300 transition cursor-pointer"
+                        @click="goBack"
+                    >
+                        <i class="fas fa-arrow-left text-sm"></i>
+                    </button>
+                    <h1 class="text-black font-bold text-4xl">
+                        {{ user_group.name }}
+                    </h1>
+                </div>
             </div>
 
             <div class="flex gap-2">
                 <PrimaryButton @click="toggleEdit">
-                    <i class="fas fa-edit mr-2"></i> {{ $t("buttons.edit") }}
+                    <i
+                        :class="[
+                            editUserGroup ? 'fas fa-times' : 'fas fa-edit',
+                            'mr-2',
+                        ]"
+                    ></i>
+                    {{
+                        editUserGroup
+                            ? $t("buttons.cancel")
+                            : $t("buttons.edit")
+                    }}
                 </PrimaryButton>
                 <PrimaryButton v-if="editUserGroup" @click="saveUserGroup">
                     <i class="fas fa-check mr-2"></i>{{ $t("buttons.save") }}
@@ -121,6 +139,9 @@ export default {
         };
     },
     methods: {
+        goBack() {
+            this.$inertia.visit(route("company.read", this.company.guid));
+        },
         deleteUserGroup() {
             this.form.delete(
                 route("company.usergroup.delete", {

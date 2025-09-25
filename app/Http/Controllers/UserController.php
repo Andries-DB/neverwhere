@@ -27,10 +27,8 @@ class UserController extends Controller
     }
     public function store($guid, Request $request)
     {
-        // dd($request->all());
         $this->authorizeAdmin();
 
-        // dd($request->all());
         $request->validate([
             'name' => 'required|string|max:255',
             'firstname'  => 'required|string|max:255',
@@ -82,19 +80,20 @@ class UserController extends Controller
     {
         $this->authorizeAdmin();
 
-        $user = User::where('guid', $guid)->with('sources')->firstOrFail();
+        $user = User::where('guid', $guid)->with('sources', 'companies')->firstOrFail();
 
         $sources = Source::all();
+        $companies = Company::select('company', 'guid')->get();
 
         return Inertia::render('Users/Read', [
             'user' => $user,
-            'sources' => $sources
+            'sources' => $sources,
+            'companies' => $companies,
         ]);
     }
 
     public function update($guid, $user_guid, Request $request)
     {
-        // dd($request->all());
         $this->authorizeAdmin();
 
         $request->validate([
@@ -120,9 +119,7 @@ class UserController extends Controller
             'email' => $request->email,
         ]);
 
-        // Synchroniseer de gekoppelde bronnen
         $user->sources()->sync($request->source_ids ?? []);
-
         $user->usergroups()->sync($request->user_group_ids ?? []);
 
         return redirect()->back()->with('success', 'Gebruiker succesvol bijgewerkt.');
@@ -145,6 +142,16 @@ class UserController extends Controller
         ]);
 
         $user = User::where('guid', $guid)->firstOrFail();
+
+        // If company_guid is provided, associate the user with the company
+        if ($request->has('company_guid') && $request->company_guid) {
+            $company = Company::where('guid', $request->company_guid)->first();
+            if ($company) {
+                // Detach user from all companies and attach to the new one
+                $user->companies()->sync([$company->id]);
+                $user->sources()->sync($company->sources->pluck('id')->toArray());
+            }
+        }
 
         $user->update([
             'name' => $request->name,

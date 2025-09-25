@@ -132,22 +132,6 @@ export default {
                             );
 
                             if (newName && newName.trim() !== "") {
-                                const fieldName =
-                                    params.column.getColDef().field;
-
-                                // Update de originele columnDefs array (in je Vue component)
-                                const columnDefs = this.getTableColumnDefs(
-                                    this.message
-                                ); // of hoe je ze ook ophaalt
-                                const targetCol = columnDefs.find(
-                                    (col) => col.field === fieldName
-                                );
-                                if (targetCol) {
-                                    targetCol.headerName = newName;
-                                }
-
-                                // Update de grid met de nieuwe column definitions
-                                this.gridApi.setColumnDefs(columnDefs);
                                 const colDef = params.column.getColDef();
                                 colDef.headerName = newName;
 
@@ -169,7 +153,6 @@ export default {
                                     );
 
                                 if (!colState) {
-                                    // als hij nog niet bestaat, maak een nieuwe entry
                                     colState = { colId: colDef.field };
                                     this.savedGridState.columnState.push(
                                         colState
@@ -177,9 +160,7 @@ export default {
                                 }
                                 // voeg de naam eraan toe
                                 colState.headerName = newName;
-
                                 params.api.refreshHeader();
-                                params.api.refreshToolPanel(); // Dit vernieuwt de sidebar
                             }
                         },
                     });

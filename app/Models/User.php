@@ -133,4 +133,18 @@ class User extends Authenticatable
     {
         $this->update(['two_factor_verified_at' => now()]);
     }
+
+    public function syncSources(): void
+    {
+        $sourceIds = $this->userGroups()
+            ->with('sources')
+            ->get()
+            ->pluck('sources')
+            ->flatten()
+            ->pluck('id')
+            ->unique()
+            ->toArray();
+
+        $this->sources()->sync($sourceIds);
+    }
 }

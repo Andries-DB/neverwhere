@@ -101,21 +101,21 @@ class ConversationController extends Controller
         $user = User::with('companies')->find($request->user()->id);
 
         $response = Http::timeout(60)->post($source->webhook, [
-            'chat_id' => $conversation->id,
+            'chat_id' => $conversation->guid,
             'message_id' => $lastUserMessage->id,
             'type' => 'respond',
             'input' => $lastUserMessage->message,
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $user->companies[0]->id,
+                'id' => $user->companies[0]->guid,
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => $source->id,
+                'id' => $source->guid,
                 'name' => $source->name,
             ],
             'query' => '',
@@ -285,21 +285,21 @@ class ConversationController extends Controller
         $company = $user->companies->first();
 
         $response = Http::timeout(60)->post($message->source->webhook, [
-            'chat_id' => $message->conversation->id,
+            'chat_id' => $message->conversation->guid,
             'message_id' => $message->question_message,
             'type' => 'refresh',
             'input' => $request->input('feedback'),
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $company->id,
+                'id' => $company->guid,
                 'name' => $company->company,
             ],
             'source' => [
-                'id' => $message->source->id,
+                'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -322,10 +322,8 @@ class ConversationController extends Controller
         return;
     }
 
-    // UPDATE
     public function changeInput($id, Request $request)
     {
-        // dd($request->all());
         $message = Message::with(['source', 'conversation'])->find($id);
 
         abort_if(!$message, 403, 'This pinned item does not exist');
@@ -333,31 +331,31 @@ class ConversationController extends Controller
         $user = auth()->user()->loadMissing('companies');
         $company = $user->companies->first();
         $response = Http::timeout(60)->post($message->source->webhook, [
-            'chat_id' => $message->conversation->id,
+            'chat_id' => $message->conversation->guid,
             'message_id' => $message->question_message,
             'type' => 'change',
             'input' => $request->input('feedback'),
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $company->id,
+                'id' => $company->guid,
                 'name' => $company->company,
             ],
             'source' => [
-                'id' => $message->source->id,
+                'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
             'settings' => $request->config
         ]);
 
-
         if ($response->failed()) {
             return redirect()->back()->withErrors(['bot' => 'Er is een fout opgetreden bij het genereren van een bericht.']);
         }
+
         $json = $response->json();
         $output = $json['output'];
 
@@ -370,7 +368,7 @@ class ConversationController extends Controller
     }
 
 
-    public function duplicateItem($id, Request $request)
+    public function duplicateItem($id)
     {
         $pinnedItem = PinnedItem::find($id);
 
@@ -405,21 +403,21 @@ class ConversationController extends Controller
         }
 
         $response = Http::timeout(60)->post($message->source->webhook, [
-            'chat_id' => $message->conversation->id,
+            'chat_id' => $message->conversation->guid,
             'message_id' => $message->question_message,
             'type' => 'thumb_up',
             'input' => $request->input('feedback', null),
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $user->companies[0]->id,
+                'id' => $user->companies[0]->guid,
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => $message->source->id,
+                'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -455,21 +453,21 @@ class ConversationController extends Controller
         }
 
         $response = Http::timeout(60)->post($message->source->webhook, [
-            'chat_id' => $message->conversation->id,
+            'chat_id' => $message->conversation->guid,
             'message_id' => $message->question_message,
             'type' => 'thumb_down',
             'input' => $request->input('feedback', null),
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $user->companies[0]->id,
+                'id' => $user->companies[0]->guid,
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => $message->source->id,
+                'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -495,21 +493,21 @@ class ConversationController extends Controller
         $user = auth()->user()->load('companies');
         // dd($request->input('action'));
         $response = Http::timeout(60)->post($message->source->webhook, [
-            'chat_id' => $message->conversation->id,
+            'chat_id' => $message->conversation->guid,
             'message_id' => $message->question_message,
             'type' => $request->input('action') === 'summarize' ? 'summarize' : 'ask_suggestion',
             'input' => '',
             'user' => [
-                'id' => $user->id,
+                'id' => $user->guid,
                 'email' => $user->email,
                 'role' => $user->role,
             ],
             'company' => [
-                'id' => $user->companies[0]->id,
+                'id' => $user->companies[0]->guid,
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => $message->source->id,
+                'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,

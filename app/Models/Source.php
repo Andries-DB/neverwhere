@@ -11,7 +11,8 @@ class Source extends Model
         'name',
         'webhook',
         'company_id',
-        'model'
+        'model',
+        'guid'
     ];
 
     public function users()

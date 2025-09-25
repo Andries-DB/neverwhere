@@ -6,11 +6,25 @@
         <div
             class="flex md:flex-row gap-2 md:gap-0 flex-col md:items-center items-start justify-between"
         >
-            <h1 class="text-black font-bold text-4xl">{{ source.name }}</h1>
+            <div class="flex items-center gap-3">
+                <button
+                    class="flex items-center justify-center w-9 h-9 rounded-md bg-gray-200 text-gray-600 hover:bg-gray-300 transition cursor-pointer"
+                    @click="goBack"
+                >
+                    <i class="fas fa-arrow-left text-sm"></i>
+                </button>
+                <h1 class="text-black font-bold text-4xl">{{ source.name }}</h1>
+            </div>
 
             <div class="flex gap-2">
                 <PrimaryButton @click="toggleEdit">
-                    <i class="fas fa-edit mr-2"></i> {{ $t("buttons.edit") }}
+                    <i
+                        :class="[
+                            editSource ? 'fas fa-times' : 'fas fa-edit',
+                            'mr-2',
+                        ]"
+                    ></i>
+                    {{ editSource ? $t("buttons.cancel") : $t("buttons.edit") }}
                 </PrimaryButton>
                 <PrimaryButton v-if="editSource" @click="saveSource">
                     <i class="fas fa-check mr-2"></i>{{ $t("buttons.save") }}
@@ -109,6 +123,9 @@ export default {
         };
     },
     methods: {
+        goBack() {
+            this.$inertia.visit(route("company.read", this.company.guid));
+        },
         saveSource() {
             this.form.patch(
                 route("company.source.update", {

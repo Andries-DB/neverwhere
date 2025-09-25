@@ -14,7 +14,7 @@ class UserGroup extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'user_group_user');
     }
 
     public function sources()
