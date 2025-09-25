@@ -300,17 +300,32 @@ export default {
             );
 
             if (existingConfig) {
-                if (
-                    existingConfig.series &&
-                    existingConfig.series[0]?.label?.formatter &&
-                    typeof existingConfig.series[0].label.formatter === "string"
-                ) {
-                    const formatterString =
-                        existingConfig.series[0].label.formatter;
-                    existingConfig.series[0].label.formatter = new Function(
-                        "params",
-                        `return (${formatterString})(params);`
-                    );
+                if (existingConfig.series) {
+                    const series = existingConfig.series[0];
+
+                    // label formatter
+                    if (
+                        series.label?.formatter &&
+                        typeof series.label.formatter === "string"
+                    ) {
+                        const formatterString = series.label.formatter;
+                        series.label.formatter = new Function(
+                            "params",
+                            `return (${formatterString})(params);`
+                        );
+                    }
+
+                    // groupedKeys dataFilter
+                    if (series.groupedKeys) {
+                        series.groupedKeys.forEach((key) => {
+                            if (typeof key.dataFilter === "string") {
+                                key.dataFilter = new Function(
+                                    "params",
+                                    `return (${key.dataFilter})(params);`
+                                );
+                            }
+                        });
+                    }
                 }
 
                 return {
