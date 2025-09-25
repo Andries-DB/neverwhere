@@ -11,7 +11,7 @@ return [
     'feedback' => 'Laat je feedback achter',
     'knowledge' => 'Train het model',
     'suggestion' => 'Geef nieuwe suggestievragen',
-    'refresh' => 'Geef je aanpassingen door',
+    'refresh' => 'Geef je nieuwe periode door',
     'default' => 'Standaard',
     'width' => 'Breedte',
     'half' => 'Halve',

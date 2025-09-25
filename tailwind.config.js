@@ -17,6 +17,7 @@ export default {
             },
             colors: {
                 primary: "#ffc02a",
+                secondary: "#111828",
             },
             backgroundImage: {
                 dotted: "radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px);",
