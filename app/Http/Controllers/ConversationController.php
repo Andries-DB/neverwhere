@@ -372,8 +372,8 @@ class ConversationController extends Controller
                 'name' => $company->company,
             ],
             'source' => [
-                'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
-                // 'id' => $message->source->guid,
+                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+                'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -445,9 +445,9 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
 
-                // 'id' => $message->source->guid,
+                'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -497,9 +497,9 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
 
-                // 'id' => $message->source->guid,
+                'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
@@ -539,9 +539,9 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
-                'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
 
-                // 'id' => $message->source->guid,
+                'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
             'query' => $message->sql_query,
