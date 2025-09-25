@@ -1,17 +1,19 @@
 <?php
 
 return [
-    'select' => 'Selecteer dashboard',
-    'create' => 'Maak nieuw dashboard',
-    'export' => 'Exporteer dashboard',
-    'default' => 'Maak default',
+    'select' => 'Kies pinboard',
+    'create' => 'Nieuw pinboard',
+    'export' => 'Exporteer pinboard',
+    'default' => 'Zet als standaard',
     'delete' => 'Verwijder',
-    'welcome' => 'Welkom op je dashboard! Hier kun je grafieken en tabellen toevoegen om snel inzicht te krijgen in je data. Begin met het vastpinnen van items via de conversatie.',
-    'small' => 'Verklein',
-    'big' => 'Vergroot',
-    'refresh' => 'Refresh',
+    'welcome' => 'Verzamel de beste inzichten in je pinboards. Start een gesprek en voeg vervolgens tabellen en grafieken toe aan je pinboards.',
+    'small' => 'Kleiner',
+    'big' => 'Groter',
+    'refresh' => 'Vernieuwen',
     'duplicate' => 'Dupliceer',
-    'delete_pin' => 'Losmaken',
-    'records' => 'records',
-    'edit' => 'Titel bewerken'
+    'delete_pin' => 'Verwijder',
+    'records' => 'Lijnen',
+    'edit' => 'Titel bewerken',
+    'change_name' => 'Verander kolom naam',
+    'change_name_help' => 'Nieuwe kolomtitel.',
 ];

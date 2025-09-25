@@ -17,5 +17,7 @@ return [
     'half' => 'Moitié',
     'full' => 'Complet',
     'pin' => 'Épingler',
-    'pinning' => 'Épinglage...'
+    'pinning' => 'Épinglage...',
+    'create_new_dashboard' => 'Créer un nouveau tableau de bord',
+    'new_dashboard' => 'Nouveau tableau de bord',
 ];

@@ -1,7 +1,7 @@
 <?php
 return [
     'companies' => 'Bedrijven',
-    'logs' => 'Logs',
+    'logs' => 'Logboek',
     'dashboard' => 'Pinboard',
     'reports' => 'Rapporten',
     'users' => 'Gebruikers',
@@ -9,11 +9,11 @@ return [
     'settings' => 'Instellingen',
     '2fauth' => 'Tweestapsverificatie',
     'logout' => 'Uitloggen',
-    'myconversations' => 'Mijn Conversaties',
-    'newconversations' => "Nieuwe conversatie",
-    'changename' => 'Pas naam aan',
+    'myconversations' => 'Mijn gesprekken',
+    'newconversations' => "Nieuw gesprek",
+    'changename' => 'Naam wijzigen',
     'delete' => 'Verwijderen',
-    'noconversations' => 'Er zijn geen conversaties',
+    'noconversations' => 'Er zijn geen gesprekken.',
     'pinboard' => 'Pinboard',
-    'studio' => 'Studio'
+    'studio' => 'Dr. Itchy\'s labo'
 ];

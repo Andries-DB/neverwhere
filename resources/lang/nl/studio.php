@@ -1,6 +1,6 @@
 <?php
 
 return [
-    'select' => 'Selecteer bron',
+    'select' => 'Selecteer databron',
     'suggestion_questions' => 'Suggestie vragen',
 ];

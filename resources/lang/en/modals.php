@@ -17,5 +17,7 @@ return [
     'half' => 'Half',
     'full' => 'Full',
     'pin' => 'Pin',
-    'pinning' => 'Pinning...'
+    'pinning' => 'Pinning...',
+    'create_new_dashboard' => 'Create a new dashboard',
+    'new_dashboard' => 'New dashboard',
 ];

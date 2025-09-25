@@ -1,8 +1,7 @@
 <?php
 return [
-    'add' => 'Voeg toe',
-    'delete' => 'Verwijder',
-    'save' => 'Sla op',
-    'edit' => 'Pas aan',
-    'cancel' => 'Annuleer',
+    'add' => 'Toevoegen',
+    'delete' => 'Verwijderen',
+    'save' => 'Opslaan',
+    'edit' => 'Aanpassen',
 ];

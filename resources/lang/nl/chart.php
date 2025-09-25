@@ -2,24 +2,24 @@
 
 return [
     'charttypes' => [
-        'bar' => 'Balk',
-        'line' => 'Lijn',
-        'area' => 'Vlak',
-        'pie' => 'Pie',
+        'bar' => 'Staafdiagram',
+        'line' => 'Lijngrafiek',
+        'area' => 'Gebiedsgrafiek',
+        'pie' => 'Cirkeldiagram',
     ],
     'aggtypes' => [
         'sum' => 'Som',
-        'avg' => 'Gemiddeld',
+        'avg' => 'Gemiddelde',
         'count' => 'Aantal',
         'min' => 'Minimum',
         'max' => 'Maximum'
     ],
-    'type' => 'Grafiek Type',
-    'agg' => 'Aggregatie',
-    'xAxis' => 'X-as (Categorie)',
-    'yAxis' => 'Y-as (Waarde)',
-    'sort' => 'Sorteer op',
-    'order' => 'Richting',
-    "choose_x" => 'Kies X-as veld',
-    'choose_y' => 'Kies Y-as veld'
+    'type' => 'Grafiektype',
+    'agg' => 'Totaal',
+    'xAxis' => 'X-as',
+    'yAxis' => 'Y-as',
+    'sort' => 'Sorteer',
+    'order' => 'Volgorde',
+    "choose_x" => 'Dimensie x-as',
+    'choose_y' => 'Dimensie y-as'
 ];
