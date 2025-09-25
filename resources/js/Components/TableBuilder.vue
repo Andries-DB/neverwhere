@@ -18,6 +18,7 @@
                 @grid-ready="onGridReady"
                 :grandTotalRow="grandTotalRow"
                 :sideBar="sideBar"
+                :localeText="localeText"
             />
         </div>
     </div>
@@ -33,6 +34,11 @@ import {
     LicenseManager,
     IntegratedChartsModule,
 } from "ag-grid-enterprise";
+import {
+    AG_GRID_LOCALE_NL,
+    AG_GRID_LOCALE_EN,
+    AG_GRID_LOCALE_FR,
+} from "@ag-grid-community/locale";
 
 ModuleRegistry.registerModules([
     AllEnterpriseModule,
@@ -63,9 +69,17 @@ export default {
             type: Boolean,
             default: false,
         },
+        integrated_chart: {
+            type: Object,
+            required: false,
+        },
     },
     data() {
         return {
+            localeText: AG_GRID_LOCALE_NL,
+            AG_GRID_LOCALE_EN,
+            AG_GRID_LOCALE_NL,
+            AG_GRID_LOCALE_FR,
             recordCountInterval: null,
             grandTotalRow: "",
             gridApi: null,
@@ -119,7 +133,7 @@ export default {
                     const defaultItems = params.defaultItems;
 
                     defaultItems.unshift({
-                        name: "Change column name",
+                        name: this.$t("dashboard.change_name"),
                         icon: '<i class="fas fa-edit"></i>',
                         cssClasses: ["custom-menu-item-with-border"],
                         action: () => {
@@ -127,7 +141,7 @@ export default {
                                 params.column.getColDef().headerName ||
                                 params.column.getColDef().field;
                             const newName = prompt(
-                                "Nieuwe kolomtitel:",
+                                $t("dashboard.change_name_help"),
                                 currentName
                             );
 
@@ -203,6 +217,16 @@ export default {
         },
     },
     created() {
+        // Set locale of the AG GRID
+        const localeMap = {
+            en: this.AG_GRID_LOCALE_EN,
+            nl: this.AG_GRID_LOCALE_NL,
+            fr: this.AG_GRID_LOCALE_FR,
+        };
+
+        const userLocale = this.$page.props.auth.user.locale || "en";
+        this.localeText = localeMap[userLocale] ?? this.AG_GRID_LOCALE_EN;
+
         this.loadGridState();
 
         if (
@@ -234,6 +258,20 @@ export default {
                 filterModel: this.gridApi.getFilterModel(),
             };
         },
+        getIntegratedChart() {
+            if (!this.gridApi) {
+                return null;
+            }
+
+            const chartModels = this.gridApi.getChartModels();
+
+            if (chartModels.length === 0) {
+                return null;
+            }
+
+            // We nemen de eerste chart
+            return chartModels[0];
+        },
         exportTable() {
             this.gridApi.exportDataAsCsv({
                 fileName: `export_${this.message.guid || "table"}.csv`,
@@ -252,6 +290,8 @@ export default {
                 return;
             }
 
+            let chartModels = this.gridApi.getChartModels();
+
             const columnState = this.gridApi.getColumnState().map((c) => {
                 const colDef = this.gridApi.getColumnDef(c.colId);
                 return { ...c, headerName: colDef.headerName };
@@ -261,6 +301,8 @@ export default {
                 columnState,
                 filterModel: this.gridApi.getFilterModel(),
             };
+
+            console.log(chartModels);
 
             try {
                 const data = {
@@ -383,14 +425,14 @@ export default {
 
                     if (isNumeric) {
                         Object.assign(columnDef, {
-                            type: "numericColumn",
+                            type: "leftAligned",
                             cellClass: "number-cell",
                             aggFunc: "sum",
                         });
                     }
                     if (isDate) {
                         Object.assign(columnDef, {
-                            type: "dateColumn",
+                            type: "leftAligned",
                             cellClass: "date-cell",
                         });
                     }
@@ -810,6 +852,10 @@ export default {
             this.gridApi.addEventListener("sortChanged", () => {
                 this.message.filteredRecordCount = this.getFilteredRecords();
             });
+
+            if (this.sort === "pinned" && this.integrated_chart) {
+                this.gridApi.restoreChart(this.integrated_chart);
+            }
 
             setTimeout(() => {
                 this.restoreGridState();

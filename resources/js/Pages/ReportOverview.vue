@@ -412,7 +412,7 @@
                         <!-- Environment -->
                         <div v-if="selectedRequest.environment" class="mb-6">
                             <h3 class="text-sm font-medium text-gray-700 mb-2">
-                                {{ $t("labels.environment") }}
+                                {{ $t("reports.environment") }}
                             </h3>
                             <p class="text-gray-600 text-sm">
                                 {{ selectedRequest.environment }}

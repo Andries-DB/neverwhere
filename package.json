@@ -21,6 +21,8 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
+        "@ag-grid-community/core": "^32.3.9",
+        "@ag-grid-community/locale": "^34.2.0",
         "ag-charts-enterprise": "^11.3.2",
         "ag-charts-vue3": "^11.3.2",
         "ag-grid-enterprise": "^33.3.2",

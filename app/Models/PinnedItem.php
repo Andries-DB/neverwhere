@@ -29,11 +29,13 @@ class PinnedItem extends Model
         'last_updated',
         'config',
         'total_row',
+        'integrated_chart',
     ];
 
     protected $casts = [
         'json' => 'array',
         'col_def' => 'array',
+        'integrated_chart' => 'array',
     ];
 
     public function user()

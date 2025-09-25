@@ -16,7 +16,7 @@
             <!-- Dashboard Selector -->
             <div>
                 <label class="block mb-2 text-sm font-medium text-gray-700">{{
-                    $t("labels.dasboard")
+                    $t("labels.dashboard")
                 }}</label>
                 <div class="relative" v-click-outside="closeDashboardDropdown">
                     <button
@@ -26,7 +26,11 @@
                         :class="{ 'border-red-500': form.errors.dashboard_id }"
                     >
                         <span class="truncate">{{
-                            selectedDashboard ? selectedDashboard.name : "..."
+                            isCreatingNewDashboard
+                                ? $t("modals.new_dashboard")
+                                : selectedDashboard
+                                ? selectedDashboard.name
+                                : "..."
                         }}</span>
                         <div class="ml-2 flex flex-col">
                             <svg
@@ -60,6 +64,9 @@
                         class="absolute z-50 mt-1 w-full rounded-lg bg-white shadow-lg border border-gray-200"
                     >
                         <div class="py-1 max-h-60 overflow-auto">
+                            <!-- Nieuw dashboard optie -->
+
+                            <!-- Bestaande dashboards -->
                             <div
                                 v-for="dashboard in dashboards"
                                 :key="dashboard.guid"
@@ -67,6 +74,7 @@
                                 class="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
                                 :class="{
                                     'bg-gray-100 text-gray-900':
+                                        !isCreatingNewDashboard &&
                                         selectedDashboard &&
                                         selectedDashboard.guid ===
                                             dashboard.guid,
@@ -85,10 +93,51 @@
                                 </div>
                                 <svg
                                     v-if="
+                                        !isCreatingNewDashboard &&
                                         selectedDashboard &&
                                         selectedDashboard.guid ===
                                             dashboard.guid
                                     "
+                                    class="h-4 w-4 text-gray-900"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+
+                            <div
+                                @click="selectNewDashboard"
+                                class="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100"
+                                :class="{
+                                    'bg-gray-100 text-gray-900':
+                                        isCreatingNewDashboard,
+                                }"
+                            >
+                                <div class="flex items-center">
+                                    <svg
+                                        class="h-4 w-4 mr-2 text-gray-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                        />
+                                    </svg>
+                                    <span class="font-medium">{{
+                                        $t("modals.create_new_dashboard")
+                                    }}</span>
+                                </div>
+                                <svg
+                                    v-if="isCreatingNewDashboard"
                                     class="h-4 w-4 text-gray-900"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
@@ -111,6 +160,19 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Nieuw dashboard naam input -->
+            <div v-if="isCreatingNewDashboard">
+                <TextInput
+                    v-model="form.new_dashboard_name"
+                    :label="$t('labels.dashboard')"
+                    :placeholder="$t('labels.dashboard')"
+                    class="w-full"
+                    :class="{
+                        'border-red-500': form.errors.new_dashboard_name,
+                    }"
+                />
             </div>
 
             <div>
@@ -195,7 +257,7 @@ export default {
         show: Boolean,
         close: Function,
         message: Object,
-        coldefs: Array, // Nieuwe coldefs prop
+        coldefs: Array,
         sort: String,
         dashboards: Array,
         pinnedDef: Array,
@@ -206,11 +268,13 @@ export default {
             width: "",
             title: "",
             col_def: "",
-            dashboard_id: "", // Nieuwe dashboard_id field
+            dashboard_id: "",
+            new_dashboard_name: "", // Nieuwe field voor dashboard naam
         });
 
         const isDashboardDropdownOpen = ref(false);
         const selectedDashboard = ref(null);
+        const isCreatingNewDashboard = ref(false);
 
         const setDefaultDashboard = (dashboards) => {
             if (dashboards && dashboards.length > 0) {
@@ -227,6 +291,7 @@ export default {
                     selectedDashboard.value = dashboards[0];
                     form.dashboard_id = dashboards[0].id;
                 }
+                isCreatingNewDashboard.value = false;
             }
         };
 
@@ -268,6 +333,15 @@ export default {
         const selectDashboard = (dashboard) => {
             selectedDashboard.value = dashboard;
             form.dashboard_id = dashboard.id;
+            isCreatingNewDashboard.value = false;
+            form.new_dashboard_name = "";
+            isDashboardDropdownOpen.value = false;
+        };
+
+        const selectNewDashboard = () => {
+            selectedDashboard.value = null;
+            form.dashboard_id = null;
+            isCreatingNewDashboard.value = true;
             isDashboardDropdownOpen.value = false;
         };
 
@@ -409,9 +483,11 @@ export default {
             getFieldDisplayName,
             isDashboardDropdownOpen,
             selectedDashboard,
+            isCreatingNewDashboard,
             toggleDashboardDropdown,
             closeDashboardDropdown,
             selectDashboard,
+            selectNewDashboard,
         };
     },
 };

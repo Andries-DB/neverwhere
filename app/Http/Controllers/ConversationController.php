@@ -115,6 +115,8 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
+                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+
                 'id' => $source->guid,
                 'name' => $source->name,
             ],
@@ -178,7 +180,6 @@ class ConversationController extends Controller
 
     public function pinChart(Request $request)
     {
-        // dd($request->all());
         $request->validate([
             'dashboard_id' => 'required|exists:dashboards,id',
         ]);
@@ -222,9 +223,34 @@ class ConversationController extends Controller
     public function pinTable(Request $request)
     {
         $request->validate([
-            'dashboard_id' => 'required|exists:dashboards,id',
+            'dashboard_id' => 'nullable|exists:dashboards,id',
+            'new_dashboard_name' => 'nullable|string|max:255',
         ]);
-        $dashboard = Dashboard::where('id', $request->dashboard_id)->first();
+
+        if ($request->dashboard_id) {
+            $dashboard = Dashboard::findOrFail($request->dashboard_id);
+        } elseif ($request->new_dashboard_name) {
+            $dashboard = Dashboard::create([
+                'guid' => (string) Str::uuid(),
+
+                'name' => $request->new_dashboard_name,
+                'user_id' => auth()->id(), // optioneel: eigenaar van het dashboard
+            ]);
+        } else {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'dashboard_id' => ['Je moet een bestaand dashboard selecteren of een nieuwe naam opgeven.'],
+            ]);
+        }
+
+        $colDef = $request->col_def;
+        $integratedChart = null;
+        if (isset($colDef['integrated_chart'])) {
+            $integratedChart = $colDef['integrated_chart'];
+            unset($colDef['integrated_chart']);
+        }
+
+
+        // dd($integratedChart, $colDef);
 
         PinnedItem::create([
             'user_id' => auth()->id(),
@@ -233,7 +259,8 @@ class ConversationController extends Controller
             'type' => 'table',
             'width' => $request->width,
             ...(isset($request->message['json']) ? ['json' => $request->message['json']] : []),
-            'col_def' => $request->col_def,
+            'col_def' => $colDef,
+            'integrated_chart' => $integratedChart,
             'display_order' => (PinnedItem::where('user_id', auth()->id())->max('display_order') ?? 0) + 1,
             'dashboard_id' => $dashboard->id,
             'last_updated' => now()->format('Y-m-d H:i:s'),
@@ -241,7 +268,7 @@ class ConversationController extends Controller
         ]);
 
         $message = Message::where('id', $request->message['id'])->first();
-        $message->col_def = $request->col_def;
+        $message->col_def = $colDef;
         $message->save();
 
         return;
@@ -345,6 +372,7 @@ class ConversationController extends Controller
                 'name' => $company->company,
             ],
             'source' => [
+                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
                 'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
@@ -360,7 +388,7 @@ class ConversationController extends Controller
         $output = $json['output'];
 
         $message->config = json_encode($output[0]);
-        $message->save();
+        // $message->save();
 
         return [
             'message' => $message
@@ -417,6 +445,8 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
+                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+
                 'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
@@ -467,6 +497,8 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
+                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+
                 'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],
@@ -507,6 +539,8 @@ class ConversationController extends Controller
                 'name' => $user->companies[0]->company
             ],
             'source' => [
+                // 'id' => 'df3e7a24-d6a9-4188-8852-70628d16edda',
+
                 'id' => $message->source->guid,
                 'name' => $message->source->name,
             ],

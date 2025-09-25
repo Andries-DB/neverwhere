@@ -315,7 +315,6 @@ export default {
                         );
                     }
 
-                    // groupedKeys dataFilter
                     if (series.groupedKeys) {
                         series.groupedKeys.forEach((key) => {
                             if (typeof key.dataFilter === "string") {
@@ -327,6 +326,160 @@ export default {
                         });
                     }
                 }
+
+                return {
+                    ...existingConfig,
+                    data: sortedData,
+                };
+            }
+
+            // Genereer nieuwe config
+            return this.generateNewChartConfig(
+                sortedData,
+                chartType,
+                xAxis,
+                yAxis,
+                aggregation
+            );
+        },
+        getCustomChartOptionsWithoutFunctions(message) {
+            let chartType = "";
+            let xAxis = "";
+            let yAxis = "";
+            let aggregation = "";
+            let sortField = "";
+            let sortDirection = "";
+
+            if (this.sort === "pinned") {
+                chartType = this.item.sort_chart;
+                xAxis = this.item._x;
+                yAxis = this.item._y;
+                aggregation = this.item._agg;
+                sortField = this.item._order;
+                sortDirection = this.item._order_dir;
+            } else {
+                chartType = message.selectedChartType || "column";
+                xAxis = message.selectedXAxis;
+                yAxis = message.selectedYAxis;
+                aggregation = message.selectedAggregation || "sum";
+                sortField = message.selectedSortField || "";
+                sortDirection = message.selectedSortDirection || "desc";
+            }
+
+            // Parse existing config if available
+            let existingConfig = null;
+
+            const parseConfig = (configString) => {
+                try {
+                    const parsed = JSON.parse(configString);
+
+                    if (
+                        parsed.Graph &&
+                        Array.isArray(parsed.Graph) &&
+                        parsed.Graph[0]
+                    ) {
+                        if (parsed.Graph[0]["0"]) {
+                            return parsed.Graph[0]["0"];
+                        }
+                        return parsed.Graph[0];
+                    }
+
+                    if (parsed.data || parsed.series) {
+                        return parsed;
+                    }
+                    return null;
+                } catch (e) {
+                    console.error("Kon config niet parsen:", e);
+                    return null;
+                }
+            };
+            if (this.config) {
+                existingConfig = parseConfig(this.config);
+            } else if (message.config) {
+                existingConfig = parseConfig(message.config);
+            }
+
+            // Extract axes from existing config
+            if (existingConfig) {
+                // Voor pie charts
+                if (existingConfig.series?.[0]?.type === "pie") {
+                    xAxis =
+                        existingConfig.series[0].calloutLabelKey ||
+                        existingConfig.series[0].labelKey;
+                    yAxis = existingConfig.series[0].angleKey;
+                }
+                // Voor normale charts
+                else if (existingConfig.series?.[0]) {
+                    const firstSeries = existingConfig.series[0];
+
+                    if (Array.isArray(firstSeries.xKey)) {
+                        xAxis = firstSeries.xKey;
+                    } else {
+                        xAxis = firstSeries.xKey;
+                    }
+
+                    if (existingConfig.series.length > 1) {
+                        yAxis = existingConfig.series.map((s) => s.yKey);
+                    } else {
+                        yAxis = firstSeries.yKey;
+                    }
+                }
+            }
+
+            // Prepareer data
+            const chartData = this.prepareCustomChartData(
+                message.json,
+                xAxis,
+                yAxis,
+                aggregation,
+                existingConfig
+            );
+
+            if (!chartData || chartData.length === 0) {
+                return {};
+            }
+
+            // Sorteer data
+            let sortedData = this.sortChartData(
+                chartData.data,
+                sortField,
+                sortDirection,
+                xAxis,
+                yAxis
+            );
+
+            sortedData = this.transformDataToOutputKeys(
+                sortedData,
+                chartData.keys
+            );
+
+            if (existingConfig) {
+                // if (existingConfig.series) {
+                //     const series = existingConfig.series[0];
+
+                //     // label formatter
+                //     if (
+                //         series.label?.formatter &&
+                //         typeof series.label.formatter === "string"
+                //     ) {
+                //         const formatterString = series.label.formatter;
+                //         series.label.formatter = new Function(
+                //             "params",
+                //             `return (${formatterString})(params);`
+                //         );
+                //     }
+
+                //     if (series.groupedKeys) {
+                //         series.groupedKeys.forEach((key) => {
+                //             if (typeof key.dataFilter === "string") {
+                //                 key.dataFilter = new Function(
+                //                     "params",
+                //                     `return (${key.dataFilter})(params);`
+                //                 );
+                //             }
+                //         });
+                //     }
+                // }
 
                 return {
                     ...existingConfig,

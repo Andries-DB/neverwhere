@@ -427,16 +427,13 @@
                                                     <i
                                                         class="fas fa-bookmark mr-1"
                                                     ></i>
-                                                    {{
-                                                        $t(
-                                                            "conversations.saved"
-                                                        )
-                                                    }}
                                                 </span>
                                                 <span v-else>
                                                     <i
                                                         class="far fa-bookmark mr-1"
                                                     ></i>
+                                                </span>
+                                                <span>
                                                     {{
                                                         $t("conversations.save")
                                                     }}
@@ -455,16 +452,13 @@
                                                     <i
                                                         class="fas fa-bookmark mr-1"
                                                     ></i>
-                                                    {{
-                                                        $t(
-                                                            "conversations.saved"
-                                                        )
-                                                    }}
                                                 </span>
                                                 <span v-else>
                                                     <i
                                                         class="far fa-bookmark mr-1"
                                                     ></i>
+                                                </span>
+                                                <span>
                                                     {{
                                                         $t("conversations.save")
                                                     }}
@@ -616,7 +610,7 @@
                                             </div>
                                         </div>
 
-                                        <button
+                                        <!-- <button
                                             @click="exportTable(message)"
                                             v-if="message.displayAsTable"
                                             class="px-3 py-1.5 text-xs rounded-md focus:outline-none flex items-center text-gray-600 hover:bg-gray-200"
@@ -625,7 +619,7 @@
                                                 <i class="fas fa-download"></i>
                                                 {{ $t("conversations.export") }}
                                             </span>
-                                        </button>
+                                        </button> -->
                                     </div>
 
                                     <div
@@ -1017,9 +1011,11 @@ export default {
 
             if (
                 chartBuilderRef &&
-                typeof chartBuilder.getCustomChartOptions === "function"
+                typeof chartBuilder.getCustomChartOptionsWithoutFunctions ===
+                    "function"
             ) {
-                let result = chartBuilder.getCustomChartOptions(message);
+                let result =
+                    chartBuilder.getCustomChartOptionsWithoutFunctions(message);
                 result.data = [];
 
                 this.changedConfig = result;
@@ -1182,6 +1178,8 @@ export default {
                         col_def: null,
                     });
                 }
+
+                this.scrollToBottom();
             } catch (error) {
                 this.summaryError = error.message;
             } finally {
@@ -1252,8 +1250,12 @@ export default {
                     typeof tableBuilder.getColdef === "function"
                 ) {
                     const result = tableBuilder.getColdef();
+                    const integrated_chart = tableBuilder.getIntegratedChart();
 
-                    this.pinnedDef = result;
+                    this.pinnedDef = {
+                        ...result,
+                        integrated_chart, // voegt de chart toe als aparte property
+                    };
                 }
             }
 
@@ -1709,7 +1711,7 @@ export default {
                                 bot_message.respond_type === "Query",
                             thumbs_up: 0,
                             thumbs_down: 0,
-                            selectedChartType: bot_message._sort,
+                            selectedChartType: bot_message._sort || "bar",
                             selectedXAxis: bot_message._x,
                             selectedYAxis: bot_message._y,
                             selectedAggregation: "sum",

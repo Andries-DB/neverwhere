@@ -478,6 +478,7 @@
                                     sort="pinned"
                                     :col_def="item.col_def"
                                     :total_row="item.total_row"
+                                    :integrated_chart="item.integrated_chart"
                                 />
                             </div>
                         </div>
