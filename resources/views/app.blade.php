@@ -35,7 +35,7 @@
 
         <!-- Tile for Win8 -->
         <meta name="msapplication-TileColor" content="#111828">
-        <meta name="msapplication-TileImage" content="/images/icons/icon-512x512.png">
+        <meta name="msapplication-TileImage" content="{{ asset('favicon.ico') }}">
 
         <!-- Scripts -->
         @routes
