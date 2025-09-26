@@ -24,18 +24,18 @@
         <!-- Add to homescreen for Chrome on Android -->
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="application-name" content="Neverwhere">
-        <link rel="icon" sizes="512x512" href="{{ asset('icon-512x512.png') }}">
+        <link rel="icon" sizes="512x512" href="{{ asset('favicon.ico') }}">
 
 
         <!-- Add to homescreen for Safari on iOS -->
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
         <meta name="apple-mobile-web-app-title" content="Neverwhere">
-        <link rel="apple-touch-icon" href="{{ asset('icon-512x512.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('favicon.ico') }}">
 
         <!-- Tile for Win8 -->
         <meta name="msapplication-TileColor" content="#111828">
-        <meta name="msapplication-TileImage" content="{{ asset('icon-512x512.png') }}">
+        <meta name="msapplication-TileImage" content="{{ asset('favicon.ico') }}">
 
         <!-- Scripts -->
         @routes
