@@ -2,10 +2,10 @@
 
 return [
     'charttypes' => [
-        'bar' => 'Bar',
-        'line' => 'Line',
-        'area' => 'Area',
-        'pie' => 'Pie',
+        'bar' => 'Bar Chart',
+        'line' => 'Line Chart',
+        'area' => 'Area Chart',
+        'pie' => 'Pie Chart',
     ],
     'aggtypes' => [
         'sum' => 'Sum',
@@ -15,11 +15,11 @@ return [
         'max' => 'Maximum'
     ],
     'type' => 'Chart Type',
-    'agg' => 'Aggregation',
-    'xAxis' => 'X-axis (Category)',
-    'yAxis' => 'Y-axis (Value)',
-    'sort' => 'Sort by',
+    'agg' => 'Total',
+    'xAxis' => 'X-Axis',
+    'yAxis' => 'Y-Axis',
+    'sort' => 'Sort',
     'order' => 'Order',
-    'choose_x' => 'Choose X-axis field',
-    'choose_y' => 'Choose Y-axis field'
+    "choose_x" => 'Pick X-Axis',
+    'choose_y' => 'Pick Y-Axis'
 ];

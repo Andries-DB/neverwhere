@@ -1,5 +1,4 @@
 <?php
-// en
 return [
     'companies' => 'Companies',
     'logs' => 'Logs',
@@ -9,12 +8,12 @@ return [
     'feedback' => 'Feedback',
     'settings' => 'Settings',
     '2fauth' => 'Two-Factor Authentication',
-    'logout' => 'Logout',
+    'logout' => 'Log out',
     'myconversations' => 'My Conversations',
-    'newconversations' => 'New Conversation',
+    'newconversations' => "New Conversation",
     'changename' => 'Change Name',
     'delete' => 'Delete',
-    'noconversations' => 'No conversations',
+    'noconversations' => 'No conversations yet.',
     'pinboard' => 'Pinboard',
-    'studio' => 'Studio'
+    'studio' => 'Dr. Itchy's Lab'
 ];

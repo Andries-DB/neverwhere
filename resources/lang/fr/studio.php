@@ -1,6 +1,8 @@
 <?php
 
 return [
-    'select' => 'Sélectionnez la source',
-    'suggestion_questions' => 'Questions de suggestion',
+    'select' => 'Sélectionner une source de données',
+    'suggestion_questions' => 'Questions suggérées',
+    'dashboard' => 'Sources de données'
 ];
+

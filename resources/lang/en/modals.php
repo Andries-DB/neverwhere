@@ -1,3 +1,4 @@
+
 <?php
 
 return [
@@ -7,17 +8,17 @@ return [
     'button_loading' => 'Sending...',
     'add' => 'Save',
     'create' => 'Create',
-    'settings' => 'Submit your settings',
-    'feedback' => 'Submit your feedback',
-    'knowledge' => 'Submit your knowledge',
-    'suggestion' => 'Submit your suggestion question',
-    'refresh' => 'Submit your changes',
+    'settings' => 'Manage your settings',
+    'feedback' => 'Leave your feedback',
+    'knowledge' => 'Train the model',
+    'suggestion' => 'Add new suggested questions',
+    'refresh' => 'Apply your changes',
     'default' => 'Default',
     'width' => 'Width',
     'half' => 'Half',
     'full' => 'Full',
     'pin' => 'Pin',
     'pinning' => 'Pinning...',
-    'create_new_dashboard' => 'Create a new dashboard',
-    'new_dashboard' => 'New dashboard',
+    'create_new_dashboard' => 'Create a new pinboard',
+    'new_dashboard' => 'New pinboard',
 ];

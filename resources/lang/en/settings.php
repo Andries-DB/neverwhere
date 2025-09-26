@@ -4,15 +4,16 @@ return [
     'comma' => 'Comma',
     'point' => 'Point',
     'example' => 'Example',
-    'thousand' => 'Thousand separator',
+    'thousand' => 'Thousands separator',
     'none' => 'None',
     'space' => 'Space',
-    'errors' => 'Errors occurred',
-    'success' => 'Settings saved successfully!',
+    'errors' => 'Oops. Something went wrong.',
+    'success' => 'Settings saved successfully.',
     'nl' => 'Dutch',
     'fr' => 'French',
     'en' => 'English',
     'settings' => 'Settings',
-    'settings_description' => 'Manage your personal preferences and account settings',
-    'langandreg' => 'Language and Region',
+    'settings_description' => 'Manage your personal preferences.',
+    'langandreg' => 'Language'
 ];
+

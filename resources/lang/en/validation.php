@@ -2,6 +2,15 @@
 
 return [
 
+    /*
+    |--------------------------------------------------------------------------
+    | Validation Language Lines
+    |--------------------------------------------------------------------------
+    |
+    | The default error messages used by the validator class.
+    |
+    */
+
     'accepted'             => 'The :attribute must be accepted.',
     'active_url'           => 'The :attribute is not a valid URL.',
     'after'                => 'The :attribute must be a date after :date.',
@@ -35,12 +44,12 @@ return [
     'gt'                   => [
         'numeric' => 'The :attribute must be greater than :value.',
         'file'    => 'The :attribute must be greater than :value kilobytes.',
-        'string'  => 'The :attribute must be more than :value characters.',
+        'string'  => 'The :attribute must be greater than :value characters.',
         'array'   => 'The :attribute must have more than :value items.',
     ],
     'gte'                  => [
-        'numeric' => 'The :attribute must be greater than or equal to :value.',
-        'file'    => 'The :attribute must be greater than or equal to :value kilobytes.',
+        'numeric' => 'The :attribute must be greater than or equal :value.',
+        'file'    => 'The :attribute must be greater than or equal :value kilobytes.',
         'string'  => 'The :attribute must be at least :value characters.',
         'array'   => 'The :attribute must have at least :value items.',
     ],
@@ -59,8 +68,8 @@ return [
         'array'   => 'The :attribute must have less than :value items.',
     ],
     'lte'                  => [
-        'numeric' => 'The :attribute must be less than or equal to :value.',
-        'file'    => 'The :attribute must be less than or equal to :value kilobytes.',
+        'numeric' => 'The :attribute must be less than or equal :value.',
+        'file'    => 'The :attribute must be less than or equal :value kilobytes.',
         'string'  => 'The :attribute must not be greater than :value characters.',
         'array'   => 'The :attribute must not have more than :value items.',
     ],
@@ -106,11 +115,29 @@ return [
     'url'                  => 'The :attribute format is invalid.',
     'uuid'                 => 'The :attribute must be a valid UUID.',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Validation Language Lines
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify custom validation messages for attributes.
+    |
+    */
+
     'custom' => [
         'attribute-name' => [
             'rule-name' => 'custom message',
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Validation Attributes
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify human-friendly attribute names in error messages.
+    |
+    */
 
     'attributes' => [
         'email' => 'email address',
@@ -119,7 +146,8 @@ return [
         'username' => 'username',
         'title' => 'title',
         'content' => 'content',
-        'company' => 'company name',
+        'company' => 'company name'
+        // add more here if needed
     ],
 
 ];
